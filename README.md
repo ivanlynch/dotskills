@@ -123,6 +123,7 @@ que no hayan sido creados por el instalador.
 | `implementar-plan` | Ejecuta las tareas de un plan persistido. |
 | `implementar-tarea` | Ejecuta y verifica una tarea individual. |
 | `plan` | Convierte un alcance confirmado en tareas implementables. |
+| `entrevistar` | Recorre decisiones pendientes una por una hasta alcanzar entendimiento compartido. |
 
 ## Dependencias de los workflows
 
