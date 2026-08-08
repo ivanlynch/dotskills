@@ -1,0 +1,4 @@
+interface:
+  display_name: "Documentar README"
+  short_description: "Crea README.md claros y completos para proyectos"
+  default_prompt: "Usa $documentar-readme para analizar el proyecto y crear o actualizar su README.md."

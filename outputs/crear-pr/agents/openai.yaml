@@ -1,0 +1,4 @@
+interface:
+  display_name: "Crear PR"
+  short_description: "Genera y abre PRs con título Jira"
+  default_prompt: "Usa $crear-pr para preparar y abrir una pull request con el ticket de Jira."

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Analizar Alcance"
+  short_description: "Evalúa tamaño, riesgo y división de tickets"
+  default_prompt: "Usa $analizar-alcance para evaluar si este ticket es independiente, testeable y suficientemente pequeño."
