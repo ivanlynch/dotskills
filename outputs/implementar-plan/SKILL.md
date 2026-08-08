@@ -12,7 +12,7 @@ Orquestar la ejecución de un archivo generado por `$plan`. No editar el JSON ma
 Recibir la ruta absoluta del archivo ejecutable del plan:
 
 ```text
-$implementar-plan /ruta/al/DTCZE-13551-plan.json
+$implementar-plan /ruta/al/PROJ-1234-plan.json
 ```
 
 Validarlo antes de cualquier cambio:
