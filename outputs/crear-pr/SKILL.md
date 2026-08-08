@@ -18,7 +18,7 @@ El título de la PR debe tener exactamente este formato:
 Ejemplo:
 
 ```text
-[DTCZE-13551] Arreglar tal cosa
+[PROJ-1234] Arreglar tal cosa
 ```
 
 Reglas:

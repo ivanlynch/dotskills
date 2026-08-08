@@ -41,7 +41,7 @@ def normalize_ticket(raw: str) -> str:
     ticket = raw.strip().upper()
     if not TICKET_RE.fullmatch(ticket):
         raise ValueError(
-            f"ID de Jira inválido: {raw!r}. Formato esperado: DTCZE-1234"
+            f"ID de Jira inválido: {raw!r}. Formato esperado: PROJ-1234"
         )
     return ticket
 

@@ -10,7 +10,7 @@ Implementar exactamente una tarea del archivo ejecutable del plan. No ampliar el
 ## Entrada
 
 ```text
-$implementar-tarea /ruta/al/DTCZE-13551-plan.json --task-id task-001
+$implementar-tarea /ruta/al/PROJ-1234-plan.json --task-id task-001
 ```
 
 Validar y comenzar la tarea mediante el script común:

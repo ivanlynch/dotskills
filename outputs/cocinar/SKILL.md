@@ -1,6 +1,6 @@
 ---
 name: cocinar
-description: Preparar e implementar de extremo a extremo un ticket de Jira recibido como argumento, por ejemplo `$cocinar DTCZE-1234`. Delegar la carga del ticket a `$consultar-ticket`, analizar su alcance con la skill analizar-alcance, aclarar requisitos con el skill entrevistar, localizar el flujo de implementación del proyecto, producir un plan y tareas pequeñas, obtener aprobación explícita, crear una branch con el ID del ticket, implementar, verificar y abrir una pull request mediante la skill crear-pr, cuyo título debe seguir el formato `[<JIRA TICKET>] <Título del ticket de Jira>`.
+description: Preparar e implementar de extremo a extremo un ticket de Jira recibido como argumento, por ejemplo `$cocinar PROJ-1234`. Delegar la carga del ticket a `$consultar-ticket`, analizar su alcance con la skill analizar-alcance, aclarar requisitos con el skill entrevistar, localizar el flujo de implementación del proyecto, producir un plan y tareas pequeñas, obtener aprobación explícita, crear una branch con el ID del ticket, implementar, verificar y abrir una pull request mediante la skill crear-pr, cuyo título debe seguir el formato `[<JIRA TICKET>] <Título del ticket de Jira>`.
 ---
 
 # Cocinar un ticket de Jira
@@ -81,9 +81,9 @@ Si el registro ya existe, mostrarlo y reanudar solamente desde la primera fase n
     ```json
     {
       "status": "IN_PROGRESS",
-      "root": "DTCZE-1234",
+      "root": "PROJ-1234",
       "items": {
-        "DTCZE-1234": {
+        "PROJ-1234": {
           "title": "Alcance del ticket",
           "parent": null,
           "children": [],
@@ -145,7 +145,7 @@ Antes de cualquier acción de implementación, ejecutar `show --compact` y compr
 
 1. Marcar `branch` como `IN_PROGRESS`.
 2. Inspeccionar el estado y la branch actuales sin descartar ni sobrescribir cambios del usuario.
-3. Crear una branch cuyo nombre sea exactamente el ID normalizado del ticket, por ejemplo `DTCZE-1234`.
+3. Crear una branch cuyo nombre sea exactamente el ID normalizado del ticket, por ejemplo `PROJ-1234`.
 4. Si ya existe, no borrarla ni reemplazarla. Si no se está ya en ella, pedir al usuario cómo proceder porque no se permite inventar otro nombre.
 5. Verificar la branch activa antes de marcar la fase como `DONE`.
 
