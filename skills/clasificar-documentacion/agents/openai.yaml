@@ -1,4 +1,0 @@
-interface:
-  display_name: "Clasificar documentación"
-  short_description: "Clasifica según necesidades de Diátaxis"
-  default_prompt: "Usa /clasificar-documentacion para identificar el cuadrante documental adecuado."

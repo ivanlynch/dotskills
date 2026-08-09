@@ -86,6 +86,8 @@ No conviertas la fase en un cuestionario. Si una respuesta es un hecho verificab
 
 ### 2. Clasificación del cuadrante
 
+Lee `skills/clasificar-documentacion/SKILL.md` (dentro de esta misma skill) para el criterio detallado de clasificación antes de decidir.
+
 Determina explícitamente:
 
 1. ¿El usuario está estudiando o trabajando?
@@ -161,6 +163,13 @@ Indica qué quedará fuera y espera aprobación del índice antes de redactar el
 
 ### 5. Redacción
 
+Antes de redactar, lee el archivo correspondiente al cuadrante dominante (dentro de esta misma skill) para el procedimiento y la validación específica de ese cuadrante:
+
+- Tutorial → `skills/tutoriales/SKILL.md`
+- Guía práctica → `skills/guias-practicas/SKILL.md`
+- Referencia → `skills/referencia/SKILL.md`
+- Explicación → `skills/explicaciones/SKILL.md`
+
 Cuando el índice esté aprobado, redacta en Markdown y en español, salvo indicación contraria. Sigue estas reglas:
 
 - empieza por el propósito y el resultado esperado;
@@ -176,7 +185,7 @@ Cuando el índice esté aprobado, redacta en Markdown y en español, salvo indic
 
 ### 6. Auditoría independiente
 
-Cuando exista un borrador, lanza un subagente auditor independiente o realiza un pase de auditoría separado si el entorno no permite delegarlo. El auditor debe recibir el documento, el cuadrante, el contexto, las fuentes y las decisiones del usuario.
+Cuando exista un borrador, lanza un subagente auditor independiente o realiza un pase de auditoría separado si el entorno no permite delegarlo. Dale al auditor el contenido de `skills/validar-documentacion/SKILL.md` (dentro de esta misma skill) junto con el documento, el cuadrante, el contexto, las fuentes y las decisiones del usuario.
 
 El auditor no redacta ni corrige. Debe comprobar:
 

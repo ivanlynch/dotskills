@@ -1,4 +1,0 @@
-interface:
-  display_name: "Crear tutoriales"
-  short_description: "Crea tutoriales técnicos prácticos"
-  default_prompt: "Usa /tutoriales para crear un recorrido técnico de aprendizaje."

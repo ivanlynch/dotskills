@@ -106,12 +106,6 @@ que no hayan sido creados por el instalador.
 | Workflow | Propósito |
 | --- | --- |
 | `documentar` | Coordina la creación o mejora de documentación técnica con Diátaxis. |
-| `clasificar-documentacion` | Clasifica una solicitud documental según el cuadrante de Diátaxis. |
-| `tutoriales` | Redacta tutoriales para aprender una habilidad haciendo. |
-| `guias-practicas` | Redacta guías prácticas para completar una tarea real. |
-| `referencia` | Redacta documentación de referencia técnica: APIs, comandos, parámetros. |
-| `explicaciones` | Redacta explicaciones para construir un modelo mental. |
-| `validar-documentacion` | Audita un borrador de documentación y reporta hallazgos sin corregirlo. |
 
 ### Autoría y validación de skills
 
@@ -134,8 +128,10 @@ workflows esperan capacidades adicionales:
 - `cocinar` espera un workflow de consulta de tickets (`consultar-ticket`),
   entrevistas y acceso al contexto de Jira;
 - `plan` utiliza `crear-ticket` para producir las tareas;
-- `documentar` delega en `clasificar-documentacion`, `tutoriales`,
-  `guias-practicas`, `referencia`, `explicaciones` y `validar-documentacion`;
+- `documentar` organiza el trabajo internamente en sub-skills privadas
+  (clasificación, tutoriales, guías, referencia, explicaciones y validación)
+  anidadas en `skills/documentar/skills/`; no se instalan ni se invocan por
+  separado;
 - `crear-skill` se completa habitualmente validando el resultado con
   `validar-skill`;
 - `crear-pr` necesita un repositorio Git y acceso a GitHub para abrir la PR;
