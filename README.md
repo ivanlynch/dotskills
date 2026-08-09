@@ -34,18 +34,20 @@ El instalador:
 
 ## Dónde se instalan
 
+Cada skill vive una sola vez en este repositorio, bajo `skills/<nombre>/`
+(formato abierto [Agent Skills](https://agentskills.io)). El instalador no
+copia ese contenido: lo symlinkea a las rutas que cada herramienta lee de
+forma nativa.
+
 | Herramienta | Invocación | Destino global |
 | --- | --- | --- |
-| Codex | `$plan` | `~/.codex/skills/` |
-| Claude Code | `/plan` | `~/.claude/skills/` y `~/.claude/commands/` |
-| Cursor | `/plan` | `~/.cursor/commands/` |
+| Codex | `$plan` | `~/.agents/skills/` |
+| Claude Code | `/plan` | `~/.claude/skills/` |
+| Cursor | `/plan` | `~/.agents/skills/` |
 
-Los comandos globales de Cursor dependen de la detección de comandos de la
-versión instalada. Si no aparecen, reinicia Cursor y revisa la sección de
-[solución de problemas](#solución-de-problemas). Cursor documenta los comandos
-personalizados como archivos Markdown en `.cursor/commands`; también existe una
-carpeta global `~/.cursor/commands`, aunque algunas versiones han tenido
-problemas para detectarla.
+Codex y Cursor comparten `~/.agents/skills/` (ambos lo leen nativamente), así
+que un solo enlace por skill alcanza para las dos. Claude Code solo lee
+`~/.claude/skills/`.
 
 ## Uso
 
@@ -145,26 +147,21 @@ conectores de Jira, Atlassian o GitHub.
 
 ```text
 dotskills/
-├── skills/               # Skills canónicas (SKILL.md único, sin duplicar)
-│                         # symlinkeadas a ~/.claude/skills/ y ~/.agents/skills/
-│                         # (Codex y Cursor leen ~/.agents/skills/ de forma nativa)
-├── core/                 # Definiciones de workflows aún no migradas a skills/
-├── scripts/              # Scripts auxiliares reutilizables
-├── codex/skills/         # Skills y metadatos específicos de Codex (no migradas)
-├── claude/skills/        # Adaptadores de skills para Claude Code (no migradas)
-├── claude/commands/      # Comandos slash para Claude Code (no migradas)
-├── cursor/commands/      # Comandos slash para Cursor (no migradas)
-├── cursor/rules/         # Reglas de Cursor
+├── skills/               # Cada skill vive una sola vez: <nombre>/SKILL.md
+│   └── <nombre>/         # + scripts/, agents/openai.yaml, recursos propios
+│                         # symlinkeado a ~/.claude/skills/ y ~/.agents/skills/
+├── cursor/rules/         # Reglas de Cursor (mecanismo aparte, sin migrar)
 ├── install.sh            # Instalador global
 └── uninstall.sh          # Desinstalador de enlaces
 ```
 
-`skills/` es la migración en curso a un único directorio físico por skill
-(estándar abierto [Agent Skills](https://agentskills.io)), symlinkeado en vez
-de copiado a cada herramienta. Los skills que todavía no se migraron siguen
-duplicados entre `core/`, `codex/skills/`, `claude/skills/`, `claude/commands/`
-y `cursor/commands/`. La implementación de Codex conserva sus metadatos
-`agents/openai.yaml`.
+Cada `skills/<nombre>/` es un directorio autocontenido: si invoca scripts en
+Python, los bundlea en su propio `scripts/`; si necesita metadata específica
+de Codex, la guarda en `agents/openai.yaml`. Un skill que dependa de otro (por
+ejemplo `implementar-tarea` reutilizando `plan_file.py` de `plan`) lo referencia
+por nombre de skill vecino, nunca copiando el script. `install.sh` no copia
+contenido en ningún punto: solo crea symlinks desde `skills/<nombre>/` hacia
+las carpetas globales de cada herramienta.
 
 ## Desarrollo
 
@@ -197,22 +194,21 @@ Comprueba que `git` esté instalado y que tu conexión pueda acceder a
 El instalador no sobrescribe archivos reales. Haz una copia de seguridad del
 archivo o directorio que ocupa el destino y vuelve a ejecutar el instalador.
 
-### Cursor no muestra los comandos
+### Cursor o Codex no muestran un skill
 
-Reinicia Cursor por completo y revisa `~/.cursor/commands/`. La detección de
-comandos globales ha tenido regresiones en algunas versiones; como diagnóstico,
-comprueba que los archivos `.md` existan y que sean enlaces simbólicos hacia
-`~/.local/share/dotskills/cursor/commands/`.
+Reinicia la herramienta y revisa `~/.agents/skills/`. Comprobá que el skill
+exista ahí como enlace simbólico hacia `~/.local/share/dotskills/skills/<nombre>/`.
 
-### Claude Code o Codex no muestran una skill
+### Claude Code no muestra una skill
 
-Comprueba que el enlace exista en la carpeta global correspondiente y vuelve a
-abrir la herramienta. También puedes forzar una actualización ejecutando de
-nuevo el instalador.
+Comprueba que el enlace exista en `~/.claude/skills/` y vuelve a abrir la
+herramienta. También puedes forzar una actualización ejecutando de nuevo el
+instalador.
 
 ## Documentación relacionada
 
-- [Comandos de Claude Code](https://code.claude.com/docs/en/commands)
-- [Comandos de Cursor](https://docs.cursor.com/en/agent/chat/commands)
+- [Agent Skills (estándar abierto)](https://agentskills.io)
+- [Skills en Claude Code](https://code.claude.com/docs/en/skills)
+- [Skills en Codex](https://learn.chatgpt.com/docs/build-skills)
+- [Skills en Cursor](https://cursor.com/docs/skills)
 - [Reglas de Cursor](https://docs.cursor.com/context/rules)
-- [Incidencia de comandos globales de Cursor](https://forum.cursor.com/t/commands-are-not-detected-in-the-global-cursor-directory/150967)

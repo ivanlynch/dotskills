@@ -14,7 +14,7 @@ case "$REQUESTED" in
 esac
 
 script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" 2>/dev/null && pwd || true)
-if [ ! -d "$script_dir/codex/skills" ]; then
+if [ ! -d "$script_dir/skills" ]; then
   command -v git >/dev/null 2>&1 || {
     echo "Se necesita git para instalar dotskills." >&2
     exit 1
@@ -54,32 +54,14 @@ install_shared_skills() {
 
 install_codex() {
   install_shared_skills "$HOME/.agents/skills"
-  for skill in "$script_dir"/codex/skills/*; do
-    [ -d "$skill" ] || continue
-    link_file "$skill" "$HOME/.codex/skills/$(basename "$skill")"
-  done
 }
 
 install_claude() {
   install_shared_skills "$HOME/.claude/skills"
-  for skill in "$script_dir"/claude/skills/*; do
-    [ -d "$skill" ] || continue
-    link_file "$skill" "$HOME/.claude/skills/$(basename "$skill")"
-  done
-  for command in "$script_dir"/claude/commands/*.md; do
-    [ -f "$command" ] || continue
-    [ "$(basename "$command")" = "README.md" ] && continue
-    link_file "$command" "$HOME/.claude/commands/$(basename "$command")"
-  done
 }
 
 install_cursor() {
   install_shared_skills "$HOME/.agents/skills"
-  for command in "$script_dir"/cursor/commands/*.md; do
-    [ -f "$command" ] || continue
-    [ "$(basename "$command")" = "README.md" ] && continue
-    link_file "$command" "$HOME/.cursor/commands/$(basename "$command")"
-  done
 }
 
 case "$REQUESTED" in
