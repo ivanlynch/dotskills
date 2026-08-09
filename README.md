@@ -150,7 +150,6 @@ dotskills/
 ├── skills/               # Cada skill vive una sola vez: <nombre>/SKILL.md
 │   └── <nombre>/         # + scripts/, agents/openai.yaml, recursos propios
 │                         # symlinkeado a ~/.claude/skills/ y ~/.agents/skills/
-├── cursor/rules/         # Reglas de Cursor (mecanismo aparte, sin migrar)
 ├── install.sh            # Instalador global
 └── uninstall.sh          # Desinstalador de enlaces
 ```
