@@ -1,6 +1,6 @@
 ---
 name: documentar
-description: Orquesta la creación, reorganización o mejora de documentación técnica en español con Diátaxis. Clasifica la necesidad del lector, exige fuentes verificables, redacta según el cuadrante dominante y audita el resultado antes de entregarlo.
+description: Orquesta la creación, reorganización o mejora de documentación en español con Diátaxis. Clasifica la necesidad del lector, exige fuentes verificables, redacta según el cuadrante dominante y audita el resultado antes de entregarlo. Úsala cuando el usuario quiera crear, reorganizar o mejorar cualquier documentación.
 ---
 
 # Documentar con Diátaxis
