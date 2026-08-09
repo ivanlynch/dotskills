@@ -1,4 +1,0 @@
-interface:
-  display_name: "Crear README"
-  short_description: "Genera README.md analizando el proyecto"
-  default_prompt: "Usa $crear-readme para analizar el proyecto y generar un README.md."

@@ -23,7 +23,7 @@ Reglas obligatorias del campo `name`:
 - No puede tener guiones consecutivos (`--`).
 - Debe coincidir exactamente con el nombre del directorio que lo contiene.
 
-Convención de este repositorio (no exigida por el estándar, pero obligatoria acá para consistencia): verbo + sustantivo en español, kebab-case, igual que `crear-ticket`, `analizar-alcance`, `documentar-readme`. Si el usuario propone un nombre inválido, rechazalo y proponé una alternativa que cumpla las reglas antes de seguir.
+Convención de este repositorio (no exigida por el estándar, pero obligatoria acá para consistencia): verbo + sustantivo en español, kebab-case, igual que `crear-ticket`, `analizar-alcance`, `validar-skill`. Si el usuario propone un nombre inválido, rechazalo y proponé una alternativa que cumpla las reglas antes de seguir.
 
 ### 3. Redactar la descripción (`description`)
 

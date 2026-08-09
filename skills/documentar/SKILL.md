@@ -1,6 +1,6 @@
 ---
 name: documentar
-description: Orquesta la creación, reorganización o mejora de documentación técnica en español con Diátaxis. Clasifica la necesidad del lector, exige fuentes verificables, redacta según el cuadrante dominante y audita el resultado antes de entregarlo. Si el entregable principal es un README.md, deriva el trabajo a /documentar-readme.
+description: Orquesta la creación, reorganización o mejora de documentación técnica en español con Diátaxis. Clasifica la necesidad del lector, exige fuentes verificables, redacta según el cuadrante dominante y audita el resultado antes de entregarlo.
 ---
 
 # Documentar con Diátaxis
@@ -231,7 +231,3 @@ Entrega solo cuando:
 - el documento conserva el flujo y propósito de su cuadrante.
 
 Entrega las fuentes relevantes junto con el documento y resume los hallazgos de la auditoría. Conserva los detalles necesarios para reconstruir qué se comprobó y con qué evidencia.
-
-## Ruta especializada para README.md
-
-Si el entregable principal es un `README.md`, usa `/documentar-readme` como flujo especializado. El README puede ser híbrido y debe priorizar orientación del proyecto, inicio rápido y navegación, pero cada sección debe conservar un propósito dominante. Mantén la política de fuentes, la entrevista de decisiones esenciales y la auditoría final. No dupliques el contenido de `LICENSE`, `CONTRIBUTING`, `CHANGELOG` u otros archivos dedicados.

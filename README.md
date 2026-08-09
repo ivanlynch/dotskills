@@ -118,10 +118,8 @@ que no hayan sido creados por el instalador.
 | `analizar-alcance` | Determina si un issue es independiente o debe dividirse. |
 | `cocinar` | Orquesta el flujo completo desde un ticket hasta una pull request. |
 | `crear-pr` | Prepara una pull request a partir de cambios implementados. |
-| `crear-readme` | Genera o mejora un README de proyecto. |
 | `crear-ticket` | Produce un ticket de Jira claro y accionable. |
 | `documentar` | Coordina documentación técnica con Diátaxis. |
-| `documentar-readme` | Especializa la creación o mejora de un README. |
 | `implementar-plan` | Ejecuta las tareas de un plan persistido. |
 | `implementar-tarea` | Ejecuta y verifica una tarea individual. |
 | `plan` | Convierte un alcance confirmado en tareas implementables. |
