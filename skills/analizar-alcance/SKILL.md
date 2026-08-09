@@ -9,7 +9,7 @@ Evalúa si un issue tiene un tamaño adecuado para ser completado e integrado de
 
 ## Flujo de análisis
 
-El alcance se analiza como un árbol recursivo persistido en `scope_analysis` mediante `<skill-dir>/scripts/workflow_state.py`. Mantener la fase `analizar-alcance` en `IN_PROGRESS` hasta que todas las hojas del árbol estén en `DONE`.
+El alcance se analiza como un árbol recursivo persistido en texto plano (sin JSON, sin Python) mediante `<skill-dir>/scripts/workflow_state.sh`. Mantener la fase `analizar-alcance` en `IN_PROGRESS` hasta que todas las hojas del árbol estén en `DONE`.
 
 ### 1. Reunir contexto
 
@@ -28,16 +28,16 @@ Si un dato no figura de forma explícita en el issue o el código, márcalo como
 ### 2. Registrar el issue y resolver su identificador
 
 - Si el issue ya tiene un ID de algún tracker (Jira, GitHub, Linear u otro), úsalo tal cual: no le exijas ni le fuerces ningún formato particular.
-- Si no existe ningún ID (una idea sin trackear), obtén uno interno con `workflow_state.py next-id` y úsalo como identificador en todos los pasos siguientes.
+- Si no existe ningún ID (una idea sin trackear), obtén uno interno con `<skill-dir>/scripts/workflow_state.sh next-id` y úsalo como identificador en todos los pasos siguientes.
 - Si `/cocinar` ya inicializó el registro para este ID (fase `ticket` en `DONE`), continúa directamente en el paso 3.
-- Si corrés este análisis de forma independiente (sin `/cocinar`), inicializa el registro vos mismo antes de tocar `scope_analysis`:
+- Si corrés este análisis de forma independiente (sin `/cocinar`), inicializa el registro vos mismo antes de tocar el árbol de alcance:
 
   ```bash
-  python3 <skill-dir>/scripts/workflow_state.py init <ID>
-  python3 <skill-dir>/scripts/workflow_state.py start <ID> ticket
-  python3 <skill-dir>/scripts/workflow_state.py context <ID> --id "<ID>" --title "<título breve>" --description "<resumen del objetivo>" --source user
-  python3 <skill-dir>/scripts/workflow_state.py done <ID> ticket --evidence "<origen del contexto>"
-  python3 <skill-dir>/scripts/workflow_state.py start <ID> analizar-alcance
+  <skill-dir>/scripts/workflow_state.sh init <ID>
+  <skill-dir>/scripts/workflow_state.sh start <ID> ticket
+  <skill-dir>/scripts/workflow_state.sh context <ID> --id "<ID>" --title "<título breve>" --description "<resumen del objetivo>" --source user
+  <skill-dir>/scripts/workflow_state.sh done <ID> ticket --evidence "<origen del contexto>"
+  <skill-dir>/scripts/workflow_state.sh start <ID> analizar-alcance
   ```
 
 ### 3. Evaluar el tamaño ideal
@@ -94,34 +94,53 @@ Cada subtarea propuesta debe indicar:
 
 ### 7. Cerrar el análisis en el árbol
 
-Registra cada nodo y sus relaciones padre/hijo con `workflow_state.py scope`. El documento debe incluir, además de `status`/`root`/`items`, el campo `objective` (el objetivo general del issue, del paso 1) y, en cada nodo hoja con `verdict: APTO_PARA_IMPLEMENTAR`, un campo `acceptance_criteria` con la lista de criterios verificables de esa hoja — son los mismos datos del paso 6, no los redactes dos veces.
+Registra el objetivo general (del paso 1) una sola vez:
 
-Ejecuta `workflow_state.py validate` después de cada actualización. Si algún nodo queda `BLOCKED`, invoca `/entrevistar`, resuelve una decisión por turno y volvé a analizar el mismo nodo. Si un nodo requiere división, agregá sus hijos y analizá cada uno de forma recursiva. No concluyas hasta que todos los nodos sean hojas `DONE` o exista un bloqueo explícito que requiera intervención del usuario.
+```bash
+<skill-dir>/scripts/workflow_state.sh scope-set-objective <ID> "<objetivo general del issue>"
+```
 
-El análisis completo solo puede marcarse como `CONFIRMED` cuando:
+Por cada nodo del árbol (raíz y cada subtarea), agregalo con su padre (`-` si es la raíz), status y verdict ya decididos:
 
-- el árbol tiene un nodo raíz válido y un `objective` no vacío;
-- cada hijo referencia a su padre y cada padre referencia a sus hijos;
-- cada nodo tiene título, estado y veredicto válidos;
-- cada hoja `APTO_PARA_IMPLEMENTAR` tiene `acceptance_criteria` no vacío;
-- cada hoja está en `DONE` con veredicto `APTO_PARA_IMPLEMENTAR` y cada padre dividido está en `DONE` con veredicto `REQUIERE_DIVISION`;
-- no existe ningún nodo `BLOCKED`, `PENDING` o `IN_PROGRESS`.
+```bash
+<skill-dir>/scripts/workflow_state.sh scope-add-item <ID> <item-id> <parent-id|-> <status> <verdict> "<título del nodo>"
+```
 
-Marca la fase `analizar-alcance` como `DONE` recién en este punto.
+Si el nodo es una hoja con `verdict=APTO_PARA_IMPLEMENTAR`, cargale los criterios de aceptación del paso 6 (son los mismos datos, no los redactes dos veces):
+
+```bash
+<skill-dir>/scripts/workflow_state.sh scope-set-criteria <ID> <item-id> "<criterio 1>" "<criterio 2>" ...
+```
+
+Si más adelante cambia el status o el verdict de un nodo ya creado (por ejemplo, tras resolver un bloqueo), actualizalo sin recrearlo:
+
+```bash
+<skill-dir>/scripts/workflow_state.sh scope-set-item <ID> <item-id> --status <S> --verdict <V>
+```
+
+Ejecuta `<skill-dir>/scripts/workflow_state.sh validate <ID>` después de cada actualización. Si algún nodo queda `BLOCKED`, invoca `/entrevistar`, resuelve una decisión por turno y volvé a analizar el mismo nodo con `scope-set-item`. Si un nodo requiere división, agregá sus hijos con `scope-add-item` y analizá cada uno de forma recursiva. No concluyas hasta que todos los nodos sean hojas `DONE` o exista un bloqueo explícito que requiera intervención del usuario.
+
+Cuando todos los nodos estén `DONE` y el objetivo esté cargado, confirmá el árbol completo:
+
+```bash
+<skill-dir>/scripts/workflow_state.sh scope-confirm <ID>
+```
+
+Esto falla si algún nodo no cumple sus reglas (padre/hijo consistentes, hojas `APTO_PARA_IMPLEMENTAR` con criterios no vacíos, `REQUIERE_DIVISION` con hijos, etc.) — resolvé lo que indique el error y reintentá. Marca la fase `analizar-alcance` como `DONE` recién después de que `scope-confirm` funcione.
 
 ### 8. Escribir y validar el veredicto
 
 El único entregable narrativo es este veredicto final — no generes ningún resumen intermedio antes de llegar acá.
 
-1. Obtené el path del archivo: `workflow_state.py verdict-path <ID>`.
+1. Obtené el path del archivo: `<skill-dir>/scripts/workflow_state.sh verdict-path <ID>`.
 2. Copiá `<skill-dir>/veredicto-template.md` a ese path.
 3. Completá cada `{{TOKEN}}` con contenido real. El bloque "Subtareas propuestas" es repetible: duplicalo una vez por cada work item si el veredicto raíz es `REQUIERE DIVISIÓN`; si es `APTO PARA IMPLEMENTAR`, dejá únicamente "Ninguna" en esa sección.
-4. Validá con `workflow_state.py check-verdict <ID>`. Si falla porque quedaron placeholders, completalos y volvé a validar.
+4. Validá con `<skill-dir>/scripts/workflow_state.sh check-verdict <ID>`. Si falla porque quedaron placeholders, completalos y volvé a validar.
 5. Mostrá el contenido final del archivo como tu respuesta.
 
-### 9. Entregar el handoff a `/plan`
+### 9. Entrega a `/plan`
 
-Cuando `scope_analysis` esté `CONFIRMED`, ejecutá `workflow_state.py handoff <ID>` y entregá esa salida (`action=ANALYSIS_COMPLETE`, `next_phase=plan`, `scope_handoff`) tal cual como contrato de entrada de `/plan`. No reconstruyas ni redactes ese JSON a mano.
+No hay ningún paso manual de handoff: una vez que `scope-confirm` corrió con éxito (paso 7), `/plan` lee el árbol confirmado directamente desde el mismo registro con `plan_state.sh init <ID>` — no le entregues ni redactes ningún documento a mano.
 
 ## Reglas de calidad
 

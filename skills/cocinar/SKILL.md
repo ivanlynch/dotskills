@@ -1,6 +1,6 @@
 ---
 name: cocinar
-description: Preparar e implementar de extremo a extremo un ticket de Jira recibido como argumento, por ejemplo `/cocinar PROJ-1234`. Delegar la carga del ticket a `/consultar-ticket`, analizar su alcance con la skill analizar-alcance, aclarar requisitos con el skill entrevistar, localizar el flujo de implementación del proyecto, producir un plan y tareas pequeñas, obtener aprobación explícita, crear una branch con el ID del ticket, implementar, verificar y abrir una pull request mediante la skill crear-pr, cuyo título debe seguir el formato `[<JIRA TICKET>] <Título del ticket de Jira>`.
+description: Preparar e implementar de extremo a extremo un ticket de Jira recibido como argumento, por ejemplo `/cocinar PROJ-1234`. Delegar la carga del ticket a `/consultar-ticket`, analizar su alcance con la skill analizar-alcance, aclarar requisitos con el skill entrevistar, localizar el flujo de implementación del proyecto, producir un plan y tareas pequeñas, obtener aprobación explícita, crear una branch con el ID del ticket, implementar, verificar y abrir una pull request mediante la skill crear-pr, cuyo título debe seguir el formato `[<JIRA TICKET>] <Título del ticket de Jira>`. Usar cuando el usuario pida implementar un ticket de punta a punta a partir de su ID.
 ---
 
 # Cocinar un ticket de Jira
@@ -10,7 +10,7 @@ Ejecutar este flujo como una máquina de estados estricta. No empezar una fase s
 ## Reglas invariables
 
 - Aceptar exactamente un ID de Jira como entrada. Normalizarlo a mayúsculas y validar el formato `^[A-Z][A-Z0-9]+-[0-9]+$`. Si falta o es inválido, pedir únicamente un ID válido y detenerse.
-- Ejecutar `<analizar-alcance-skill-dir>/scripts/workflow_state.py` (el mismo script que usa `/analizar-alcance`) para registrar todos los cambios de estado — no bundlear una copia propia acá.
+- Ejecutar `<analizar-alcance-skill-dir>/scripts/workflow_state.sh` (el mismo script que usa `/analizar-alcance`) para registrar todos los cambios de estado — no bundlear una copia propia acá.
 - Mantener como máximo una fase `IN_PROGRESS`.
 - Ante un error o falta de información, marcar la fase `BLOCKED`, explicar el bloqueo y esperar al usuario cuando sea necesaria una decisión.
 - No crear una branch, modificar código, ejecutar una implementación, hacer commits, subir cambios ni abrir una PR antes de que `aprobacion` esté `DONE`.
@@ -38,8 +38,8 @@ Ejecutar este flujo como una máquina de estados estricta. No empezar una fase s
 Ejecutar:
 
 ```bash
-python3 <analizar-alcance-skill-dir>/scripts/workflow_state.py init <TICKET_ID>
-python3 <analizar-alcance-skill-dir>/scripts/workflow_state.py show <TICKET_ID> --compact
+<analizar-alcance-skill-dir>/scripts/workflow_state.sh init <TICKET_ID>
+<analizar-alcance-skill-dir>/scripts/workflow_state.sh show <TICKET_ID> --compact
 ```
 
 Si el registro ya existe, mostrarlo y reanudar solamente desde la primera fase no terminada. `<skill-dir>` es el directorio que contiene este `SKILL.md`.
@@ -54,48 +54,30 @@ Si el registro ya existe, mostrarlo y reanudar solamente desde la primera fase n
 6. Si la consulta es exitosa, registrar el contexto antes de terminar la fase:
 
    ```bash
-   python3 <analizar-alcance-skill-dir>/scripts/workflow_state.py context <TICKET_ID> --id "<ticket_id>" --title "<title>" --description "<description>" --source jira
-   python3 <analizar-alcance-skill-dir>/scripts/workflow_state.py done <TICKET_ID> ticket --jira-read --evidence "<TICKET_ID>: contexto cargado por consultar-ticket"
+   <analizar-alcance-skill-dir>/scripts/workflow_state.sh context <TICKET_ID> --id "<ticket_id>" --title "<title>" --description "<description>" --source jira
+   <analizar-alcance-skill-dir>/scripts/workflow_state.sh done <TICKET_ID> ticket --jira-read --evidence "<TICKET_ID>: contexto cargado por consultar-ticket"
    ```
 
 ### 2. `analizar-alcance`: evaluar tamaño y división
 
-1. Verificar con `workflow_state.py show <TICKET_ID> --compact` que `ticket_context=COMPLETE`.
+1. Verificar con `<analizar-alcance-skill-dir>/scripts/workflow_state.sh show <TICKET_ID> --compact` que `ticket_context=COMPLETE`.
 2. Marcar `analizar-alcance` como `IN_PROGRESS`.
 3. Leer por completo y seguir `/analizar-alcance`.
 4. Evaluar independencia, tamaño, testabilidad, criterios de aceptación, dependencias y señales de división.
 5. Si faltan decisiones, usar `/entrevistar` con una sola pregunta por turno y una recomendación breve.
 6. Si el ticket requiere división, proponer subtareas verticales, independientes y testeables.
-7. Persistir el árbol completo en `scope_analysis` usando el controlador de estado. Cada nodo debe tener `title`, `parent`, `children`, `status` y `verdict`.
+7. Persistir el árbol completo con el controlador de estado (texto plano, sin JSON — ver `/analizar-alcance`). Cada nodo debe tener `title`, `parent`, `status` y `verdict`; las hojas `APTO_PARA_IMPLEMENTAR` además necesitan `acceptance_criteria`.
 8. Mantener `analizar-alcance` como `IN_PROGRESS` mientras exista cualquier nodo `BLOCKED`, `PENDING` o `IN_PROGRESS`.
 9. Si un nodo queda `BLOCKED`, invocar `/entrevistar` dentro de esta fase: hacer una pregunta por turno, incluir una recomendación, esperar la respuesta, actualizar el nodo y volver a analizarlo. No iniciar todavía la fase global `entrevistar`.
 10. Si un nodo requiere división, agregar sus subtareas al árbol y dejar el padre en `DONE` con veredicto `REQUIERE_DIVISION`. Analizar cada hijo recursivamente. Repetir hasta que cada nodo sea `DONE`; las hojas deben tener veredicto `APTO_PARA_IMPLEMENTAR` y los padres divididos `REQUIERE_DIVISION`.
 11. Después de cada actualización, ejecutar:
 
     ```bash
-    python3 <analizar-alcance-skill-dir>/scripts/workflow_state.py validate <TICKET_ID>
+    <analizar-alcance-skill-dir>/scripts/workflow_state.sh validate <TICKET_ID>
     ```
 
-12. Registrar el árbol con `scope`. El argumento `--json` debe ser un objeto JSON con esta forma mínima:
-
-    ```json
-    {
-      "status": "IN_PROGRESS",
-      "root": "PROJ-1234",
-      "items": {
-        "PROJ-1234": {
-          "title": "Alcance del ticket",
-          "parent": null,
-          "children": [],
-          "status": "DONE",
-          "verdict": "APTO_PARA_IMPLEMENTAR"
-        }
-      }
-    }
-    ```
-
-    Para cerrar el análisis, usar `"status": "CONFIRMED"` y dejar todos los nodos en `DONE`. Actualizar el árbol completo, no solo el nodo modificado.
-13. No implementar ni crear branches. Marcar la fase como `DONE` solo después de que `validate` sea válido y `scope_analysis` esté `CONFIRMED` con todos los nodos `DONE`.
+12. Registrar cada nodo con los comandos granulares de `/analizar-alcance` (`scope-set-objective`, `scope-add-item`, `scope-set-item`, `scope-set-criteria`) — no existe un comando único que reemplace todo el árbol de una vez. Para cerrar el análisis, ejecutar `scope-confirm <TICKET_ID>` recién cuando todos los nodos estén `DONE`.
+13. No implementar ni crear branches. Marcar la fase como `DONE` solo después de que `scope-confirm` funcione (equivale a `CONFIRMED` con todos los nodos `DONE`).
 
 ### 3. `entrevistar`: aclarar el alcance y cerrar decisiones
 
@@ -122,10 +104,10 @@ Si el registro ya existe, mostrarlo y reanudar solamente desde la primera fase n
 ### 5. `plan`: producir plan, tareas y deuda técnica
 
 1. Marcar `plan` como `IN_PROGRESS`.
-2. Invocar `/plan` con el `scope_handoff` confirmado y la guía local encontrada. No reconstruir el alcance ni editar manualmente el estado del plan.
+2. Invocar `/plan` con la guía local encontrada; `/plan` lee el alcance confirmado directamente del registro de `/analizar-alcance`, no hace falta pasárselo. No reconstruir el alcance ni editar manualmente el estado del plan.
 3. Seguir `/plan` para dividir el trabajo en tareas ejecutables, con resultado observable, verificación concreta y orden por dependencia.
-4. Para cada tarea, `/plan` debe invocar `/crear-ticket`, esperar su confirmación y persistir inmediatamente el título y la descripción aprobados mediante `plan_state.py`.
-5. No implementar nada. Marcar la fase como `DONE` solamente cuando `/plan` devuelva `action=PLAN_COMPLETE`, `plan_handoff` válido y todas las tareas estén persistidas como `READY`.
+4. Para cada tarea, `/plan` debe invocar `/crear-ticket`, esperar su confirmación y persistir inmediatamente el título y la descripción aprobados mediante `plan_state.sh`.
+5. No implementar nada. Marcar la fase como `DONE` solamente cuando `/plan` devuelva `PLAN_COMPLETE`, haya creado el archivo ejecutable del plan y todas las tareas estén persistidas como `READY`.
 
 ### 6. `aprobacion`: pedir permiso y detenerse
 
@@ -136,7 +118,7 @@ Si el registro ya existe, mostrarlo y reanudar solamente desde la primera fase n
 5. Solo ante un `OK` explícito posterior, marcar la fase como `DONE` usando `--user-approved` y conservar como evidencia la respuesta del usuario.
 
 ```bash
-python3 <analizar-alcance-skill-dir>/scripts/workflow_state.py done <TICKET_ID> aprobacion --user-approved --evidence "Aprobación explícita del usuario: <respuesta>"
+<analizar-alcance-skill-dir>/scripts/workflow_state.sh done <TICKET_ID> aprobacion --user-approved --evidence "Aprobación explícita del usuario: <respuesta>"
 ```
 
 Antes de cualquier acción de implementación, ejecutar `show --compact` y comprobar que `aprobacion` figura como `DONE`. Si no figura así, detenerse.
@@ -167,4 +149,4 @@ Antes de cualquier acción de implementación, ejecutar `show --compact` y compr
 
 ## Cierre
 
-Consultar el registro final con `workflow_state.py show <TICKET_ID> --compact`, pero no copiarlo completo al chat. Informar solamente fases incompletas o confirmar que todas están `DONE`. Si existe una fase `BLOCKED`, indicar en una frase el siguiente paso exacto.
+Consultar el registro final con `workflow_state.sh show <TICKET_ID> --compact`, pero no copiarlo completo al chat. Informar solamente fases incompletas o confirmar que todas están `DONE`. Si existe una fase `BLOCKED`, indicar en una frase el siguiente paso exacto.

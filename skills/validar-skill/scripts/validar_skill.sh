@@ -34,6 +34,7 @@ target_dir() {
 compute_hash() {
   local dir="$1"
   {
+    cat "$CHECKLIST_FILE"
     cat "$dir/SKILL.md"
     for sub in scripts references assets; do
       if [ -d "$dir/$sub" ]; then

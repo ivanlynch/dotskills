@@ -5,33 +5,19 @@ description: Genera un plan completo de implementación a partir de un alcance c
 
 # Plan
 
-Convertir un `scope_handoff` confirmado en un plan de implementación ejecutable. No implementar código, no crear branches y no abrir pull requests.
+Convertir un alcance confirmado por `/analizar-alcance` en un plan de implementación ejecutable. No implementar código, no crear branches y no abrir pull requests.
 
 ## Contrato de entrada
 
-Recibir exclusivamente el resultado final de `/analizar-alcance` con:
+No recibís el alcance como texto: `<skill-dir>/scripts/plan_state.sh init <TICKET_ID>` lee directamente el registro que dejó `/analizar-alcance` para ese mismo ticket y proyecto (texto plano, sin JSON, sin Python — ver `<analizar-alcance-skill-dir>/scripts/workflow_state.sh`). El script rechaza el `init` si el alcance de ese ticket no está `CONFIRMED`, si falta el objetivo, o si no hay ningún work item con verdict `APTO_PARA_IMPLEMENTAR`; no hay forma de arrancar con un alcance incompleto o bloqueado.
 
-```text
-action = ANALYSIS_COMPLETE
-next_phase = plan
-scope_handoff = alcance confirmado
-```
-
-No iniciar si falta el alcance, existe un nodo bloqueado o algún work item no está cerrado.
-
-Inicializar el registro entregando el alcance al script; el agente no debe editar el JSON del estado:
-
-```bash
-python3 <skill-dir>/scripts/plan_state.py init <TICKET_ID> --scope-json '<scope_handoff completo>'
-```
-
-El script persiste el estado en un archivo temporal asociado al ticket y al proyecto actual.
+Nunca edites a mano el archivo de estado que persiste el script.
 
 ## Flujo obligatorio
 
 ### 1. Inicializar y validar
 
-1. Ejecutar `init` con el `scope_handoff`.
+1. Ejecutar `init <TICKET_ID>`.
 2. Ejecutar `validate`.
 3. Ejecutar `next` para obtener el siguiente work item pendiente.
 4. No analizar manualmente el árbol ni editar el estado directamente.
@@ -47,7 +33,7 @@ Para cada work item devuelto por `next`:
 5. Persistir inmediatamente el resultado aprobado con una sola operación:
 
    ```bash
-   python3 <skill-dir>/scripts/plan_state.py task-add <TICKET_ID> \
+   <skill-dir>/scripts/plan_state.sh task-add <TICKET_ID> \
      --source-node-id <NODE_ID> \
      --title "<título pt-BR>" \
      --description "<descripción pt-BR>" \
@@ -61,7 +47,7 @@ Para cada work item devuelto por `next`:
 8. Marcar el work item completo con:
 
    ```bash
-   python3 <skill-dir>/scripts/plan_state.py item-complete <TICKET_ID> --source-node-id <NODE_ID>
+   <skill-dir>/scripts/plan_state.sh item-complete <TICKET_ID> --source-node-id <NODE_ID>
    ```
 
    El script solo lo permite si tiene al menos una tarea `READY` y no tiene tareas bloqueadas.
@@ -74,24 +60,24 @@ Después de procesar todos los work items:
 2. Ejecutar:
 
    ```bash
-   python3 <skill-dir>/scripts/plan_state.py complete <TICKET_ID> --evidence "<resumen breve>"
+   <skill-dir>/scripts/plan_state.sh complete <TICKET_ID> --evidence "<resumen breve>"
    ```
 
 3. Crear obligatoriamente el archivo ejecutable del plan:
 
    ```bash
-   python3 <skill-dir>/scripts/plan_state.py export-file <TICKET_ID> --output "<ruta del plan>.json"
+   <skill-dir>/scripts/plan_state.sh export-file <TICKET_ID> --output "<ruta del plan>.txt"
    ```
 
-   Este archivo es la única entrada de `/implementar-plan`. No modificarlo manualmente.
+   Este archivo (texto plano, sin JSON) es la única entrada de `/implementar-plan`. No modificarlo manualmente.
 
 4. Obtener la salida final consumible por `aprobacion` o `implementacion`:
 
    ```bash
-   python3 <skill-dir>/scripts/plan_state.py export <TICKET_ID>
+   <skill-dir>/scripts/plan_state.sh export <TICKET_ID>
    ```
 
-La salida final debe tener `action = PLAN_COMPLETE`, contener el objetivo, el alcance, las tareas en orden, dependencias, verificaciones, riesgos y deuda técnica, e informar la ruta del archivo ejecutable. No entregar el JSON interno del estado como sustituto del plan.
+La salida final debe informar el objetivo, la lista de tareas en orden y la ruta del archivo ejecutable creado en el paso 3. No entregar el estado interno del script como sustituto del plan.
 
 ## Reglas de decisión
 
@@ -101,12 +87,12 @@ La salida final debe tener `action = PLAN_COMPLETE`, contener el objetivo, el al
 - No inventar archivos, endpoints, módulos, APIs ni comandos.
 - Separar alcance incluido, fuera de alcance, supuestos, riesgos, verificaciones y deuda técnica.
 - Si falta una decisión de producto o comportamiento, detener el work item e invocar `/crear-ticket`/`/entrevistar` según corresponda; no asumir silenciosamente.
-- Si el script devuelve `ok: false`, corregir la operación indicada y no editar el estado manualmente.
+- Si el script devuelve `ERROR: ...` (exit distinto de 0), corregir lo que indique el mensaje y no editar el estado manualmente.
 - Si una tarea queda bloqueada, usar `/entrevistar` para cerrar la decisión y luego ejecutar `task-unblock` con la resolución antes de continuar.
 
 ## Resultado final
 
-Entregar solamente un resumen breve y la salida de `plan_state.py export`, indicando:
+Entregar solamente un resumen breve y la salida de `plan_state.sh export`, indicando:
 
 - `PLAN_COMPLETE` o el bloqueo actual;
 - cantidad de tareas listas;

@@ -60,16 +60,16 @@ El cuerpo no tiene restricciones de formato, pero seguí estas reglas obligatori
 
 Solo creá los que el skill realmente necesite:
 
-- **`scripts/`** — código ejecutable. Debe ser autocontenido o documentar claramente sus dependencias, incluir mensajes de error útiles y manejar casos borde sin romper. Si otro skill de este repo ya necesita el mismo script y ese otro skill es su dueño natural (ver ejemplo `implementar-tarea` reutilizando `plan_file.py` de `plan`), referencialo por nombre de skill vecino en vez de duplicarlo.
+- **`scripts/`** — código ejecutable en bash (no Python ni otro runtime que requiera instalar un intérprete aparte). Debe ser autocontenido o documentar claramente sus dependencias, incluir mensajes de error útiles y manejar casos borde sin romper. Si otro skill de este repo ya necesita el mismo script y ese otro skill es su dueño natural (ver ejemplo `implementar-tarea` reutilizando `plan_file.sh` de `plan`), referencialo por nombre de skill vecino en vez de duplicarlo.
 - **`references/`** — documentación detallada que el agente carga solo cuando la necesita (p. ej. `REFERENCE.md`, o archivos por dominio). Mantené cada archivo enfocado en un tema.
 - **`assets/`** — recursos estáticos: plantillas, imágenes, datos de referencia.
 - **`agents/openai.yaml`** — convención de este repo (no del estándar) para metadata específica de Codex (`display_name`, `short_description`, `default_prompt`). Agregalo si el skill se beneficia de una descripción corta y un prompt por defecto distintos para Codex.
 
 ### 7. Referenciar archivos correctamente
 
-- Usá siempre rutas relativas desde la raíz del skill (`references/archivo.md`, `scripts/script.py`).
+- Usá siempre rutas relativas desde la raíz del skill (`references/archivo.md`, `scripts/script.sh`).
 - Mantené las referencias a un nivel de profundidad desde el `SKILL.md`. No encadenes referencias a referencias.
-- Para invocar un script bundleado, usá el patrón ya establecido en el repo: `<skill-dir>/scripts/archivo.py` (el agente resuelve `<skill-dir>` por su propio contexto de skill activo; no hay variable de entorno portable entre Claude Code, Codex y Cursor para esto).
+- Para invocar un script bundleado, usá el patrón ya establecido en el repo: `<skill-dir>/scripts/archivo.sh` (el agente resuelve `<skill-dir>` por su propio contexto de skill activo; no hay variable de entorno portable entre Claude Code, Codex y Cursor para esto).
 
 ### 8. Crear el directorio del skill
 

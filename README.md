@@ -137,7 +137,7 @@ workflows esperan capacidades adicionales:
 - `plan` utiliza `crear-ticket` para producir las tareas;
 - `documentar` delega en clasificación, guías, referencias y validación;
 - `crear-pr` necesita un repositorio Git y acceso a GitHub para abrir la PR;
-- los scripts de estado requieren Python 3.
+- los scripts de estado son bash puro, sin dependencias externas.
 
 Estas dependencias pueden existir en tu instalación del asistente o en el
 proyecto donde trabajas. `dotskills` no crea credenciales ni configura
@@ -154,13 +154,14 @@ dotskills/
 └── uninstall.sh          # Desinstalador de enlaces
 ```
 
-Cada `skills/<nombre>/` es un directorio autocontenido: si invoca scripts en
-Python, los bundlea en su propio `scripts/`; si necesita metadata específica
-de Codex, la guarda en `agents/openai.yaml`. Un skill que dependa de otro (por
-ejemplo `implementar-tarea` reutilizando `plan_file.py` de `plan`) lo referencia
-por nombre de skill vecino, nunca copiando el script. `install.sh` no copia
-contenido en ningún punto: solo crea symlinks desde `skills/<nombre>/` hacia
-las carpetas globales de cada herramienta.
+Cada `skills/<nombre>/` es un directorio autocontenido: si invoca scripts, van
+en bash puro (sin Python, sin JSON, sin dependencias externas como `jq`) dentro
+de su propio `scripts/`; si necesita metadata específica de Codex, la guarda en
+`agents/openai.yaml`. Un skill que dependa de otro (por ejemplo `implementar-tarea`
+reutilizando `plan_file.sh` de `plan`) lo referencia por nombre de skill vecino,
+nunca copiando el script. `install.sh` no copia contenido en ningún punto: solo
+crea symlinks desde `skills/<nombre>/` hacia las carpetas globales de cada
+herramienta.
 
 ## Desarrollo
 

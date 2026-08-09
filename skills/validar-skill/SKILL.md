@@ -17,7 +17,7 @@ Ejecutar siempre primero, incluso si ya se corrió antes en esta sesión:
 <skill-dir>/scripts/validar_skill.sh init <name>
 ```
 
-Si el contenido no cambió desde el último `init`, conserva el estado y muestra el resumen actual. Si cambió (o es la primera vez), reinicia los 23 puntos a `PENDING` y lo indica explícitamente.
+Si el contenido no cambió desde el último `init`, conserva el estado y muestra el resumen actual. Si cambió (o es la primera vez), reinicia todos los puntos de `validaciones.md` a `PENDING` y lo indica explícitamente (la cantidad exacta depende de la versión vigente del checklist — no la hardcodees).
 
 ### 2. Verificar mecánicamente lo que se pueda
 
@@ -56,6 +56,6 @@ Mostrar como resultado final la salida de `status <name>` tal cual la imprime el
 
 ## Notas
 
-- El estado de la auditoría vive en `TMPDIR`, fuera del repo (mismo patrón que `workflow_state.py` de `analizar-alcance`/`cocinar`) — nunca se comitea nada de esto.
+- El estado de la auditoría vive en `TMPDIR`, fuera del repo (mismo patrón que `workflow_state.sh` de `analizar-alcance`/`cocinar`) — nunca se comitea nada de esto.
 - `validaciones.md` es la definición estática del checklist, no cambia por corrida. Si el estándar Agent Skills se actualiza, editá `validaciones.md` (y `references/especificacion.md`) directamente; el próximo `init` de cualquier skill lo va a usar.
 - El script rechaza marcar un `id` que no exista en `validaciones.md`, y rechaza `mark` si el hash del skill evaluado no coincide con el del último `init` — no hay forma de que el estado quede desincronizado del contenido real.
