@@ -67,7 +67,7 @@ Antes de entregar:
 
 ## Integración con `documentar` y `cocinando`
 
-Cuando `$documentar` detecte que el entregable principal es un `README.md`, debe usar esta skill como flujo especializado. La clasificación de Diátaxis sigue siendo útil para secciones concretas, pero el README completo debe priorizar la orientación del proyecto, el inicio rápido y la navegación.
+Cuando `/documentar` detecte que el entregable principal es un `README.md`, debe usar esta skill como flujo especializado. La clasificación de Diátaxis sigue siendo útil para secciones concretas, pero el README completo debe priorizar la orientación del proyecto, el inicio rápido y la navegación.
 
 Si falta una decisión que no pueda resolverse inspeccionando el entorno —por ejemplo, el público principal, el comando recomendado para iniciar el proyecto o la ubicación de publicación—, usa `cocinando` de esta forma:
 

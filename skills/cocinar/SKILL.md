@@ -1,6 +1,6 @@
 ---
 name: cocinar
-description: Preparar e implementar de extremo a extremo un ticket de Jira recibido como argumento, por ejemplo `$cocinar PROJ-1234`. Delegar la carga del ticket a `$consultar-ticket`, analizar su alcance con la skill analizar-alcance, aclarar requisitos con el skill entrevistar, localizar el flujo de implementación del proyecto, producir un plan y tareas pequeñas, obtener aprobación explícita, crear una branch con el ID del ticket, implementar, verificar y abrir una pull request mediante la skill crear-pr, cuyo título debe seguir el formato `[<JIRA TICKET>] <Título del ticket de Jira>`.
+description: Preparar e implementar de extremo a extremo un ticket de Jira recibido como argumento, por ejemplo `/cocinar PROJ-1234`. Delegar la carga del ticket a `/consultar-ticket`, analizar su alcance con la skill analizar-alcance, aclarar requisitos con el skill entrevistar, localizar el flujo de implementación del proyecto, producir un plan y tareas pequeñas, obtener aprobación explícita, crear una branch con el ID del ticket, implementar, verificar y abrir una pull request mediante la skill crear-pr, cuyo título debe seguir el formato `[<JIRA TICKET>] <Título del ticket de Jira>`.
 ---
 
 # Cocinar un ticket de Jira
@@ -44,13 +44,13 @@ python3 <skill-dir>/scripts/workflow_state.py show <TICKET_ID> --compact
 
 Si el registro ya existe, mostrarlo y reanudar solamente desde la primera fase no terminada. `<skill-dir>` es el directorio que contiene este `SKILL.md`.
 
-### 1. `ticket`: delegar la consulta a `$consultar-ticket`
+### 1. `ticket`: delegar la consulta a `/consultar-ticket`
 
 1. Marcar `ticket` como `IN_PROGRESS`.
-2. Invocar exactamente `$consultar-ticket <TICKET_ID>` con el ID normalizado.
+2. Invocar exactamente `/consultar-ticket <TICKET_ID>` con el ID normalizado.
 3. Usar el JSON devuelto como fuente de verdad. Debe contener únicamente `ticket_id`, `title` y `description`; verificar que `ticket_id` coincida con el ticket solicitado.
-4. No consultar Jira directamente, no usar herramientas MCP de Atlassian desde `$cocinar`, no ejecutar login y no inventar datos faltantes.
-5. Si `$consultar-ticket` devuelve un error de autenticación, conexión o ticket inexistente, respetar su flujo y marcar `ticket` como `BLOCKED` con el error breve. No duplicar sus reintentos ni pedir credenciales desde `$cocinar`.
+4. No consultar Jira directamente, no usar herramientas MCP de Atlassian desde `/cocinar`, no ejecutar login y no inventar datos faltantes.
+5. Si `/consultar-ticket` devuelve un error de autenticación, conexión o ticket inexistente, respetar su flujo y marcar `ticket` como `BLOCKED` con el error breve. No duplicar sus reintentos ni pedir credenciales desde `/cocinar`.
 6. Si la consulta es exitosa, registrar el contexto antes de terminar la fase:
 
    ```bash
@@ -62,13 +62,13 @@ Si el registro ya existe, mostrarlo y reanudar solamente desde la primera fase n
 
 1. Verificar con `workflow_state.py show <TICKET_ID> --compact` que `ticket_context=COMPLETE`.
 2. Marcar `analizar-alcance` como `IN_PROGRESS`.
-3. Leer por completo y seguir `$analizar-alcance`.
+3. Leer por completo y seguir `/analizar-alcance`.
 4. Evaluar independencia, tamaño, testabilidad, criterios de aceptación, dependencias y señales de división.
-5. Si faltan decisiones, usar `$entrevistar` con una sola pregunta por turno y una recomendación breve.
+5. Si faltan decisiones, usar `/entrevistar` con una sola pregunta por turno y una recomendación breve.
 6. Si el ticket requiere división, proponer subtareas verticales, independientes y testeables.
 7. Persistir el árbol completo en `scope_analysis` usando el controlador de estado. Cada nodo debe tener `title`, `parent`, `children`, `status` y `verdict`.
 8. Mantener `analizar-alcance` como `IN_PROGRESS` mientras exista cualquier nodo `BLOCKED`, `PENDING` o `IN_PROGRESS`.
-9. Si un nodo queda `BLOCKED`, invocar `$entrevistar` dentro de esta fase: hacer una pregunta por turno, incluir una recomendación, esperar la respuesta, actualizar el nodo y volver a analizarlo. No iniciar todavía la fase global `entrevistar`.
+9. Si un nodo queda `BLOCKED`, invocar `/entrevistar` dentro de esta fase: hacer una pregunta por turno, incluir una recomendación, esperar la respuesta, actualizar el nodo y volver a analizarlo. No iniciar todavía la fase global `entrevistar`.
 10. Si un nodo requiere división, agregar sus subtareas al árbol y dejar el padre en `DONE` con veredicto `REQUIERE_DIVISION`. Analizar cada hijo recursivamente. Repetir hasta que cada nodo sea `DONE`; las hojas deben tener veredicto `APTO_PARA_IMPLEMENTAR` y los padres divididos `REQUIERE_DIVISION`.
 11. Después de cada actualización, ejecutar:
 
@@ -99,7 +99,7 @@ Si el registro ya existe, mostrarlo y reanudar solamente desde la primera fase n
 
 ### 3. `entrevistar`: aclarar el alcance y cerrar decisiones
 
-1. El controlador impide iniciar esta fase si `ticket_context` no está completo, si `analizar-alcance` no está `DONE` o si `scope_analysis` no está confirmado. Los bloqueos del árbol se resuelven dentro de `analizar-alcance` mediante `$entrevistar`.
+1. El controlador impide iniciar esta fase si `ticket_context` no está completo, si `analizar-alcance` no está `DONE` o si `scope_analysis` no está confirmado. Los bloqueos del árbol se resuelven dentro de `analizar-alcance` mediante `/entrevistar`.
 2. Marcar `entrevistar` como `IN_PROGRESS`.
 3. Leer por completo y seguir el skill global `entrevistar`, normalmente ubicado en `../entrevistar/SKILL.md`. Si no puede localizarse, bloquear la fase; no imitarlo de memoria.
 4. Usar como contexto la información verificada de Jira o proporcionada por el usuario, el análisis de alcance y el repositorio.
@@ -122,10 +122,10 @@ Si el registro ya existe, mostrarlo y reanudar solamente desde la primera fase n
 ### 5. `plan`: producir plan, tareas y deuda técnica
 
 1. Marcar `plan` como `IN_PROGRESS`.
-2. Invocar `$plan` con el `scope_handoff` confirmado y la guía local encontrada. No reconstruir el alcance ni editar manualmente el estado del plan.
-3. Seguir `$plan` para dividir el trabajo en tareas ejecutables, con resultado observable, verificación concreta y orden por dependencia.
-4. Para cada tarea, `$plan` debe invocar `$crear-ticket`, esperar su confirmación y persistir inmediatamente el título y la descripción aprobados mediante `plan_state.py`.
-5. No implementar nada. Marcar la fase como `DONE` solamente cuando `$plan` devuelva `action=PLAN_COMPLETE`, `plan_handoff` válido y todas las tareas estén persistidas como `READY`.
+2. Invocar `/plan` con el `scope_handoff` confirmado y la guía local encontrada. No reconstruir el alcance ni editar manualmente el estado del plan.
+3. Seguir `/plan` para dividir el trabajo en tareas ejecutables, con resultado observable, verificación concreta y orden por dependencia.
+4. Para cada tarea, `/plan` debe invocar `/crear-ticket`, esperar su confirmación y persistir inmediatamente el título y la descripción aprobados mediante `plan_state.py`.
+5. No implementar nada. Marcar la fase como `DONE` solamente cuando `/plan` devuelva `action=PLAN_COMPLETE`, `plan_handoff` válido y todas las tareas estén persistidas como `READY`.
 
 ### 6. `aprobacion`: pedir permiso y detenerse
 
@@ -152,16 +152,16 @@ Antes de cualquier acción de implementación, ejecutar `show --compact` y compr
 ### 8. `implementacion`: ejecutar y verificar tareas
 
 1. Marcar `implementacion` como `IN_PROGRESS`.
-2. Invocar `$implementar-plan` con el archivo ejecutable creado por `$plan`.
-3. Dejar que `$implementar-plan` invoque `$implementar-tarea` una tarea por vez y marque cada tarea como `DONE` en el archivo únicamente después de recibir evidencia `DONE`.
+2. Invocar `/implementar-plan` con el archivo ejecutable creado por `/plan`.
+3. Dejar que `/implementar-plan` invoque `/implementar-tarea` una tarea por vez y marque cada tarea como `DONE` en el archivo únicamente después de recibir evidencia `DONE`.
 4. Mantener los cambios dentro del alcance aprobado. Informar cualquier necesidad de ampliar el alcance y esperar autorización.
-5. Marcar la fase como `DONE` solo cuando `$implementar-plan` devuelva `PLAN_COMPLETE`; si devuelve `BLOCKED`, conservar la fase bloqueada con la evidencia.
+5. Marcar la fase como `DONE` solo cuando `/implementar-plan` devuelva `PLAN_COMPLETE`; si devuelve `BLOCKED`, conservar la fase bloqueada con la evidencia.
 
 ### 9. `pr`: preparar y abrir la pull request
 
 1. Marcar `pr` como `IN_PROGRESS`.
-2. Invocar `$crear-pr` con el ID y el título verificado de Jira, la branch, los commits y las verificaciones.
-3. Dejar que `$crear-pr` busque las instrucciones y la plantilla aplicable del repositorio, prepare la descripción y valide el título.
+2. Invocar `/crear-pr` con el ID y el título verificado de Jira, la branch, los commits y las verificaciones.
+3. Dejar que `/crear-pr` busque las instrucciones y la plantilla aplicable del repositorio, prepare la descripción y valide el título.
 4. No abrir la PR si el título no cumple exactamente `[<JIRA TICKET>] <Título del ticket de Jira>`.
 5. Informar el enlace de la PR, verificaciones realizadas y deuda técnica real generada o pendiente. Marcar la fase como `DONE` únicamente después de confirmar que la PR existe.
 

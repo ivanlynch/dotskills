@@ -1,6 +1,6 @@
 ---
 name: plan
-description: Genera un plan completo de implementación a partir de un alcance confirmado, convierte cada incremento en un ticket mediante $crear-ticket y persiste cada tarea con validaciones. Úsala cuando el usuario quiera planificar cómo implementar una tarea antes de modificar código.
+description: Genera un plan completo de implementación a partir de un alcance confirmado, convierte cada incremento en un ticket mediante /crear-ticket y persiste cada tarea con validaciones. Úsala cuando el usuario quiera planificar cómo implementar una tarea antes de modificar código.
 ---
 
 # Plan
@@ -9,7 +9,7 @@ Convertir un `scope_handoff` confirmado en un plan de implementación ejecutable
 
 ## Contrato de entrada
 
-Recibir exclusivamente el resultado final de `$analizar-alcance` con:
+Recibir exclusivamente el resultado final de `/analizar-alcance` con:
 
 ```text
 action = ANALYSIS_COMPLETE
@@ -41,9 +41,9 @@ El script persiste el estado en un archivo temporal asociado al ticket y al proy
 Para cada work item devuelto por `next`:
 
 1. Definir cómo se implementará: pasos técnicos, orden, archivos o módulos candidatos solo cuando estén respaldados por la guía del proyecto, verificaciones y dependencias.
-2. Invocar `$crear-ticket` para generar el título y la descripción de la tarea. Pasar como contexto el work item, el alcance global, las decisiones confirmadas y el plan técnico descubierto.
-3. Respetar la salida de `$crear-ticket`: el título y la descripción final deben estar en portugués de Brasil (`pt-BR`).
-4. Esperar la confirmación exigida por `$crear-ticket`; no registrar una tarea preliminar como terminada.
+2. Invocar `/crear-ticket` para generar el título y la descripción de la tarea. Pasar como contexto el work item, el alcance global, las decisiones confirmadas y el plan técnico descubierto.
+3. Respetar la salida de `/crear-ticket`: el título y la descripción final deben estar en portugués de Brasil (`pt-BR`).
+4. Esperar la confirmación exigida por `/crear-ticket`; no registrar una tarea preliminar como terminada.
 5. Persistir inmediatamente el resultado aprobado con una sola operación:
 
    ```bash
@@ -57,7 +57,7 @@ Para cada work item devuelto por `next`:
    ```
 
 6. Ejecutar `validate` después de cada tarea.
-7. Si un work item necesita varias tareas, repetir `$crear-ticket` y `task-add` para cada una antes de cerrarlo.
+7. Si un work item necesita varias tareas, repetir `/crear-ticket` y `task-add` para cada una antes de cerrarlo.
 8. Marcar el work item completo con:
 
    ```bash
@@ -83,7 +83,7 @@ Después de procesar todos los work items:
    python3 <skill-dir>/scripts/plan_state.py export-file <TICKET_ID> --output "<ruta del plan>.json"
    ```
 
-   Este archivo es la única entrada de `$implementar-plan`. No modificarlo manualmente.
+   Este archivo es la única entrada de `/implementar-plan`. No modificarlo manualmente.
 
 4. Obtener la salida final consumible por `aprobacion` o `implementacion`:
 
@@ -97,12 +97,12 @@ La salida final debe tener `action = PLAN_COMPLETE`, contener el objetivo, el al
 
 - Una tarea del plan debe tener un único resultado observable y una verificación concreta.
 - Mantener las tareas pequeñas y ordenadas por dependencia.
-- No crear tareas técnicas sin título y descripción generados por `$crear-ticket`.
+- No crear tareas técnicas sin título y descripción generados por `/crear-ticket`.
 - No inventar archivos, endpoints, módulos, APIs ni comandos.
 - Separar alcance incluido, fuera de alcance, supuestos, riesgos, verificaciones y deuda técnica.
-- Si falta una decisión de producto o comportamiento, detener el work item e invocar `$crear-ticket`/`$entrevistar` según corresponda; no asumir silenciosamente.
+- Si falta una decisión de producto o comportamiento, detener el work item e invocar `/crear-ticket`/`/entrevistar` según corresponda; no asumir silenciosamente.
 - Si el script devuelve `ok: false`, corregir la operación indicada y no editar el estado manualmente.
-- Si una tarea queda bloqueada, usar `$entrevistar` para cerrar la decisión y luego ejecutar `task-unblock` con la resolución antes de continuar.
+- Si una tarea queda bloqueada, usar `/entrevistar` para cerrar la decisión y luego ejecutar `task-unblock` con la resolución antes de continuar.
 
 ## Resultado final
 

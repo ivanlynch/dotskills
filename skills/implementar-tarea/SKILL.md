@@ -1,6 +1,6 @@
 ---
 name: implementar-tarea
-description: Implementa una única tarea READY de un archivo generado por $plan, respeta sus dependencias y devuelve DONE con evidencia o BLOCKED sin marcar manualmente el archivo como completado.
+description: Implementa una única tarea READY de un archivo generado por /plan, respeta sus dependencias y devuelve DONE con evidencia o BLOCKED sin marcar manualmente el archivo como completado.
 ---
 
 # Implementar Tarea
@@ -10,7 +10,7 @@ Implementar exactamente una tarea del archivo ejecutable del plan. No ampliar el
 ## Entrada
 
 ```text
-$implementar-tarea /ruta/al/PROJ-1234-plan.json --task-id task-001
+/implementar-tarea /ruta/al/PROJ-1234-plan.json --task-id task-001
 ```
 
 Validar y comenzar la tarea mediante el script común:
@@ -45,7 +45,7 @@ Si la tarea terminó correctamente, devolver:
 }
 ```
 
-No ejecutar `plan_file.py complete`; `$implementar-plan` lo hará después de validar el resultado.
+No ejecutar `plan_file.py complete`; `/implementar-plan` lo hará después de validar el resultado.
 
 Si no puede terminarse, devolver:
 

@@ -13,7 +13,7 @@ La salida final del ticket debe estar siempre en portugués de Brasil (`pt-BR`),
 
 ## Regla principal: entrevistar antes de redactar
 
-Usa el skill global `$entrevistar` como parte obligatoria del flujo:
+Usa el skill global `/entrevistar` como parte obligatoria del flujo:
 
 1. Haz una sola pregunta por turno.
 2. Mantén cada pregunta breve y directa.

@@ -9,7 +9,7 @@ Genera documentación clara, precisa, orientada al usuario y consistente con el 
 
 ## Ruta especializada para README.md
 
-Si el usuario pide crear, actualizar o mejorar un `README.md`, usa `$documentar-readme` como flujo especializado. Esa skill contiene las reglas específicas para revisar el proyecto, estructurar el README, usar GFM, incorporar admoniciones y detectar logos o iconos. Conserva el comportamiento de descubrimiento de `cocinando` para las decisiones que no puedan resolverse inspeccionando el entorno.
+Si el usuario pide crear, actualizar o mejorar un `README.md`, usa `/documentar-readme` como flujo especializado. Esa skill contiene las reglas específicas para revisar el proyecto, estructurar el README, usar GFM, incorporar admoniciones y detectar logos o iconos. Conserva el comportamiento de descubrimiento de `cocinando` para las decisiones que no puedan resolverse inspeccionando el entorno.
 
 ## Flujo de trabajo
 

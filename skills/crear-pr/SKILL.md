@@ -100,6 +100,6 @@ Sube la branch y abre la PR mediante el flujo disponible del proyecto. Tras la o
 
 Marca la tarea como completada solo después de confirmar la URL de la PR.
 
-## Integración con `$cocinar`
+## Integración con `/cocinar`
 
-Cuando `$cocinar` llegue a su fase `pr`, debe invocar esta skill con el ID y el título verificado de Jira, la branch, los commits y las verificaciones. `$cocinar` conserva el control de la máquina de estados; esta skill concentra la preparación, validación y apertura de la PR.
+Cuando `/cocinar` llegue a su fase `pr`, debe invocar esta skill con el ID y el título verificado de Jira, la branch, los commits y las verificaciones. `/cocinar` conserva el control de la máquina de estados; esta skill concentra la preparación, validación y apertura de la PR.

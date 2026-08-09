@@ -23,14 +23,14 @@ Usa la información disponible del issue, del repositorio y del workspace. Ident
 - flujos, estados y roles que deben validarse;
 - restricciones, riesgos y recursos pendientes.
 
-Si un dato no figura de forma explícita en el issue o el código, márcalo como `[Requiere confirmación]`. No inventes estimaciones, dependencias ni criterios que no estén respaldados por el contexto. Si una decisión no puede resolverse investigando el entorno, invoca `$entrevistar` por cada punto ambiguo y espera su respuesta antes de continuar.
+Si un dato no figura de forma explícita en el issue o el código, márcalo como `[Requiere confirmación]`. No inventes estimaciones, dependencias ni criterios que no estén respaldados por el contexto. Si una decisión no puede resolverse investigando el entorno, invoca `/entrevistar` por cada punto ambiguo y espera su respuesta antes de continuar.
 
 ### 2. Registrar el issue y resolver su identificador
 
 - Si el issue ya tiene un ID de algún tracker (Jira, GitHub, Linear u otro), úsalo tal cual: no le exijas ni le fuerces ningún formato particular.
 - Si no existe ningún ID (una idea sin trackear), obtén uno interno con `workflow_state.py next-id` y úsalo como identificador en todos los pasos siguientes.
-- Si `$cocinar` ya inicializó el registro para este ID (fase `ticket` en `DONE`), continúa directamente en el paso 3.
-- Si corrés este análisis de forma independiente (sin `$cocinar`), inicializa el registro vos mismo antes de tocar `scope_analysis`:
+- Si `/cocinar` ya inicializó el registro para este ID (fase `ticket` en `DONE`), continúa directamente en el paso 3.
+- Si corrés este análisis de forma independiente (sin `/cocinar`), inicializa el registro vos mismo antes de tocar `scope_analysis`:
 
   ```bash
   python3 <skill-dir>/scripts/workflow_state.py init <ID>
@@ -89,14 +89,14 @@ Cada subtarea propuesta debe indicar:
 - objetivo único;
 - alcance y fuera de alcance;
 - dependencia explícita, si existe;
-- criterios de aceptación verificables (necesarios para el paso 7 y para el handoff a `$plan`);
+- criterios de aceptación verificables (necesarios para el paso 7 y para el handoff a `/plan`);
 - forma de probarla e integrarla de manera independiente.
 
 ### 7. Cerrar el análisis en el árbol
 
 Registra cada nodo y sus relaciones padre/hijo con `workflow_state.py scope`. El documento debe incluir, además de `status`/`root`/`items`, el campo `objective` (el objetivo general del issue, del paso 1) y, en cada nodo hoja con `verdict: APTO_PARA_IMPLEMENTAR`, un campo `acceptance_criteria` con la lista de criterios verificables de esa hoja — son los mismos datos del paso 6, no los redactes dos veces.
 
-Ejecuta `workflow_state.py validate` después de cada actualización. Si algún nodo queda `BLOCKED`, invoca `$entrevistar`, resuelve una decisión por turno y volvé a analizar el mismo nodo. Si un nodo requiere división, agregá sus hijos y analizá cada uno de forma recursiva. No concluyas hasta que todos los nodos sean hojas `DONE` o exista un bloqueo explícito que requiera intervención del usuario.
+Ejecuta `workflow_state.py validate` después de cada actualización. Si algún nodo queda `BLOCKED`, invoca `/entrevistar`, resuelve una decisión por turno y volvé a analizar el mismo nodo. Si un nodo requiere división, agregá sus hijos y analizá cada uno de forma recursiva. No concluyas hasta que todos los nodos sean hojas `DONE` o exista un bloqueo explícito que requiera intervención del usuario.
 
 El análisis completo solo puede marcarse como `CONFIRMED` cuando:
 
@@ -119,9 +119,9 @@ El único entregable narrativo es este veredicto final — no generes ningún re
 4. Validá con `workflow_state.py check-verdict <ID>`. Si falla porque quedaron placeholders, completalos y volvé a validar.
 5. Mostrá el contenido final del archivo como tu respuesta.
 
-### 9. Entregar el handoff a `$plan`
+### 9. Entregar el handoff a `/plan`
 
-Cuando `scope_analysis` esté `CONFIRMED`, ejecutá `workflow_state.py handoff <ID>` y entregá esa salida (`action=ANALYSIS_COMPLETE`, `next_phase=plan`, `scope_handoff`) tal cual como contrato de entrada de `$plan`. No reconstruyas ni redactes ese JSON a mano.
+Cuando `scope_analysis` esté `CONFIRMED`, ejecutá `workflow_state.py handoff <ID>` y entregá esa salida (`action=ANALYSIS_COMPLETE`, `next_phase=plan`, `scope_handoff`) tal cual como contrato de entrada de `/plan`. No reconstruyas ni redactes ese JSON a mano.
 
 ## Reglas de calidad
 
