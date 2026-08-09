@@ -15,7 +15,16 @@ remove_link() {
   fi
 }
 
+remove_shared_skills() {
+  target_root=$1
+  for skill in skills/*; do
+    [ -d "$skill" ] || continue
+    remove_link "$target_root/$(basename "$skill")"
+  done
+}
+
 remove_codex() {
+  remove_shared_skills "$HOME/.agents/skills"
   for skill in codex/skills/*; do
     [ -d "$skill" ] || continue
     remove_link "$HOME/.codex/skills/$(basename "$skill")"
@@ -23,6 +32,7 @@ remove_codex() {
 }
 
 remove_claude() {
+  remove_shared_skills "$HOME/.claude/skills"
   for skill in claude/skills/*; do
     [ -d "$skill" ] || continue
     remove_link "$HOME/.claude/skills/$(basename "$skill")"
@@ -35,6 +45,7 @@ remove_claude() {
 }
 
 remove_cursor() {
+  remove_shared_skills "$HOME/.agents/skills"
   for command in cursor/commands/*.md; do
     [ -f "$command" ] || continue
     [ "$(basename "$command")" = "README.md" ] && continue

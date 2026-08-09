@@ -1,4 +1,0 @@
-interface:
-  display_name: "Entrevistar"
-  short_description: "Aclara decisiones una por una"
-  default_prompt: "Usa $entrevistar para recorrer las decisiones pendientes una por una y alcanzar un entendimiento compartido."

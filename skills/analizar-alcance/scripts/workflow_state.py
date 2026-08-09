@@ -24,7 +24,7 @@ PHASES = (
     "implementacion",
     "pr",
 )
-TICKET_RE = re.compile(r"^[A-Z][A-Z0-9]+-[0-9]+$")
+ISSUE_ID_RE = re.compile(r"^[^\s/\\]+$")
 SCOPE_STATUSES = ("PENDING", "IN_PROGRESS", "BLOCKED", "DONE")
 SCOPE_VERDICTS = (
     "APTO_PARA_IMPLEMENTAR",
@@ -37,20 +37,79 @@ def now() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
-def normalize_ticket(raw: str) -> str:
-    ticket = raw.strip().upper()
-    if not TICKET_RE.fullmatch(ticket):
+def normalize_issue_id(raw: str) -> str:
+    issue_id = raw.strip()
+    if not issue_id or not ISSUE_ID_RE.fullmatch(issue_id):
         raise ValueError(
-            f"ID de Jira inválido: {raw!r}. Formato esperado: PROJ-1234"
+            f"ID de issue inválido: {raw!r}. No puede estar vacío ni contener "
+            "espacios o '/'. Cualquier identificador de tracker sirve "
+            "(PROJ-1234, #123, ABC-123, TASK-001, ...)."
         )
-    return ticket
+    return issue_id
+
+
+def slug_for_filename(issue_id: str) -> str:
+    slug = re.sub(r"[^A-Za-z0-9_.-]+", "-", issue_id).strip("-").lower()
+    return slug or "issue"
+
+
+def project_hash() -> str:
+    project = str(Path.cwd().resolve())
+    return hashlib.sha256(project.encode()).hexdigest()[:12]
 
 
 def state_path(ticket: str) -> Path:
-    project = str(Path.cwd().resolve())
-    project_hash = hashlib.sha256(project.encode()).hexdigest()[:12]
     temp_root = Path(os.environ.get("TMPDIR", "/tmp"))
-    return temp_root / f"cocinar-{ticket.lower()}-{project_hash}-state.json"
+    return temp_root / f"cocinar-{slug_for_filename(ticket)}-{project_hash()}-state.json"
+
+
+def verdict_path(ticket: str) -> Path:
+    state_file = state_path(ticket)
+    return state_file.with_name(state_file.stem.replace("-state", "") + "-veredicto.md")
+
+
+def counter_path() -> Path:
+    temp_root = Path(os.environ.get("TMPDIR", "/tmp"))
+    return temp_root / f"dotskills-task-counter-{project_hash()}.json"
+
+
+PLACEHOLDER_RE = re.compile(r"\{\{[A-Z0-9_]+\}\}")
+
+
+def cmd_next_id() -> int:
+    path = counter_path()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    next_n = 1
+    if path.exists():
+        data = json.loads(path.read_text(encoding="utf-8"))
+        next_n = int(data.get("next", 1))
+    issue_id = f"TASK-{next_n:03d}"
+    path.write_text(json.dumps({"next": next_n + 1}), encoding="utf-8")
+    print(issue_id)
+    return 0
+
+
+def cmd_verdict_path(ticket: str) -> int:
+    print(verdict_path(ticket))
+    return 0
+
+
+def cmd_check_verdict(ticket: str) -> int:
+    path = verdict_path(ticket)
+    if not path.exists():
+        raise RuntimeError(
+            f"No existe el veredicto en {path}. Escribilo a partir de "
+            "veredicto-template.md antes de validar."
+        )
+    content = path.read_text(encoding="utf-8")
+    leftovers = sorted(set(PLACEHOLDER_RE.findall(content)))
+    if leftovers:
+        raise RuntimeError(
+            "Quedan placeholders sin completar en el veredicto: "
+            + ", ".join(leftovers)
+        )
+    print(f"{ticket}: veredicto OK ({path})")
+    return 0
 
 
 def new_state(ticket: str) -> dict:
@@ -69,6 +128,7 @@ def new_state(ticket: str) -> dict:
             "version": 1,
             "status": "PENDING",
             "root": ticket,
+            "objective": None,
             "items": {},
             "updated_at": None,
         },
@@ -126,8 +186,16 @@ def load(ticket: str) -> tuple[Path, dict]:
     )
     state.setdefault(
         "scope_analysis",
-        {"version": 1, "status": "PENDING", "root": ticket, "items": {}, "updated_at": None},
+        {
+            "version": 1,
+            "status": "PENDING",
+            "root": ticket,
+            "objective": None,
+            "items": {},
+            "updated_at": None,
+        },
     )
+    state["scope_analysis"].setdefault("objective", None)
     for phase in PHASES:
         state["phases"].setdefault(phase, empty_phase())
     return path, state
@@ -156,6 +224,8 @@ def validate_scope(scope: dict, ticket: str) -> list[str]:
         errors.append(f"scope_analysis.root debe ser {ticket}.")
     if items and root not in items:
         errors.append("scope_analysis.items debe contener el nodo raíz.")
+    if scope.get("status") == "CONFIRMED" and not str(scope.get("objective") or "").strip():
+        errors.append("scope_analysis.objective es obligatorio para CONFIRMED.")
     for item_id, item in items.items():
         if not isinstance(item, dict):
             errors.append(f"El nodo {item_id} debe ser un objeto.")
@@ -187,6 +257,17 @@ def validate_scope(scope: dict, ticket: str) -> list[str]:
             errors.append(f"El nodo {item_id} solo puede estar BLOCKED si está bloqueado.")
         if item.get("status") == "BLOCKED" and item.get("children"):
             errors.append(f"El nodo {item_id} no puede tener hijos mientras está BLOCKED.")
+        if item.get("verdict") == "APTO_PARA_IMPLEMENTAR":
+            criteria = item.get("acceptance_criteria")
+            if (
+                not isinstance(criteria, list)
+                or not criteria
+                or any(not str(c or "").strip() for c in criteria)
+            ):
+                errors.append(
+                    f"El nodo {item_id} requiere acceptance_criteria como lista no vacía "
+                    "de strings no vacíos."
+                )
     for item_id, item in items.items():
         for child_id in item.get("children", []) if isinstance(item, dict) else []:
             if child_id not in items:
@@ -390,7 +471,7 @@ def cmd_context(
         raise RuntimeError(
             "ticket_context solo puede completarse mientras la fase 'ticket' está IN_PROGRESS."
         )
-    normalized_id = normalize_ticket(context_id)
+    normalized_id = normalize_issue_id(context_id)
     if normalized_id != ticket:
         raise RuntimeError(
             f"El ID del ticket context ({normalized_id}) no coincide con {ticket}."
@@ -482,6 +563,37 @@ def cmd_validate(ticket: str) -> int:
     return 0
 
 
+def cmd_handoff(ticket: str) -> int:
+    path, state = load(ticket)
+    scope = state.get("scope_analysis", {})
+    if not scope_complete(state):
+        raise RuntimeError(
+            "scope_analysis debe estar CONFIRMED con todos los nodos DONE antes de generar el handoff."
+        )
+    objective = str(scope.get("objective") or "").strip()
+    if not objective:
+        raise RuntimeError("scope_analysis.objective está vacío.")
+    work_items = [
+        {
+            "id": item_id,
+            "title": item.get("title"),
+            "acceptance_criteria": item.get("acceptance_criteria") or [],
+        }
+        for item_id, item in scope.get("items", {}).items()
+        if item.get("verdict") == "APTO_PARA_IMPLEMENTAR"
+    ]
+    if not work_items:
+        raise RuntimeError("No hay work items con verdict APTO_PARA_IMPLEMENTAR.")
+    handoff = {
+        "action": "ANALYSIS_COMPLETE",
+        "next_phase": "plan",
+        "ticket": ticket,
+        "scope_handoff": {"objective": objective, "work_items": work_items},
+    }
+    print(json.dumps(handoff, ensure_ascii=False, indent=2))
+    return 0
+
+
 def cmd_block(ticket: str, phase: str, reason: str) -> int:
     path, state = load(ticket)
     item = state["phases"][phase]
@@ -542,13 +654,26 @@ def parser() -> argparse.ArgumentParser:
     block.add_argument("ticket")
     block.add_argument("phase", choices=PHASES)
     block.add_argument("--reason", required=True)
+
+    commands.add_parser("next-id")
+
+    handoff = commands.add_parser("handoff")
+    handoff.add_argument("ticket")
+
+    verdict_path_cmd = commands.add_parser("verdict-path")
+    verdict_path_cmd.add_argument("ticket")
+
+    check_verdict = commands.add_parser("check-verdict")
+    check_verdict.add_argument("ticket")
     return root
 
 
 def main() -> int:
     args = parser().parse_args()
     try:
-        ticket = normalize_ticket(args.ticket)
+        if args.command == "next-id":
+            return cmd_next_id()
+        ticket = normalize_issue_id(args.ticket)
         if args.command == "init":
             return cmd_init(ticket)
         if args.command == "show":
@@ -577,6 +702,12 @@ def main() -> int:
             return cmd_validate(ticket)
         if args.command == "block":
             return cmd_block(ticket, args.phase, args.reason)
+        if args.command == "handoff":
+            return cmd_handoff(ticket)
+        if args.command == "verdict-path":
+            return cmd_verdict_path(ticket)
+        if args.command == "check-verdict":
+            return cmd_check_verdict(ticket)
     except (OSError, ValueError, RuntimeError, json.JSONDecodeError) as error:
         print(f"ERROR: {error}", file=sys.stderr)
         return 1

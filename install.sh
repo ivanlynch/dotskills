@@ -44,7 +44,16 @@ link_file() {
   echo "Instalado: $target_path"
 }
 
+install_shared_skills() {
+  target_root=$1
+  for skill in "$script_dir"/skills/*; do
+    [ -d "$skill" ] || continue
+    link_file "$skill" "$target_root/$(basename "$skill")"
+  done
+}
+
 install_codex() {
+  install_shared_skills "$HOME/.agents/skills"
   for skill in "$script_dir"/codex/skills/*; do
     [ -d "$skill" ] || continue
     link_file "$skill" "$HOME/.codex/skills/$(basename "$skill")"
@@ -52,6 +61,7 @@ install_codex() {
 }
 
 install_claude() {
+  install_shared_skills "$HOME/.claude/skills"
   for skill in "$script_dir"/claude/skills/*; do
     [ -d "$skill" ] || continue
     link_file "$skill" "$HOME/.claude/skills/$(basename "$skill")"
@@ -64,6 +74,7 @@ install_claude() {
 }
 
 install_cursor() {
+  install_shared_skills "$HOME/.agents/skills"
   for command in "$script_dir"/cursor/commands/*.md; do
     [ -f "$command" ] || continue
     [ "$(basename "$command")" = "README.md" ] && continue

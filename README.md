@@ -113,7 +113,7 @@ que no hayan sido creados por el instalador.
 
 | Workflow | Propósito |
 | --- | --- |
-| `analizar-alcance` | Determina si un ticket es independiente o debe dividirse. |
+| `analizar-alcance` | Determina si un issue es independiente o debe dividirse. |
 | `cocinar` | Orquesta el flujo completo desde un ticket hasta una pull request. |
 | `crear-pr` | Prepara una pull request a partir de cambios implementados. |
 | `crear-readme` | Genera o mejora un README de proyecto. |
@@ -145,20 +145,26 @@ conectores de Jira, Atlassian o GitHub.
 
 ```text
 dotskills/
-├── core/                 # Definiciones de workflows compartidas
+├── skills/               # Skills canónicas (SKILL.md único, sin duplicar)
+│                         # symlinkeadas a ~/.claude/skills/ y ~/.agents/skills/
+│                         # (Codex y Cursor leen ~/.agents/skills/ de forma nativa)
+├── core/                 # Definiciones de workflows aún no migradas a skills/
 ├── scripts/              # Scripts auxiliares reutilizables
-├── codex/skills/         # Skills y metadatos específicos de Codex
-├── claude/skills/        # Adaptadores de skills para Claude Code
-├── claude/commands/      # Comandos slash para Claude Code
-├── cursor/commands/      # Comandos slash para Cursor
+├── codex/skills/         # Skills y metadatos específicos de Codex (no migradas)
+├── claude/skills/        # Adaptadores de skills para Claude Code (no migradas)
+├── claude/commands/      # Comandos slash para Claude Code (no migradas)
+├── cursor/commands/      # Comandos slash para Cursor (no migradas)
 ├── cursor/rules/         # Reglas de Cursor
 ├── install.sh            # Instalador global
 └── uninstall.sh          # Desinstalador de enlaces
 ```
 
-La implementación de Codex conserva sus metadatos `agents/openai.yaml`. Los
-adaptadores de Claude Code y Cursor contienen el mismo flujo expresado con sus
-convenciones de invocación.
+`skills/` es la migración en curso a un único directorio físico por skill
+(estándar abierto [Agent Skills](https://agentskills.io)), symlinkeado en vez
+de copiado a cada herramienta. Los skills que todavía no se migraron siguen
+duplicados entre `core/`, `codex/skills/`, `claude/skills/`, `claude/commands/`
+y `cursor/commands/`. La implementación de Codex conserva sus metadatos
+`agents/openai.yaml`.
 
 ## Desarrollo
 
