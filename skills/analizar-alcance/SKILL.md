@@ -1,6 +1,6 @@
 ---
 name: analizar-alcance
-description: Analiza el tamaño y alcance de un issue para determinar si puede completarse, entregarse e integrarse de forma independiente. Detecta riesgos, dependencias y señales de que debe dividirse en subtareas verticales y testeables. No depende de ningún tracker en particular: funciona con un ID de Jira, GitHub, Linear o sin ID.
+description: Analiza el tamaño y alcance de un issue para determinar si puede completarse, entregarse e integrarse de forma independiente. Detecta riesgos, dependencias y señales de que debe dividirse en subtareas verticales y testeables. No depende de ningún tracker en particular: funciona con un ID de Jira, GitHub, Linear o sin ID. Usar cuando el usuario pida evaluar, dimensionar o dividir un issue, ticket o tarea antes de implementarla.
 ---
 
 # Analizar Alcance

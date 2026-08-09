@@ -10,7 +10,7 @@ Ejecutar este flujo como una máquina de estados estricta. No empezar una fase s
 ## Reglas invariables
 
 - Aceptar exactamente un ID de Jira como entrada. Normalizarlo a mayúsculas y validar el formato `^[A-Z][A-Z0-9]+-[0-9]+$`. Si falta o es inválido, pedir únicamente un ID válido y detenerse.
-- Ejecutar `scripts/workflow_state.py` desde la raíz del proyecto para registrar todos los cambios de estado.
+- Ejecutar `<analizar-alcance-skill-dir>/scripts/workflow_state.py` (el mismo script que usa `/analizar-alcance`) para registrar todos los cambios de estado — no bundlear una copia propia acá.
 - Mantener como máximo una fase `IN_PROGRESS`.
 - Ante un error o falta de información, marcar la fase `BLOCKED`, explicar el bloqueo y esperar al usuario cuando sea necesaria una decisión.
 - No crear una branch, modificar código, ejecutar una implementación, hacer commits, subir cambios ni abrir una PR antes de que `aprobacion` esté `DONE`.
@@ -38,8 +38,8 @@ Ejecutar este flujo como una máquina de estados estricta. No empezar una fase s
 Ejecutar:
 
 ```bash
-python3 <skill-dir>/scripts/workflow_state.py init <TICKET_ID>
-python3 <skill-dir>/scripts/workflow_state.py show <TICKET_ID> --compact
+python3 <analizar-alcance-skill-dir>/scripts/workflow_state.py init <TICKET_ID>
+python3 <analizar-alcance-skill-dir>/scripts/workflow_state.py show <TICKET_ID> --compact
 ```
 
 Si el registro ya existe, mostrarlo y reanudar solamente desde la primera fase no terminada. `<skill-dir>` es el directorio que contiene este `SKILL.md`.
@@ -54,8 +54,8 @@ Si el registro ya existe, mostrarlo y reanudar solamente desde la primera fase n
 6. Si la consulta es exitosa, registrar el contexto antes de terminar la fase:
 
    ```bash
-   python3 <skill-dir>/scripts/workflow_state.py context <TICKET_ID> --id "<ticket_id>" --title "<title>" --description "<description>" --source jira
-   python3 <skill-dir>/scripts/workflow_state.py done <TICKET_ID> ticket --jira-read --evidence "<TICKET_ID>: contexto cargado por consultar-ticket"
+   python3 <analizar-alcance-skill-dir>/scripts/workflow_state.py context <TICKET_ID> --id "<ticket_id>" --title "<title>" --description "<description>" --source jira
+   python3 <analizar-alcance-skill-dir>/scripts/workflow_state.py done <TICKET_ID> ticket --jira-read --evidence "<TICKET_ID>: contexto cargado por consultar-ticket"
    ```
 
 ### 2. `analizar-alcance`: evaluar tamaño y división
@@ -73,7 +73,7 @@ Si el registro ya existe, mostrarlo y reanudar solamente desde la primera fase n
 11. Después de cada actualización, ejecutar:
 
     ```bash
-    python3 <skill-dir>/scripts/workflow_state.py validate <TICKET_ID>
+    python3 <analizar-alcance-skill-dir>/scripts/workflow_state.py validate <TICKET_ID>
     ```
 
 12. Registrar el árbol con `scope`. El argumento `--json` debe ser un objeto JSON con esta forma mínima:
@@ -136,7 +136,7 @@ Si el registro ya existe, mostrarlo y reanudar solamente desde la primera fase n
 5. Solo ante un `OK` explícito posterior, marcar la fase como `DONE` usando `--user-approved` y conservar como evidencia la respuesta del usuario.
 
 ```bash
-python3 <skill-dir>/scripts/workflow_state.py done <TICKET_ID> aprobacion --user-approved --evidence "Aprobación explícita del usuario: <respuesta>"
+python3 <analizar-alcance-skill-dir>/scripts/workflow_state.py done <TICKET_ID> aprobacion --user-approved --evidence "Aprobación explícita del usuario: <respuesta>"
 ```
 
 Antes de cualquier acción de implementación, ejecutar `show --compact` y comprobar que `aprobacion` figura como `DONE`. Si no figura así, detenerse.
