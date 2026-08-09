@@ -1,4 +1,4 @@
 interface:
   display_name: "Documentar"
   short_description: "Genera documentación técnica en español con Diátaxis"
-  default_prompt: "Usa $documentar para crear documentación técnica en español mediante preguntas guiadas y una estructura Diátaxis."
+  default_prompt: "Usa /documentar para crear documentación técnica en español mediante preguntas guiadas y una estructura Diátaxis."

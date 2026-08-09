@@ -1,4 +1,4 @@
 interface:
   display_name: "Crear explicaciones"
   short_description: "Crea explicaciones y modelos mentales"
-  default_prompt: "Usa $explicaciones para explicar conceptos y decisiones técnicas."
+  default_prompt: "Usa /explicaciones para explicar conceptos y decisiones técnicas."

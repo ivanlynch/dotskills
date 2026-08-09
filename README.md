@@ -41,7 +41,7 @@ forma nativa.
 
 | Herramienta | Invocación | Destino global |
 | --- | --- | --- |
-| Codex | `$plan` | `~/.agents/skills/` |
+| Codex | `/plan` | `~/.agents/skills/` |
 | Claude Code | `/plan` | `~/.claude/skills/` |
 | Cursor | `/plan` | `~/.agents/skills/` |
 
@@ -51,31 +51,7 @@ que un solo enlace por skill alcanza para las dos. Claude Code solo lee
 
 ## Uso
 
-### Codex
-
-Después de instalar el adaptador, las skills se invocan con `$`:
-
-```text
-$analizar-alcance
-$plan
-$crear-ticket
-$cocinar PROJ-1234
-```
-
-### Claude Code
-
-Claude Code usa comandos slash y skills:
-
-```text
-/analizar-alcance
-/plan
-/crear-ticket
-/cocinar PROJ-1234
-```
-
-### Cursor
-
-Los comandos aparecen en el menú slash de Agent:
+La invocación es igual en las tres herramientas:
 
 ```text
 /analizar-alcance
@@ -113,16 +89,41 @@ que no hayan sido creados por el instalador.
 
 ## Workflows incluidos
 
+### Ticket → pull request
+
 | Workflow | Propósito |
 | --- | --- |
 | `analizar-alcance` | Determina si un issue es independiente o debe dividirse. |
-| `cocinar` | Orquesta el flujo completo desde un ticket hasta una pull request. |
-| `crear-pr` | Prepara una pull request a partir de cambios implementados. |
 | `crear-ticket` | Produce un ticket de Jira claro y accionable. |
-| `documentar` | Coordina documentación técnica con Diátaxis. |
+| `cocinar` | Orquesta el flujo completo desde un ticket hasta una pull request. |
+| `plan` | Convierte un alcance confirmado en tareas implementables. |
 | `implementar-plan` | Ejecuta las tareas de un plan persistido. |
 | `implementar-tarea` | Ejecuta y verifica una tarea individual. |
-| `plan` | Convierte un alcance confirmado en tareas implementables. |
+| `crear-pr` | Prepara una pull request a partir de cambios implementados. |
+
+### Documentación (Diátaxis)
+
+| Workflow | Propósito |
+| --- | --- |
+| `documentar` | Coordina la creación o mejora de documentación técnica con Diátaxis. |
+| `clasificar-documentacion` | Clasifica una solicitud documental según el cuadrante de Diátaxis. |
+| `tutoriales` | Redacta tutoriales para aprender una habilidad haciendo. |
+| `guias-practicas` | Redacta guías prácticas para completar una tarea real. |
+| `referencia` | Redacta documentación de referencia técnica: APIs, comandos, parámetros. |
+| `explicaciones` | Redacta explicaciones para construir un modelo mental. |
+| `validar-documentacion` | Audita un borrador de documentación y reporta hallazgos sin corregirlo. |
+
+### Autoría y validación de skills
+
+| Workflow | Propósito |
+| --- | --- |
+| `crear-skill` | Crea un nuevo skill conforme al estándar Agent Skills. |
+| `validar-skill` | Audita un skill existente contra el estándar y las convenciones del repo. |
+
+### Transversal
+
+| Workflow | Propósito |
+| --- | --- |
 | `entrevistar` | Recorre decisiones pendientes una por una hasta alcanzar entendimiento compartido. |
 
 ## Dependencias de los workflows
@@ -133,7 +134,10 @@ workflows esperan capacidades adicionales:
 - `cocinar` espera un workflow de consulta de tickets (`consultar-ticket`),
   entrevistas y acceso al contexto de Jira;
 - `plan` utiliza `crear-ticket` para producir las tareas;
-- `documentar` delega en clasificación, guías, referencias y validación;
+- `documentar` delega en `clasificar-documentacion`, `tutoriales`,
+  `guias-practicas`, `referencia`, `explicaciones` y `validar-documentacion`;
+- `crear-skill` se completa habitualmente validando el resultado con
+  `validar-skill`;
 - `crear-pr` necesita un repositorio Git y acceso a GitHub para abrir la PR;
 - los scripts de estado son bash puro, sin dependencias externas.
 

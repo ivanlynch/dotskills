@@ -1,4 +1,4 @@
 interface:
   display_name: "Auditar documentación"
   short_description: "Audita fuentes y calidad documental"
-  default_prompt: "Usa $validar-documentacion para auditar un documento y devolver hallazgos."
+  default_prompt: "Usa /validar-documentacion para auditar un documento y devolver hallazgos."

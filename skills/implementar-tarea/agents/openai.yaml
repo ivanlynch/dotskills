@@ -1,4 +1,4 @@
 interface:
   display_name: "Implementar Tarea"
   short_description: "Implementa una tarea del plan"
-  default_prompt: "Usa $implementar-tarea para implementar una única tarea del plan."
+  default_prompt: "Usa /implementar-tarea para implementar una única tarea del plan."
