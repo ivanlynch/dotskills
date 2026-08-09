@@ -1,0 +1,4 @@
+interface:
+  display_name: "Crear guías prácticas"
+  short_description: "Crea guías para tareas reales"
+  default_prompt: "Usa $guias-practicas para documentar una tarea técnica concreta."

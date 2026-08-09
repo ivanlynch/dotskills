@@ -1,0 +1,4 @@
+interface:
+  display_name: "Crear referencia técnica"
+  short_description: "Crea referencia técnica consultable"
+  default_prompt: "Usa $referencia para documentar una superficie técnica con precisión."
