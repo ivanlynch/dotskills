@@ -60,10 +60,9 @@ El cuerpo no tiene restricciones de formato, pero seguí estas reglas obligatori
 
 Solo creá los que el skill realmente necesite:
 
-- **`scripts/`** — código ejecutable en bash (no Python ni otro runtime que requiera instalar un intérprete aparte). Debe ser autocontenido o documentar claramente sus dependencias, incluir mensajes de error útiles y manejar casos borde sin romper. Si otro skill de este repo ya necesita el mismo script y ese otro skill es su dueño natural (ver ejemplo `implementar-tarea` reutilizando `plan_file.sh` de `plan`), referencialo por nombre de skill vecino en vez de duplicarlo.
+- **`scripts/`** — código ejecutable en bash (no Python ni otro runtime que requiera instalar un intérprete aparte). Debe ser autocontenido o documentar claramente sus dependencias, incluir mensajes de error útiles y manejar casos borde sin romper. Si otro skill de este repo ya necesita el mismo script y ese otro skill es su dueño natural (ver ejemplo `implementar-tarea` reutilizando `plan_file.sh` de `plan`), referencialo por nombre de skill vecino en vez de duplicarlo. Todo script `<nombre>.sh` necesita su test en `scripts/tests/<nombre>.sh` (bash puro, sin frameworks externos) antes de dar el skill por terminado.
 - **`references/`** — documentación detallada que el agente carga solo cuando la necesita (p. ej. `REFERENCE.md`, o archivos por dominio). Mantené cada archivo enfocado en un tema.
 - **`assets/`** — recursos estáticos: plantillas, imágenes, datos de referencia.
-- **`agents/openai.yaml`** — convención de este repo (no del estándar) para metadata específica de Codex (`display_name`, `short_description`, `default_prompt`). Agregalo si el skill se beneficia de una descripción corta y un prompt por defecto distintos para Codex.
 
 ### 7. Referenciar archivos correctamente
 
@@ -81,7 +80,7 @@ No audites el resultado vos mismo: invocá `/validar-skill <name>` sobre el skil
 
 ## Reglas de calidad
 
-- No inventes campos de frontmatter fuera de los seis que define el estándar (`name`, `description`, `license`, `compatibility`, `metadata`, `allowed-tools`) más `agents/openai.yaml` como extensión propia del repo.
+- No inventes campos de frontmatter fuera de los seis que define el estándar (`name`, `description`, `license`, `compatibility`, `metadata`, `allowed-tools`).
 - No relajes ninguna regla de `name` o `description` "porque total funciona igual": son las dos que los agentes leen siempre, para todos los skills, al arrancar.
 - No dupliques contenido ni scripts que ya viven en otro skill del repo — referencialos.
 - No des la tarea por terminada sin un veredicto completo de `/validar-skill`.

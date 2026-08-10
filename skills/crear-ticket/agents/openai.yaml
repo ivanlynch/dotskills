@@ -1,4 +1,0 @@
-interface:
-  display_name: "Crear Ticket"
-  short_description: "Genera tickets Jira claros y accionables"
-  default_prompt: "Usa /crear-ticket para entrevistarme y generar en portugués de Brasil el título y la descripción de un ticket de Jira."

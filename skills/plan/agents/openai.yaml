@@ -1,4 +1,0 @@
-interface:
-  display_name: "Plan"
-  short_description: "Genera y persiste un plan de implementación"
-  default_prompt: "Usa /plan para convertir el alcance confirmado en tareas de implementación persistidas."

@@ -1,4 +1,0 @@
-interface:
-  display_name: "Analizar Alcance"
-  short_description: "Evalúa tamaño, riesgo y división de issues"
-  default_prompt: "Usa /analizar-alcance para evaluar si este issue es independiente, testeable y suficientemente pequeño."

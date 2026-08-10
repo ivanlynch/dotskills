@@ -1,4 +1,0 @@
-interface:
-  display_name: "Implementar Plan"
-  short_description: "Orquesta la ejecución de un plan persistido"
-  default_prompt: "Usa /implementar-plan para ejecutar las tareas ordenadas del archivo de plan."
