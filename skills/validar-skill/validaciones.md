@@ -35,6 +35,7 @@ tabla — no cambies el formato de las filas sin actualizar el script.
 | `referencias-un-nivel` | Las referencias no encadenan más de un nivel de profundidad (una referencia no apunta a otra referencia). |
 | `scripts-documentados` (condicional) | Si existe `scripts/`: cada script documenta sus dependencias y maneja errores con mensajes claros. |
 | `scripts-bash-no-python` (condicional) | Si existe `scripts/`: los scripts son bash (`.sh`), no Python ni otro runtime que requiera instalar un intérprete aparte. |
+| `scripts-con-test` (condicional) | Si existe `scripts/`: cada script `<nombre>.sh` tiene su test correspondiente en `scripts/tests/<nombre>.sh`. |
 | `scripts-no-duplicados` | Ningún script bundleado duplica uno que ya es propiedad de otro skill del repo (debería referenciarlo por nombre de skill vecino en vez de copiarlo). |
 | `ubicacion-exclusiva` | El skill vive únicamente en `skills/<nombre>/` — no hay copias en otras carpetas del repo. |
 | `prefijo-referencias-slash` | Las referencias a otros skills dentro del cuerpo usan `/nombre`, no `$nombre` ni otro prefijo. |
