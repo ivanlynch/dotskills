@@ -31,7 +31,8 @@ El script verifica que la tarea esté `PENDING`, que sus dependencias estén `DO
 3. Inspeccionar el código necesario y ejecutar los pasos de implementación en orden.
 4. Mantener los cambios dentro del alcance de esa tarea.
 5. Ejecutar las verificaciones indicadas y las validaciones obligatorias del proyecto.
-6. Revisar el diff de la tarea sin descartar cambios ajenos.
+6. Ejecutar la suite de tests relevante y coverage si el proyecto ya tiene una herramienta o comando configurado para ello. Si no existe soporte de coverage, registrar esa limitación en la evidencia sin instalar una herramienta nueva.
+7. Revisar el diff de la tarea sin descartar cambios ajenos.
 
 ## Resultado
 

@@ -1,6 +1,6 @@
 ---
 name: implementar-plan
-description: Lee un archivo de plan de implementación, ejecuta sus tareas ordenadas mediante /implementar-tarea y marca cada tarea como DONE en el mismo archivo únicamente después de recibir un resultado DONE con evidencia. Usar cuando haya que ejecutar de punta a punta un plan ya generado por /plan, tarea por tarea y en orden de dependencias.
+description: Lee un archivo de plan de implementación, ejecuta sus tareas ordenadas mediante /implementar-tarea y marca cada tarea como DONE después de recibir evidencia. Usar para ejecutar un plan tarea por tarea; con --commit-each, crear además un commit pequeño y verificable después de cada etapa, especialmente desde /cocinar.
 ---
 
 # Implementar Plan
@@ -9,10 +9,11 @@ Orquestar la ejecución de un archivo generado por `/plan`. No editar el archivo
 
 ## Entrada
 
-Recibir la ruta absoluta del archivo ejecutable del plan:
+Recibir la ruta absoluta del archivo ejecutable del plan y, opcionalmente, `--commit-each`:
 
 ```text
 /implementar-plan /ruta/al/PROJ-1234-plan.txt
+/implementar-plan /ruta/al/PROJ-1234-plan.txt --commit-each
 ```
 
 Validarlo antes de cualquier cambio:
@@ -41,7 +42,12 @@ Repetir hasta recibir `PLAN_COMPLETE`:
 
 7. Si devuelve `BLOCKED`, ejecutar `block` con el motivo y detenerse.
 8. Ejecutar `validate` después de cada transición.
-9. Continuar desde `next`; nunca asumir la siguiente tarea leyendo el archivo directamente.
+9. Si se recibió `--commit-each`, después de completar la tarea:
+   - revisar el diff y confirmar que solo contiene la etapa actual;
+   - confirmar que los tests pasan y que se ejecutó coverage si el proyecto lo soporta;
+   - crear un commit pequeño con mensaje Conventional Commit en inglés;
+   - verificar que el commit se creó antes de continuar.
+10. Continuar desde `next`; nunca asumir la siguiente tarea leyendo el archivo directamente.
 
 ## Salidas
 
@@ -49,5 +55,6 @@ Repetir hasta recibir `PLAN_COMPLETE`:
 - `IMPLEMENT_TASK`: se debe ejecutar `/implementar-tarea`.
 - `BLOCKED`: la ejecución requiere una decisión o intervención.
 - `WAIT_DEPENDENCY`: el plan es inconsistente o no tiene una tarea ejecutable.
+- Con `--commit-each`, un fallo al crear o verificar el commit bloquea la ejecución antes de iniciar otra tarea.
 
 Informar al final la ruta del archivo y el resumen de tareas completadas. El archivo actualizado es la fuente de verdad para continuar posteriormente.

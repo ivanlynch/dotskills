@@ -1,6 +1,6 @@
 ---
 name: cocinar
-description: Preparar e implementar de extremo a extremo un ticket de Jira recibido como argumento, por ejemplo `/cocinar PROJ-1234`. Delegar la carga del ticket a `/consultar-ticket`, analizar su alcance con la skill analizar-alcance, aclarar requisitos con el skill entrevistar, localizar el flujo de implementación del proyecto, producir un plan y tareas pequeñas, obtener aprobación explícita, crear una branch con el ID del ticket, implementar, verificar y abrir una pull request mediante la skill crear-pr, cuyo título debe seguir el formato `[<JIRA TICKET>] <Título del ticket de Jira>`. Usar cuando el usuario pida implementar un ticket de punta a punta a partir de su ID.
+description: Preparar e implementar de extremo a extremo un ticket de Jira recibido como argumento, por ejemplo `/cocinar PROJ-1234`. Consultar el ticket y sus subtareas, analizar el alcance, aclarar requisitos, producir un plan interno en etapas pequeñas, obtener aprobación explícita, crear una branch, implementar cada etapa con tests y commits verificables, y abrir una pull request mediante la skill crear-pr. Usar cuando el usuario pida cocinar o implementar un ticket existente de punta a punta sin crear tickets adicionales.
 ---
 
 # Cocinar un ticket de Jira
@@ -15,6 +15,9 @@ Ejecutar este flujo como una máquina de estados estricta. No empezar una fase s
 - Ante un error o falta de información, marcar la fase `BLOCKED`, explicar el bloqueo y esperar al usuario cuando sea necesaria una decisión.
 - No crear una branch, modificar código, ejecutar una implementación, hacer commits, subir cambios ni abrir una PR antes de que `aprobacion` esté `DONE`.
 - Investigar hechos disponibles en Jira, el repositorio o las herramientas. Preguntar al usuario solamente por decisiones o información que no pueda descubrirse.
+- Cocinar siempre el ticket recibido como unidad de trabajo. Las subtareas existentes son contexto; no crear subtareas ni tickets nuevos automáticamente.
+- El plan de implementación es interno a este flujo. No invocar `/crear-ticket` para convertir sus etapas en issues de Jira.
+- Cada etapa debe ser pequeña, verificable y terminar en un commit separado. Ejecutar tests y coverage cuando el proyecto ya los soporte; si no hay coverage configurado, registrar esa limitación sin introducir una herramienta nueva.
 - No ampliar el alcance silenciosamente.
 
 ## Economía de tokens y ejecución
@@ -57,6 +60,8 @@ Si el registro ya existe, mostrarlo y reanudar solamente desde la primera fase n
    <analizar-alcance-skill-dir>/scripts/workflow_state.sh context <TICKET_ID> --id "<ticket_id>" --title "<title>" --description "<description>" --source jira
    <analizar-alcance-skill-dir>/scripts/workflow_state.sh done <TICKET_ID> ticket --jira-read --evidence "<TICKET_ID>: contexto cargado por consultar-ticket"
    ```
+
+7. Consultar las subtareas existentes con `/consultar-subtareas <TICKET_ID>` y conservar su JSON como contexto adicional. Si no hay subtareas, continuar con `subtasks: []`; no crear ninguna.
 
 ### 2. `analizar-alcance`: evaluar tamaño y división
 
@@ -101,12 +106,12 @@ Si el registro ya existe, mostrarlo y reanudar solamente desde la primera fase n
 3. Leer y obedecer la guía aplicable más específica. Registrar las rutas encontradas como evidencia.
 4. Si no existe una guía local, indicarlo explícitamente. La fase puede terminar, pero la fase siguiente deberá crear un Markdown temporal con el plan.
 
-### 5. `plan`: producir plan, tareas y deuda técnica
+### 5. `plan`: producir plan interno por etapas y deuda técnica
 
 1. Marcar `plan` como `IN_PROGRESS`.
-2. Invocar `/plan` con la guía local encontrada; `/plan` lee el alcance confirmado directamente del registro de `/analizar-alcance`, no hace falta pasárselo. No reconstruir el alcance ni editar manualmente el estado del plan.
+2. Invocar `/plan --internal` con la guía local encontrada; `/plan` lee el alcance confirmado directamente del registro de `/analizar-alcance`, no hace falta pasárselo. No reconstruir el alcance ni editar manualmente el estado del plan.
 3. Seguir `/plan` para dividir el trabajo en tareas ejecutables, con resultado observable, verificación concreta y orden por dependencia.
-4. Para cada tarea, `/plan` debe invocar `/crear-ticket`, esperar su confirmación y persistir inmediatamente el título y la descripción aprobados mediante `plan_state.sh`.
+4. En modo `--internal`, `/plan` debe redactar y persistir directamente el título y la descripción de cada etapa mediante `plan_state.sh`; no invocar `/crear-ticket` ni esperar confirmaciones por etapa.
 5. No implementar nada. Marcar la fase como `DONE` solamente cuando `/plan` devuelva `PLAN_COMPLETE`, haya creado el archivo ejecutable del plan y todas las tareas estén persistidas como `READY`.
 
 ### 6. `aprobacion`: pedir permiso y detenerse
@@ -134,9 +139,9 @@ Antes de cualquier acción de implementación, ejecutar `show --compact` y compr
 ### 8. `implementacion`: ejecutar y verificar tareas
 
 1. Marcar `implementacion` como `IN_PROGRESS`.
-2. Invocar `/implementar-plan` con el archivo ejecutable creado por `/plan`.
+2. Invocar `/implementar-plan <plan-file> --commit-each` con el archivo ejecutable creado por `/plan`.
 3. Dejar que `/implementar-plan` invoque `/implementar-tarea` una tarea por vez y marque cada tarea como `DONE` en el archivo únicamente después de recibir evidencia `DONE`.
-4. Mantener los cambios dentro del alcance aprobado. Informar cualquier necesidad de ampliar el alcance y esperar autorización.
+4. Después de cada tarea `DONE`, verificar tests, coverage cuando exista y el diff; crear un commit pequeño y separado antes de continuar con la siguiente etapa. Mantener los cambios dentro del alcance aprobado. Informar cualquier necesidad de ampliar el alcance y esperar autorización.
 5. Marcar la fase como `DONE` solo cuando `/implementar-plan` devuelva `PLAN_COMPLETE`; si devuelve `BLOCKED`, conservar la fase bloqueada con la evidencia.
 
 ### 9. `pr`: preparar y abrir la pull request
