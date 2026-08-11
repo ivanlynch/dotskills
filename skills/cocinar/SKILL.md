@@ -18,6 +18,7 @@ Ejecutar este flujo como una máquina de estados estricta. No empezar una fase s
 - Cocinar siempre el ticket recibido como unidad de trabajo. Las subtareas existentes son contexto; no crear subtareas ni tickets nuevos automáticamente.
 - El plan de implementación es interno a este flujo. No invocar `/crear-ticket` para convertir sus etapas en issues de Jira.
 - Cada etapa debe ser pequeña, verificable y terminar en un commit separado. Ejecutar tests y coverage cuando el proyecto ya los soporte; si no hay coverage configurado, registrar esa limitación sin introducir una herramienta nueva.
+- Si una verificación o una etapa queda bloqueada, investigar primero las opciones disponibles en el proyecto y usar `/entrevistar` para agotarlas y obtener la decisión necesaria. No registrar deuda técnica ni cerrar la etapa por decisión unilateral.
 - No ampliar el alcance silenciosamente.
 
 ## Economía de tokens y ejecución
@@ -47,13 +48,13 @@ Ejecutar:
 
 Si el registro ya existe, mostrarlo y reanudar solamente desde la primera fase no terminada. `<skill-dir>` es el directorio que contiene este `SKILL.md`.
 
-### 1. `ticket`: delegar la consulta a `/consultar-ticket`
+### 1. `ticket`: delegar la consulta a la skill correcta de `consultar-ticket`
 
 1. Marcar `ticket` como `IN_PROGRESS`.
-2. Invocar exactamente `/consultar-ticket <TICKET_ID>` con el ID normalizado.
+2. Leer y seguir exactamente `/Users/ivanlynch/.codex/skills/consultar-ticket/SKILL.md`. Ejecutar esa skill con `<TICKET_ID>` normalizado; su implementación obligatoria es `python3 /Users/ivanlynch/.codex/skills/consultar-ticket/scripts/get_ticket.py <TICKET_ID>`.
 3. Usar el JSON devuelto como fuente de verdad. Debe contener únicamente `ticket_id`, `title` y `description`; verificar que `ticket_id` coincida con el ticket solicitado.
 4. No consultar Jira directamente, no usar herramientas MCP de Atlassian desde `/cocinar`, no ejecutar login y no inventar datos faltantes.
-5. Si `/consultar-ticket` devuelve un error de autenticación, conexión o ticket inexistente, respetar su flujo y marcar `ticket` como `BLOCKED` con el error breve. No duplicar sus reintentos ni pedir credenciales desde `/cocinar`.
+5. Si la skill `/Users/ivanlynch/.codex/skills/consultar-ticket/SKILL.md` devuelve un error de autenticación, conexión o ticket inexistente, respetar su flujo y marcar `ticket` como `BLOCKED` con el error breve. No duplicar sus reintentos ni pedir credenciales desde `/cocinar`.
 6. Si la consulta es exitosa, registrar el contexto antes de terminar la fase:
 
    ```bash
@@ -141,7 +142,7 @@ Antes de cualquier acción de implementación, ejecutar `show --compact` y compr
 1. Marcar `implementacion` como `IN_PROGRESS`.
 2. Invocar `/implementar-plan <plan-file> --commit-each` con el archivo ejecutable creado por `/plan`.
 3. Dejar que `/implementar-plan` invoque `/implementar-tarea` una tarea por vez y marque cada tarea como `DONE` en el archivo únicamente después de recibir evidencia `DONE`.
-4. Después de cada tarea `DONE`, verificar tests, coverage cuando exista y el diff; crear un commit pequeño y separado antes de continuar con la siguiente etapa. Mantener los cambios dentro del alcance aprobado. Informar cualquier necesidad de ampliar el alcance y esperar autorización.
+4. Después de cada tarea `DONE`, verificar tests, coverage cuando exista y el diff; crear un commit pequeño y separado antes de continuar con la siguiente etapa. Si alguna verificación falla, detener la etapa, investigar las opciones disponibles y usar `/entrevistar` antes de decidir cómo continuar. Mantener los cambios dentro del alcance aprobado. Informar cualquier necesidad de ampliar el alcance y esperar autorización.
 5. Marcar la fase como `DONE` solo cuando `/implementar-plan` devuelva `PLAN_COMPLETE`; si devuelve `BLOCKED`, conservar la fase bloqueada con la evidencia.
 
 ### 9. `pr`: preparar y abrir la pull request

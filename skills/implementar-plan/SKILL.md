@@ -40,7 +40,7 @@ Repetir hasta recibir `PLAN_COMPLETE`:
      --evidence "<evidencia devuelta por implementar-tarea>"
    ```
 
-7. Si devuelve `BLOCKED`, ejecutar `block` con el motivo y detenerse.
+7. Si devuelve `BLOCKED`, ejecutar `block` con el motivo y detenerse. La etapa debe continuar por `/entrevistar` para investigar y agotar alternativas antes de aceptar una limitación o registrar deuda técnica.
 8. Ejecutar `validate` después de cada transición.
 9. Si se recibió `--commit-each`, después de completar la tarea:
    - revisar el diff y confirmar que solo contiene la etapa actual;

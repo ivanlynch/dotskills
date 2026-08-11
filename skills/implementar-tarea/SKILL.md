@@ -34,6 +34,8 @@ El script verifica que la tarea esté `PENDING`, que sus dependencias estén `DO
 6. Ejecutar la suite de tests relevante y coverage si el proyecto ya tiene una herramienta o comando configurado para ello. Si no existe soporte de coverage, registrar esa limitación en la evidencia sin instalar una herramienta nueva.
 7. Revisar el diff de la tarea sin descartar cambios ajenos.
 
+Si una verificación falla o no puede ejecutarse, no devolver `DONE` ni registrar automáticamente deuda técnica. Investigar las instrucciones y comandos disponibles del proyecto, probar las opciones seguras que correspondan y, si todavía hace falta una decisión o intervención, devolver `BLOCKED` para que `/cocinar` invoque `/entrevistar` y agote las alternativas con el usuario.
+
 ## Resultado
 
 Si la tarea terminó correctamente, devolver texto plano con estas tres líneas (sin JSON):
