@@ -43,13 +43,13 @@ Aplicá `/entrevistar` para cada punto, uno por vez con respuesta recomendada, y
    ```bash
    <skill-dir>/scripts/crear_prd.sh add "<ruta>" --paso --cerrar-lista
    ```
-4. Entrevistá al usuario por cada **Criterio de Aceptación**. Por cada uno que confirme, registralo (una llamada por criterio):
+4. Entrevistá al usuario por cada **Requerimiento Funcional**: una capacidad atómica y verificable del sistema, no necesariamente un paso del flujo (también cubre reglas y restricciones que no aparecen en la narrativa del happy path, como validaciones o casos límite). Por cada uno que confirme, registralo con un título corto y una descripción — el script le asigna automáticamente el próximo ID `RF-00N`:
    ```bash
-   <skill-dir>/scripts/crear_prd.sh add "<ruta>" --criterio "<criterio confirmado>"
+   <skill-dir>/scripts/crear_prd.sh add "<ruta>" --requerimiento "<título corto>" "<descripción confirmada>"
    ```
-   Después de cada criterio registrado, preguntá explícitamente si hay alguno más. Recién cuando `/entrevistar` confirme que no hay más, cerrá la lista:
+   Después de cada requerimiento registrado, preguntá explícitamente si hay alguno más. Recién cuando `/entrevistar` confirme que no hay más, cerrá la lista:
    ```bash
-   <skill-dir>/scripts/crear_prd.sh add "<ruta>" --criterio --cerrar-lista
+   <skill-dir>/scripts/crear_prd.sh add "<ruta>" --requerimiento --cerrar-lista
    ```
 5. Entrevistá al usuario por cada elemento de la **Zona de Exclusión**. Por cada uno que confirme, registralo (una llamada por exclusión):
    ```bash

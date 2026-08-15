@@ -9,10 +9,10 @@ set -euo pipefail
 #   crear_prd.sh init "<titulo_de_la_feature>" [ruta_de_salida]
 #   crear_prd.sh add <ruta_del_prd> --problema "<texto>"
 #   crear_prd.sh add <ruta_del_prd> --objetivo "<texto>"
-#   crear_prd.sh add <ruta_del_prd> --paso "<texto>" [--cerrar-lista]        (repetible)
-#   crear_prd.sh add <ruta_del_prd> --criterio "<texto>" [--cerrar-lista]    (repetible)
-#   crear_prd.sh add <ruta_del_prd> --exclusion "<texto>" [--cerrar-lista]   (repetible)
-#   crear_prd.sh add <ruta_del_prd> --paso|--criterio|--exclusion --cerrar-lista
+#   crear_prd.sh add <ruta_del_prd> --paso "<texto>" [--cerrar-lista]                        (repetible)
+#   crear_prd.sh add <ruta_del_prd> --requerimiento "<título>" "<descripción>" [--cerrar-lista]  (repetible, asigna RF-00N)
+#   crear_prd.sh add <ruta_del_prd> --exclusion "<texto>" [--cerrar-lista]                   (repetible)
+#   crear_prd.sh add <ruta_del_prd> --paso|--requerimiento|--exclusion --cerrar-lista
 #   crear_prd.sh check <ruta_del_prd>
 #
 # --cerrar-lista cierra la lista correspondiente (falla si quedaría vacía).
@@ -29,10 +29,10 @@ Uso:
   $0 init "<titulo_de_la_feature>" [ruta_de_salida]
   $0 add <ruta_del_prd> --problema "<texto>"
   $0 add <ruta_del_prd> --objetivo "<texto>"
-  $0 add <ruta_del_prd> --paso "<texto>" [--cerrar-lista]        (repetible)
-  $0 add <ruta_del_prd> --criterio "<texto>" [--cerrar-lista]    (repetible)
-  $0 add <ruta_del_prd> --exclusion "<texto>" [--cerrar-lista]   (repetible)
-  $0 add <ruta_del_prd> --paso|--criterio|--exclusion --cerrar-lista
+  $0 add <ruta_del_prd> --paso "<texto>" [--cerrar-lista]                        (repetible)
+  $0 add <ruta_del_prd> --requerimiento "<título>" "<descripción>" [--cerrar-lista]  (repetible, asigna RF-00N)
+  $0 add <ruta_del_prd> --exclusion "<texto>" [--cerrar-lista]                   (repetible)
+  $0 add <ruta_del_prd> --paso|--requerimiento|--exclusion --cerrar-lista
   $0 check <ruta_del_prd>
 EOF
 }
@@ -97,7 +97,8 @@ reemplazar_unico() {
 
 # Cuenta cuántas líneas de ítem (que matchean $patron) hay inmediatamente
 # arriba del marcador, para poder numerar el próximo ítem de una lista
-# numerada. Se detiene en la primera línea que no matchea.
+# numerada de una sola línea por ítem. Se detiene en la primera línea que
+# no matchea.
 contar_items_lista() {
   local ruta="$1" marcador="$2" patron="$3"
   local linea
@@ -115,8 +116,8 @@ contar_items_lista() {
   echo "$n"
 }
 
-# Inserta un ítem con viñeta fija (checklist o lista simple) antes de la
-# línea de marcador, dejando el marcador para poder seguir agregando ítems.
+# Inserta un ítem con viñeta fija (lista simple) antes de la línea de
+# marcador, dejando el marcador para poder seguir agregando ítems.
 agregar_item() {
   local ruta="$1" marcador="$2" prefijo="$3" valor="$4"
   local linea
@@ -156,17 +157,49 @@ agregar_item_numerado() {
   echo "Agregado paso $siguiente a '$marcador' en: $ruta"
 }
 
-# Elimina la línea de marcador de una lista, solo si ya tiene al menos un
-# ítem cargado justo arriba (checklist, lista simple o numerada).
+# Inserta un requerimiento funcional (título + descripción, dos líneas) antes
+# del marcador, asignando el próximo ID RF-00N disponible. El ID se calcula
+# contando encabezados '#### RF-NNN:' en todo el archivo, no solo la línea
+# inmediata anterior al marcador (el bloque ocupa varias líneas, a diferencia
+# de un ítem de una sola línea). No agrega una línea en blanco propia: el
+# separador antes de la siguiente sección lo aporta el template, igual que
+# con --paso y --exclusion.
+agregar_requerimiento() {
+  local ruta="$1" marcador="$2" titulo="$3" descripcion="$4"
+  local linea
+  linea=$(grep -nF "$marcador" "$ruta" | head -1 | cut -d: -f1)
+  if [ -z "$linea" ]; then
+    echo "Error: '$marcador' no existe en '$ruta' (¿ya se cerró la lista?)." >&2
+    exit 1
+  fi
+  local n siguiente id
+  n=$(grep -cE '^#### RF-[0-9]+: ' "$ruta" || true)
+  siguiente=$((n + 1))
+  id=$(printf 'RF-%03d' "$siguiente")
+  local tmp
+  tmp=$(mktemp)
+  head -n $((linea - 1)) "$ruta" > "$tmp"
+  {
+    printf '#### %s: %s\n' "$id" "$titulo"
+    printf '%s\n' "$descripcion"
+  } >> "$tmp"
+  tail -n +"$linea" "$ruta" >> "$tmp"
+  mv "$tmp" "$ruta"
+  echo "Agregado $id a '$marcador' en: $ruta"
+}
+
+# Elimina la línea de marcador de una lista, solo si en todo el archivo ya
+# hay al menos un ítem que matchee $patron (no se limita a la línea
+# inmediata anterior, porque un requerimiento ocupa varias líneas).
 cerrar_lista_marcador() {
-  local ruta="$1" marcador="$2"
+  local ruta="$1" marcador="$2" patron="$3"
   local linea
   linea=$(grep -nF "$marcador" "$ruta" | head -1 | cut -d: -f1)
   if [ -z "$linea" ]; then
     echo "Error: '$marcador' no existe en '$ruta' (¿ya se cerró esta lista?)." >&2
     exit 1
   fi
-  if [ "$linea" -le 1 ] || ! sed -n "$((linea - 1))p" "$ruta" | grep -qE '^(- |[0-9]+\. )'; then
+  if ! grep -qE "$patron" "$ruta"; then
     echo "Error: no se agregó ningún ítem antes de cerrar '$marcador'. Agregá al menos uno antes de usar --cerrar-lista." >&2
     exit 1
   fi
@@ -176,6 +209,50 @@ cerrar_lista_marcador() {
   tail -n +$((linea + 1)) "$ruta" >> "$tmp"
   mv "$tmp" "$ruta"
   echo "Lista '$marcador' cerrada en: $ruta"
+}
+
+cmd_add_requerimiento() {
+  local ruta="$1"
+  shift || true
+
+  local titulo="" descripcion="" cerrar=""
+  if [ "${1:-}" = "--cerrar-lista" ]; then
+    cerrar="--cerrar-lista"
+    shift || true
+  else
+    titulo="${1:-}"
+    shift || true
+    if [ "${1:-}" = "--cerrar-lista" ]; then
+      cerrar="--cerrar-lista"
+      shift || true
+    elif [ -n "${1:-}" ]; then
+      descripcion="$1"
+      shift || true
+      if [ "${1:-}" = "--cerrar-lista" ]; then
+        cerrar="--cerrar-lista"
+        shift || true
+      fi
+    fi
+  fi
+
+  if [ -n "${1:-}" ]; then
+    echo "Error: argumento inesperado '$1'." >&2
+    uso
+    exit 1
+  fi
+  if [ -z "$titulo" ] && [ -z "$cerrar" ]; then
+    echo "Error: --requerimiento requiere un título y una descripción, ej: --requerimiento \"Crear invitación\" \"Un administrador puede...\"." >&2
+    uso
+    exit 1
+  fi
+  if [ -n "$titulo" ] && [ -z "$descripcion" ]; then
+    echo "Error: --requerimiento requiere también una descripción, ej: --requerimiento \"Crear invitación\" \"Un administrador puede...\"." >&2
+    exit 1
+  fi
+
+  [ -n "$titulo" ] && agregar_requerimiento "$ruta" "{{REQUERIMIENTOS}}" "$titulo" "$descripcion"
+  [ "$cerrar" = "--cerrar-lista" ] && cerrar_lista_marcador "$ruta" "{{REQUERIMIENTOS}}" '^#### RF-[0-9]+: '
+  return 0
 }
 
 cmd_add() {
@@ -188,6 +265,11 @@ cmd_add() {
   shift || true
   local flag="${1:-}"
   shift || true
+
+  if [ "$flag" = "--requerimiento" ]; then
+    cmd_add_requerimiento "$ruta" "$@"
+    return 0
+  fi
 
   # El valor es opcional: si el siguiente token ya es --cerrar-lista, se
   # interpreta como "cerrar sin agregar nada nuevo".
@@ -232,15 +314,11 @@ cmd_add() {
       ;;
     --paso)
       [ -n "$valor" ] && agregar_item_numerado "$ruta" "{{FLUJO_PRINCIPAL}}" "$valor"
-      [ "$cerrar" = "--cerrar-lista" ] && cerrar_lista_marcador "$ruta" "{{FLUJO_PRINCIPAL}}"
-      ;;
-    --criterio)
-      [ -n "$valor" ] && agregar_item "$ruta" "{{CRITERIOS}}" "- [ ] " "$valor"
-      [ "$cerrar" = "--cerrar-lista" ] && cerrar_lista_marcador "$ruta" "{{CRITERIOS}}"
+      [ "$cerrar" = "--cerrar-lista" ] && cerrar_lista_marcador "$ruta" "{{FLUJO_PRINCIPAL}}" '^[0-9]+\. '
       ;;
     --exclusion)
       [ -n "$valor" ] && agregar_item "$ruta" "{{OUT_OF_SCOPE}}" "- " "$valor"
-      [ "$cerrar" = "--cerrar-lista" ] && cerrar_lista_marcador "$ruta" "{{OUT_OF_SCOPE}}"
+      [ "$cerrar" = "--cerrar-lista" ] && cerrar_lista_marcador "$ruta" "{{OUT_OF_SCOPE}}" '^- '
       ;;
     *)
       echo "Error: flag desconocido '$flag'." >&2

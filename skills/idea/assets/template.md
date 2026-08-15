@@ -20,8 +20,8 @@
 ### Flujo Principal
 {{FLUJO_PRINCIPAL}}
 
-### Criterios de Aceptación
-{{CRITERIOS}}
+### Requerimientos Funcionales
+{{REQUERIMIENTOS}}
 
 ---
 

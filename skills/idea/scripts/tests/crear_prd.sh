@@ -99,20 +99,31 @@ else
   echo "PASS: 'add --paso' rechaza agregar a una lista ya cerrada."
 fi
 
-"$TARGET_SCRIPT" add "$TEST_OUTPUT" --criterio "Un usuario logueado puede marcar/desmarcar un favorito." > /dev/null
-"$TARGET_SCRIPT" add "$TEST_OUTPUT" --criterio "La lista de favoritos persiste entre sesiones." > /dev/null
+"$TARGET_SCRIPT" add "$TEST_OUTPUT" --requerimiento "Marcar favorito" "Un usuario logueado puede marcar/desmarcar un favorito." > /dev/null
+"$TARGET_SCRIPT" add "$TEST_OUTPUT" --requerimiento "Persistencia" "La lista de favoritos persiste entre sesiones." > /dev/null
 
-if [ "$(grep -c -- '- \[ \]' "$TEST_OUTPUT")" -ne 2 ]; then
-  echo "TEST FAIL: Deberían existir 2 criterios de aceptación agregados." >&2
+if ! grep -q "^#### RF-001: Marcar favorito$" "$TEST_OUTPUT"; then
+  echo "TEST FAIL: El requerimiento 1 no quedó con el ID RF-001 esperado." >&2
   exit 1
 fi
-echo "PASS: 'add --criterio' agrega ítems repetidos sin pisar los anteriores."
+if ! grep -q "^#### RF-002: Persistencia$" "$TEST_OUTPUT"; then
+  echo "TEST FAIL: El requerimiento 2 no quedó con el ID RF-002 esperado." >&2
+  exit 1
+fi
+echo "PASS: 'add --requerimiento' asigna IDs RF-00N incrementales sin pisar los anteriores."
 
-if ! grep -q "{{CRITERIOS}}" "$TEST_OUTPUT" || ! grep -q "{{OUT_OF_SCOPE}}" "$TEST_OUTPUT"; then
+if ! grep -q "{{REQUERIMIENTOS}}" "$TEST_OUTPUT" || ! grep -q "{{OUT_OF_SCOPE}}" "$TEST_OUTPUT"; then
   echo "TEST FAIL: Los marcadores de lista deberían seguir presentes tras agregar ítems sin --cerrar-lista." >&2
   exit 1
 fi
 echo "PASS: sin --cerrar-lista, los marcadores siguen abiertos para poder seguir agregando ítems."
+
+if "$TARGET_SCRIPT" add "$TEST_OUTPUT" --requerimiento "Sin descripción" > /dev/null 2>&1; then
+  echo "TEST FAIL: --requerimiento debería exigir también una descripción, no solo un título." >&2
+  exit 1
+else
+  echo "PASS: --requerimiento rechaza un título sin descripción."
+fi
 
 if "$TARGET_SCRIPT" add "$TEST_OUTPUT" --problema "otro texto" > /dev/null 2>&1; then
   echo "TEST FAIL: No debería permitir reemplazar un campo ya completado." >&2
@@ -122,7 +133,7 @@ else
 fi
 
 if "$TARGET_SCRIPT" check "$TEST_OUTPUT" > /dev/null 2>&1; then
-  echo "TEST FAIL: 'check' debería fallar mientras las listas de criterios/exclusiones sigan abiertas." >&2
+  echo "TEST FAIL: 'check' debería fallar mientras las listas de requerimientos/exclusiones sigan abiertas." >&2
   exit 1
 else
   echo "PASS: 'check' detecta que las listas de ítems siguen abiertas."
@@ -140,7 +151,7 @@ echo "PASS: --cerrar-lista funciona con un único ítem agregado en la misma lla
 
 TMP3="${TMP_DIR}/test-cierre-solo-vacio.md"
 "$TARGET_SCRIPT" init "Otra Feature Mas" "$TMP3" > /dev/null
-if "$TARGET_SCRIPT" add "$TMP3" --criterio --cerrar-lista > /dev/null 2>&1; then
+if "$TARGET_SCRIPT" add "$TMP3" --requerimiento --cerrar-lista > /dev/null 2>&1; then
   echo "TEST FAIL: --cerrar-lista solo (sin texto) no debería aceptarse si la lista está vacía." >&2
   exit 1
 else
@@ -154,13 +165,13 @@ else
   echo "PASS: --cerrar-lista se rechaza en campos que no son lista."
 fi
 
-"$TARGET_SCRIPT" add "$TEST_OUTPUT" --criterio --cerrar-lista > /dev/null
+"$TARGET_SCRIPT" add "$TEST_OUTPUT" --requerimiento --cerrar-lista > /dev/null
 
 "$TARGET_SCRIPT" add "$TEST_OUTPUT" --exclusion "Compartir la lista de favoritos con otros usuarios." > /dev/null
 "$TARGET_SCRIPT" add "$TEST_OUTPUT" --exclusion --cerrar-lista > /dev/null
 
-if grep -q "{{CRITERIOS}}" "$TEST_OUTPUT" || grep -q "{{OUT_OF_SCOPE}}" "$TEST_OUTPUT"; then
-  echo "TEST FAIL: --cerrar-lista debería haber eliminado los marcadores de criterios/exclusiones." >&2
+if grep -q "{{REQUERIMIENTOS}}" "$TEST_OUTPUT" || grep -q "{{OUT_OF_SCOPE}}" "$TEST_OUTPUT"; then
+  echo "TEST FAIL: --cerrar-lista debería haber eliminado los marcadores de requerimientos/exclusiones." >&2
   exit 1
 fi
 echo "PASS: --cerrar-lista solo (sin texto) cierra la lista usando los ítems ya cargados en llamadas previas."
@@ -170,5 +181,11 @@ if ! "$TARGET_SCRIPT" check "$TEST_OUTPUT" > /dev/null 2>&1; then
   exit 1
 fi
 echo "PASS: 'check' confirma que no quedan placeholders pendientes."
+
+if ! diff -q <(cat -s "$TEST_OUTPUT") "$TEST_OUTPUT" > /dev/null; then
+  echo "TEST FAIL: El PRD final tiene líneas en blanco duplicadas (separador del template + separador propio del requerimiento)." >&2
+  exit 1
+fi
+echo "PASS: no quedan líneas en blanco duplicadas en el PRD final."
 
 echo "Todos los tests pasaron correctamente."
