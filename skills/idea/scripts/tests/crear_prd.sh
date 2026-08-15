@@ -188,4 +188,38 @@ if ! diff -q <(cat -s "$TEST_OUTPUT") "$TEST_OUTPUT" > /dev/null; then
 fi
 echo "PASS: no quedan líneas en blanco duplicadas en el PRD final."
 
+TMP4="${TMP_DIR}/test-aprobar.md"
+"$TARGET_SCRIPT" init "Feature Para Aprobar" "$TMP4" > /dev/null
+
+if "$TARGET_SCRIPT" aprobar "$TMP4" > /dev/null 2>&1; then
+  echo "TEST FAIL: 'aprobar' no debería permitirse mientras queden placeholders pendientes." >&2
+  exit 1
+else
+  echo "PASS: 'aprobar' rechaza un PRD con placeholders pendientes."
+fi
+
+if "$TARGET_SCRIPT" aprobar "$TEST_OUTPUT" > /dev/null 2>&1; then
+  :
+else
+  echo "TEST FAIL: 'aprobar' debería aceptarse una vez que 'check' está en OK." >&2
+  exit 1
+fi
+
+if ! grep -q '\*\*Estado:\*\* Completo' "$TEST_OUTPUT"; then
+  echo "TEST FAIL: 'aprobar' debería haber cambiado el Estado a Completo." >&2
+  exit 1
+fi
+if grep -q '\*\*Estado:\*\* Borrador' "$TEST_OUTPUT"; then
+  echo "TEST FAIL: 'aprobar' no debería dejar el Estado en Borrador." >&2
+  exit 1
+fi
+echo "PASS: 'aprobar' cambia el Estado de Borrador a Completo cuando check está en OK."
+
+if "$TARGET_SCRIPT" aprobar "$TEST_OUTPUT" > /dev/null 2>&1; then
+  echo "TEST FAIL: 'aprobar' no debería poder correrse dos veces sobre el mismo PRD." >&2
+  exit 1
+else
+  echo "PASS: 'aprobar' rechaza aprobar un PRD que ya no está en Borrador."
+fi
+
 echo "Todos los tests pasaron correctamente."

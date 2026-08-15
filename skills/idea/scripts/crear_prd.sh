@@ -14,11 +14,18 @@ set -euo pipefail
 #   crear_prd.sh add <ruta_del_prd> --exclusion "<texto>" [--cerrar-lista]                   (repetible)
 #   crear_prd.sh add <ruta_del_prd> --paso|--requerimiento|--exclusion --cerrar-lista
 #   crear_prd.sh check <ruta_del_prd>
+#   crear_prd.sh aprobar <ruta_del_prd>
 #
 # --cerrar-lista cierra la lista correspondiente (falla si quedaría vacía).
 # Se puede combinar con el último ítem en la misma llamada, o usarse solo
 # (sin texto) cuando el cierre se decide después de haber agregado el
 # último ítem en una llamada previa. No aplica a --problema ni --objetivo.
+#
+# 'check' es completitud MECÁNICA (¿faltan placeholders?), no aprobación:
+# no cambia el Estado del documento. 'aprobar' es la única forma de pasar
+# de Borrador a Completo, y requiere que 'check' ya esté en OK — está
+# pensado para usarse recién después de que el usuario aprobó explícitamente
+# un resumen objetivo del PRD, no como paso automático del LLM.
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 TEMPLATE_PATH="${SCRIPT_DIR}/../assets/template.md"
@@ -34,6 +41,7 @@ Uso:
   $0 add <ruta_del_prd> --exclusion "<texto>" [--cerrar-lista]                   (repetible)
   $0 add <ruta_del_prd> --paso|--requerimiento|--exclusion --cerrar-lista
   $0 check <ruta_del_prd>
+  $0 aprobar <ruta_del_prd>
 EOF
 }
 
@@ -329,6 +337,14 @@ cmd_add() {
   return 0
 }
 
+# Devuelve (por stdout) los placeholders {{...}} pendientes en $ruta, uno
+# por línea. Vacío si no queda ninguno. La usan tanto 'check' como
+# 'aprobar', para no duplicar el criterio de completitud mecánica.
+placeholders_pendientes() {
+  local ruta="$1"
+  grep -oE '\{\{[A-Z_]+\}\}' "$ruta" | sort -u || true
+}
+
 cmd_check() {
   local ruta="${1:-}"
   if [ -z "$ruta" ] || [ ! -f "$ruta" ]; then
@@ -337,13 +353,42 @@ cmd_check() {
     exit 1
   fi
   local pendientes
-  pendientes=$(grep -oE '\{\{[A-Z_]+\}\}' "$ruta" | sort -u || true)
+  pendientes=$(placeholders_pendientes "$ruta")
   if [ -n "$pendientes" ]; then
     echo "Placeholders pendientes en '$ruta':" >&2
     echo "$pendientes" >&2
     exit 1
   fi
   echo "OK: no quedan placeholders pendientes en '$ruta'."
+}
+
+cmd_aprobar() {
+  local ruta="${1:-}"
+  if [ -z "$ruta" ] || [ ! -f "$ruta" ]; then
+    echo "Error: ruta de PRD inválida: '${ruta:-}'." >&2
+    uso
+    exit 1
+  fi
+  local pendientes
+  pendientes=$(placeholders_pendientes "$ruta")
+  if [ -n "$pendientes" ]; then
+    echo "Error: no se puede aprobar, todavía quedan placeholders pendientes:" >&2
+    echo "$pendientes" >&2
+    exit 1
+  fi
+  local linea
+  linea=$(grep -nF '**Estado:** Borrador' "$ruta" | head -1 | cut -d: -f1)
+  if [ -z "$linea" ]; then
+    echo "Error: no se encontró '**Estado:** Borrador' en '$ruta' (¿ya fue aprobado?)." >&2
+    exit 1
+  fi
+  local tmp
+  tmp=$(mktemp)
+  head -n $((linea - 1)) "$ruta" > "$tmp"
+  printf '**Estado:** Completo\n' >> "$tmp"
+  tail -n +$((linea + 1)) "$ruta" >> "$tmp"
+  mv "$tmp" "$ruta"
+  echo "PRD aprobado (Estado: Completo) en: $ruta"
 }
 
 main() {
@@ -358,6 +403,7 @@ main() {
     init) cmd_init "$@" ;;
     add) cmd_add "$@" ;;
     check) cmd_check "$@" ;;
+    aprobar) cmd_aprobar "$@" ;;
     *)
       echo "Error: subcomando desconocido: '$sub'." >&2
       uso

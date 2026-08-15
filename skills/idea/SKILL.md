@@ -62,17 +62,29 @@ Aplicá `/entrevistar` para cada punto, uno por vez con respuesta recomendada, y
 
 `--cerrar-lista` se puede usar solo (sin texto, como en los ejemplos de arriba) o combinado con el último ítem en la misma llamada si ya sabés de antemano que es el último. `add` rechaza reemplazar un campo único ya completado, y rechaza `--cerrar-lista` si la lista quedaría vacía — si alguno falla, es señal de que el paso ya se hizo o de que falta agregar al menos un ítem antes de cerrar.
 
-### 3. Verificar completitud
+### 3. Verificar completitud mecánica
 
 ```bash
 <skill-dir>/scripts/crear_prd.sh check "<ruta>"
 ```
 
-Si reporta placeholders pendientes, volvé al paso 2 y completá el campo faltante con `/entrevistar`. Repetí hasta que `check` confirme que no queda ninguno.
+Si reporta placeholders pendientes, volvé al paso 2 y completá el campo faltante con `/entrevistar`. Repetí hasta que `check` confirme que no queda ninguno. Esto es completitud mecánica (¿están todos los campos rellenos?), no aprobación del contenido — no cambia el `Estado` del documento.
 
-### 4. Entrega
+### 4. Aprobación del usuario
 
-Mostrale el archivo final al usuario y confirmá que refleja lo acordado en la entrevista.
+`check` en OK no alcanza para dar el PRD por terminado: la completitud del *contenido* la aprueba el usuario, no el script. Presentale un **resumen objetivo** de lo que va a hacer esta tarea (problema, objetivo, flujo principal, cada requerimiento con su ID `RF-00N`, y las exclusiones) y esperá su confirmación explícita.
+
+Recién cuando el usuario apruebe, marcá el documento como completo:
+
+```bash
+<skill-dir>/scripts/crear_prd.sh aprobar "<ruta>"
+```
+
+Esto cambia `**Estado:** Borrador` a `**Estado:** Completo` en el archivo. Si el usuario pide cambios en el resumen, volvé al paso 2 antes de aprobar.
+
+### 5. Entrega
+
+Mostrale el archivo final al usuario.
 
 ## Skills relacionadas
 
