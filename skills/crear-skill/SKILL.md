@@ -23,7 +23,7 @@ Reglas obligatorias del campo `name`:
 - No puede tener guiones consecutivos (`--`).
 - Debe coincidir exactamente con el nombre del directorio que lo contiene.
 
-Convención de este repositorio (no exigida por el estándar, pero obligatoria acá para consistencia): verbo + sustantivo en español, kebab-case, igual que `crear-ticket`, `analizar-alcance`, `validar-skill`. Si el usuario propone un nombre inválido, rechazalo y proponé una alternativa que cumpla las reglas antes de seguir.
+Convención de este repositorio (no exigida por el estándar, pero obligatoria acá para consistencia): verbo + sustantivo en español, kebab-case, igual que `crear-ticket`, `crear-pr`, `validar-skill`. Si el usuario propone un nombre inválido, rechazalo y proponé una alternativa que cumpla las reglas antes de seguir.
 
 ### 3. Redactar la descripción (`description`)
 
@@ -54,13 +54,13 @@ El cuerpo no tiene restricciones de formato, pero seguí estas reglas obligatori
 - Escribilo en español, con la misma voz que el resto de los skills del repo (instrucciones directas, sin relleno).
 - Incluí: instrucciones paso a paso, ejemplos de entrada/salida cuando aplique, y casos borde relevantes.
 - **Mantené el `SKILL.md` completo por debajo de 500 líneas** y el cuerpo (sin contar frontmatter) por debajo de ~5000 tokens — el agente carga todo el archivo entero al activar el skill. Si el contenido crece más, movelo a `references/` y dejá solo un puntero en el cuerpo.
-- Si el skill invoca a otro skill de este repo, referencialo con el prefijo `/nombre-del-skill` (convención ya establecida en `cocinar`, `analizar-alcance`, `plan`, etc.).
+- Si el skill invoca a otro skill de este repo, referencialo con el prefijo `/nombre-del-skill` (convención ya establecida en `cocinar`, `idea`, `spec`, etc.).
 
 ### 6. Organizar directorios opcionales
 
 Solo creá los que el skill realmente necesite:
 
-- **`scripts/`** — código ejecutable en bash (no Python ni otro runtime que requiera instalar un intérprete aparte). Debe ser autocontenido o documentar claramente sus dependencias, incluir mensajes de error útiles y manejar casos borde sin romper. Si otro skill de este repo ya necesita el mismo script y ese otro skill es su dueño natural (ver ejemplo `implementar-tarea` reutilizando `plan_file.sh` de `plan`), referencialo por nombre de skill vecino en vez de duplicarlo. Todo script `<nombre>.sh` necesita su test en `scripts/tests/<nombre>.sh` (bash puro, sin frameworks externos) antes de dar el skill por terminado.
+- **`scripts/`** — código ejecutable en bash (no Python ni otro runtime que requiera instalar un intérprete aparte). Debe ser autocontenido o documentar claramente sus dependencias, incluir mensajes de error útiles y manejar casos borde sin romper. Si otro skill de este repo ya necesita el mismo script y ese otro skill es su dueño natural, referencialo por nombre de skill vecino en vez de duplicarlo. Si en cambio el script solo tiene sentido dentro del flujo de otro skill y no se usa de forma independiente, no lo bundlees como skill aparte: movelo a `references/`/`scripts/` de la skill dueña (ver `cocinar`, que absorbió así el análisis de alcance y la ejecución de tareas). Todo script `<nombre>.sh` necesita su test en `scripts/tests/<nombre>.sh` (bash puro, sin frameworks externos) antes de dar el skill por terminado.
 - **`references/`** — documentación detallada que el agente carga solo cuando la necesita (p. ej. `REFERENCE.md`, o archivos por dominio). Mantené cada archivo enfocado en un tema.
 - **`assets/`** — recursos estáticos: plantillas, imágenes, datos de referencia.
 

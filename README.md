@@ -54,7 +54,8 @@ que un solo enlace por skill alcanza para las dos. Claude Code solo lee
 La invocación es igual en las tres herramientas:
 
 ```text
-/analizar-alcance
+/idea
+/spec
 /plan
 /crear-ticket
 /cocinar PROJ-1234
@@ -89,22 +90,20 @@ que no hayan sido creados por el instalador.
 
 ## Workflows incluidos
 
-### Definición de producto
+### Idea → especificación → plan
 
 | Workflow | Propósito |
 | --- | --- |
-| `crear-prd` | Guía la redacción de un PRD centrado en cliente, problema y evidencia. |
+| `idea` | Transforma una idea abstracta en un PRD funcional (`changes/<slug>/prd.md`). |
+| `spec` | Traduce un PRD aprobado en una especificación técnica con escenarios Gherkin (`changes/<slug>/spec.md`). |
+| `plan` | Convierte una spec aprobada en un plan de tareas trazables a cada escenario (`changes/<slug>/plan.md`). |
 
 ### Ticket → pull request
 
 | Workflow | Propósito |
 | --- | --- |
-| `analizar-alcance` | Determina si un issue es independiente o debe dividirse. |
 | `crear-ticket` | Produce un ticket de Jira claro y accionable. |
-| `cocinar` | Orquesta el flujo completo desde un ticket hasta una pull request. |
-| `plan` | Convierte un alcance confirmado en tareas implementables. |
-| `implementar-plan` | Ejecuta las tareas de un plan persistido. |
-| `implementar-tarea` | Ejecuta y verifica una tarea individual. |
+| `cocinar` | Orquesta de punta a punta el análisis de alcance, la planificación interna, la implementación y la pull request de un ticket de Jira. |
 | `crear-pr` | Prepara una pull request a partir de cambios implementados. |
 
 ### Documentación (Diátaxis)
@@ -132,8 +131,14 @@ Los archivos se pueden instalar sin configurar servicios externos, pero algunos
 workflows esperan capacidades adicionales:
 
 - `cocinar` espera un workflow de consulta de tickets (`consultar-ticket`),
-  entrevistas y acceso al contexto de Jira;
-- `plan` utiliza `crear-ticket` para producir las tareas;
+  entrevistas y acceso al contexto de Jira. El análisis de alcance, la
+  planificación interna y la ejecución tarea por tarea viven como
+  `references/` y `scripts/` propios de `cocinar` (no son skills invocables
+  por separado: no dependen de Jira, pero tampoco tienen sentido fuera de
+  este flujo);
+- `spec` exige un PRD de `idea` con `Estado: Completo`; `plan` exige una spec
+  de `spec` con `Estado: Completo` — cada etapa valida mecánicamente que la
+  anterior esté aprobada antes de arrancar;
 - `documentar` organiza el trabajo internamente en sub-skills privadas
   (clasificación, tutoriales, guías, referencia, explicaciones y validación)
   anidadas en `skills/documentar/skills/`; no se instalan ni se invocan por
@@ -160,11 +165,14 @@ dotskills/
 
 Cada `skills/<nombre>/` es un directorio autocontenido: si invoca scripts, van
 en bash puro (sin Python, sin JSON, sin dependencias externas como `jq`) dentro
-de su propio `scripts/`. Un skill que dependa de otro (por ejemplo `implementar-tarea`
-reutilizando `plan_file.sh` de `plan`) lo referencia por nombre de skill vecino,
-nunca copiando el script. `install.sh` no copia contenido en ningún punto: solo
-crea symlinks desde `skills/<nombre>/` hacia las carpetas globales de cada
-herramienta.
+de su propio `scripts/`. Un skill que dependa de otro lo referencia por nombre
+de skill vecino, nunca copiando el script. Cuando una skill solo tiene sentido
+como parte del flujo de otra (por ejemplo, el análisis de alcance y la
+ejecución tarea por tarea de `cocinar`), su contenido vive directamente en
+`references/` y `scripts/` de la skill dueña en vez de existir como skill
+separada — así queda claro que no es invocable por su cuenta. `install.sh` no
+copia contenido en ningún punto: solo crea symlinks desde `skills/<nombre>/`
+hacia las carpetas globales de cada herramienta.
 
 ## Desarrollo
 

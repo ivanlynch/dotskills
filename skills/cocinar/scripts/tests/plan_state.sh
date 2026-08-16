@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 # Test de plan_state.sh: construye un scope CONFIRMED real con
-# workflow_state.sh (analizar-alcance) y ejercita el ciclo completo de
-# planificación sobre ese mismo estado, incluyendo el export-file que
-# consume plan_file.sh. Uso: scripts/tests/plan_state.sh (sin argumentos)
+# workflow_state.sh y ejercita el ciclo completo de planificación sobre ese
+# mismo estado, incluyendo el export-file que consume plan_file.sh.
+# Uso: scripts/tests/plan_state.sh (sin argumentos)
 set -uo pipefail
 
 PLAN_SCRIPT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/plan_state.sh"
 PLAN_FILE_SCRIPT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/plan_file.sh"
-WORKFLOW_SCRIPT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../../analizar-alcance/scripts" && pwd)/workflow_state.sh"
+WORKFLOW_SCRIPT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/workflow_state.sh"
 
 pass=0
 fail=0

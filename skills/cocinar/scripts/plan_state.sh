@@ -32,8 +32,9 @@ slug_for_filename() {
   printf '%s' "$1" | tr -c 'A-Za-z0-9_.-' '-' | tr 'A-Z' 'a-z' | sed -e 's/^-*//' -e 's/-*$//'
 }
 
-# Debe coincidir exactamente con analizar-alcance/scripts/workflow_state.sh:
-# ambos scripts necesitan calcular la misma ruta para poder leerse.
+# Debe coincidir exactamente con workflow_state_path() de workflow_state.sh
+# (mismo directorio scripts/ de /cocinar): ambos scripts necesitan calcular
+# la misma ruta para poder leerse.
 workflow_state_path() {
   local slug; slug="$(slug_for_filename "$1")"
   [ -n "$slug" ] || slug="issue"
@@ -162,7 +163,7 @@ import_scope() {
   # Lee el estado (ya plano) de workflow_state.sh para el mismo ticket y
   # proyecto; exige scope_analysis CONFIRMED con todos los nodos DONE.
   local ticket="$1" wpath; wpath="$(workflow_state_path "$ticket")"
-  [ -f "$wpath" ] || err "No hay análisis de alcance para $ticket. Corré /analizar-alcance primero."
+  [ -f "$wpath" ] || err "No hay análisis de alcance para $ticket. Completá la fase 'analizar-alcance' de /cocinar primero."
   local scope_status; scope_status="$(awk -F'\t' '$1=="SCOPEMETA" && $2=="status"{print $3}' "$wpath")"
   [ "$scope_status" = "CONFIRMED" ] || err "scope_analysis de $ticket no está CONFIRMED todavía."
   local objective; objective="$(awk -F'\t' '$1=="SCOPEMETA" && $2=="objective"{print $3}' "$wpath")"

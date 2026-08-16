@@ -1,105 +1,76 @@
 ---
 name: plan
-description: Genera un plan completo de implementación a partir de un alcance confirmado y persiste cada incremento como una tarea ejecutable con validaciones. Usar en modo normal cuando el usuario necesite convertir incrementos en tickets mediante /crear-ticket, o en modo interno cuando /cocinar necesite planificar etapas sin crear tickets.
+description: Convierte una spec técnica ya completa en un plan de tareas trazables (changes/<slug>/plan.md), donde cada tarea declara qué escenarios RF00NE00N cubre y de qué otras tareas depende. Úsala cuando haya una spec aprobada y haga falta desglosarla en trabajo ejecutable antes de implementar.
 ---
 
 # Plan
 
-Convertir un alcance confirmado por `/analizar-alcance` en un plan de implementación ejecutable. No implementar código, no crear branches y no abrir pull requests. El modo normal crea tickets; el modo `--internal`, reservado para `/cocinar`, persiste etapas internas sin crear tickets de Jira.
+Traduce una **spec técnica ya aprobada** (`Estado: Completo`, generada por `/spec`) en un **plan de tareas** (`plan.md`): una lista de tareas donde cada una cubre uno o más escenarios `RF00NE00N` y declara sus dependencias, mediante un proceso de entrevista interactivo. No ejecuta ni implementa nada — solo produce el documento, igual que `/idea` y `/spec`.
 
-## Modos
+## Flujo de Trabajo
 
-- Sin `--internal`: invocar `/crear-ticket` para cada tarea, como flujo de planificación independiente.
-- Con `--internal`: redactar directamente títulos y descripciones breves para las etapas, sin invocar `/crear-ticket` ni pedir confirmación por cada etapa.
+El documento se completa con comandos, no editando el archivo a mano: cada tarea confirmada en la entrevista se registra de inmediato con `crear_plan.sh`, y al final `check` confirma mecánicamente que todos los escenarios de la spec quedaron cubiertos por alguna tarea. No des el plan por terminado por criterio propio — dejá que `check` lo confirme.
 
-## Contrato de entrada
+**A diferencia de `/spec`** (una sección scaffoldeada por cada `RF00N`), acá la relación tarea↔escenario es muchos-a-muchos: una tarea puede cubrir varios escenarios, y un escenario puede necesitar varias tareas. Por eso no hay una sección por escenario — es una lista plana de tareas, y la cobertura se verifica releyendo la spec original, no contando placeholders por escenario.
 
-No recibís el alcance como texto: `<skill-dir>/scripts/plan_state.sh init <TICKET_ID>` lee directamente el registro que dejó `/analizar-alcance` para ese mismo ticket y proyecto (texto plano, sin JSON, sin Python — ver `<analizar-alcance-skill-dir>/scripts/workflow_state.sh`). El script rechaza el `init` si el alcance de ese ticket no está `CONFIRMED`, si falta el objetivo, o si no hay ningún work item con verdict `APTO_PARA_IMPLEMENTAR`; no hay forma de arrancar con un alcance incompleto o bloqueado.
+### 1. Ubicar la spec de entrada
 
-Nunca edites a mano el archivo de estado que persiste el script.
+Necesitás la ruta de un `spec.md` con `**Estado:** Completo`. Si el usuario nombra la feature en vez de la ruta, infiere `changes/<slug>/spec.md`. Si la spec todavía está en Borrador, no sigas: primero hay que completarla con `/spec`.
 
-## Flujo obligatorio
+### 2. Crear el archivo
 
-### 1. Inicializar y validar
+```bash
+<skill-dir>/scripts/crear_plan.sh init "<ruta_spec>" [ruta_salida]
+```
 
-1. Ejecutar `init <TICKET_ID>`.
-2. Ejecutar `validate`.
-3. Ejecutar `next` para obtener el siguiente work item pendiente.
-4. No analizar manualmente el árbol ni editar el estado directamente.
+Si omitís `ruta_salida`, el script guarda el plan junto a la spec (`changes/<slug>/plan.md`, mismo directorio que `spec.md`). El script imprime por stdout la lista completa de escenarios `RF00NE00N` de la spec, en orden — esa es la agenda de cobertura que hay que completar, no hace falta que la releas vos mismo de la spec.
 
-### 2. Convertir cada work item en una tarea
+Guardá la ruta del plan y la lista de escenarios: las vas a usar en el paso siguiente.
 
-Para cada work item devuelto por `next`:
+### 3. Entrevistar y registrar tareas
 
-1. Definir cómo se implementará: pasos técnicos, orden, archivos o módulos candidatos solo cuando estén respaldados por la guía del proyecto, verificaciones y dependencias.
-2. En modo normal, invocar `/crear-ticket` para generar el título y la descripción de la tarea. Pasar como contexto el work item, el alcance global, las decisiones confirmadas y el plan técnico descubierto.
-3. En modo `--internal`, redactar directamente un título y una descripción orientados al resultado, junto con sus pasos y verificaciones. No invocar `/crear-ticket`.
-4. En modo normal, respetar la salida de `/crear-ticket` y esperar su confirmación; en modo `--internal`, no esperar confirmación por etapa porque `/cocinar` ya la obtuvo antes de implementar.
-5. Persistir inmediatamente la tarea con una sola operación:
+Recorré los escenarios pendientes de cobertura (los que imprimió `init`, y los que `check` siga marcando como faltantes). Para cada tarea:
 
+1. Aplicá `/entrevistar` para definir, con el usuario: qué hace la tarea (título + descripción orientada al resultado), qué escenarios `RF00NE00N` cubre (pueden ser varios, incluso de distintos `RF00N`), de qué otras tareas depende (si depende de alguna, esa tarea ya tiene que existir en el plan) y cuál es su verificación concreta.
+2. Cuando el usuario confirme la tarea completa, registrala:
    ```bash
-   <skill-dir>/scripts/plan_state.sh task-add <TICKET_ID> \
-     --source-node-id <NODE_ID> \
-     --title "<título pt-BR>" \
-     --description "<descripción pt-BR>" \
-     --implementation-step "<paso técnico>" \
-     --verification "<verificación>" \
-     [--depends-on <TASK_ID>]
+   <skill-dir>/scripts/crear_plan.sh add "<ruta_plan>" --tarea "<título>" "<descripción>" \
+     --verificacion "<texto>" [--depende-de <T00N> ...] --cubre <RF00NE00N> [<RF00NE00N> ...]
+   ```
+   No le asignes vos un ID: el script calcula automáticamente el próximo `T00N`. El script rechaza `--cubre` con un escenario que no existe en la spec y `--depende-de` con una tarea que todavía no existe en el plan — si alguno falla, es señal de un typo o de que falta agregar la tarea dependencia primero.
+3. Preguntá explícitamente si hace falta otra tarea (para terminar de cubrir escenarios pendientes, o porque un escenario ya cubierto necesita más de una tarea) — no des la lista por cerrada por tu cuenta.
+4. Cuando el usuario confirme que no hace falta ninguna tarea más, cerrá la lista:
+   ```bash
+   <skill-dir>/scripts/crear_plan.sh add "<ruta_plan>" --tarea --cerrar-lista
    ```
 
-6. Ejecutar `validate` después de cada tarea.
-7. Si un work item necesita varias tareas, repetir el paso de generación correspondiente al modo activo y `task-add` para cada una antes de cerrarlo.
-8. Marcar el work item completo con:
+`--cerrar-lista` se puede usar solo o combinado con la última tarea en la misma llamada.
 
-   ```bash
-   <skill-dir>/scripts/plan_state.sh item-complete <TICKET_ID> --source-node-id <NODE_ID>
-   ```
+### 4. Verificar completitud mecánica
 
-   El script solo lo permite si tiene al menos una tarea `READY` y no tiene tareas bloqueadas.
+```bash
+<skill-dir>/scripts/crear_plan.sh check "<ruta_plan>"
+```
 
-### 3. Cerrar y exportar el plan
+Si reporta escenarios sin cubrir, volvé al paso 3 y agregá la tarea que falte (la lista de tareas hay que reabrirla agregando de nuevo, sin `--cerrar-lista`, salvo que ya esté cerrada — en ese caso agregá la tarea y volvé a cerrar). Si reporta una dependencia inexistente, corregí el `--depende-de` de esa tarea. Repetí hasta que `check` confirme que no queda ningún problema.
 
-Después de procesar todos los work items:
+### 5. Aprobación del usuario
 
-1. Ejecutar `validate`.
-2. Ejecutar:
+`check` en OK no alcanza para dar el plan por terminado: la completitud del *contenido* la aprueba el usuario, no el script. Presentale un **resumen objetivo**: cada tarea con su ID, qué escenarios cubre y de qué depende. Esperá su confirmación explícita.
 
-   ```bash
-   <skill-dir>/scripts/plan_state.sh complete <TICKET_ID> --evidence "<resumen breve>"
-   ```
+Recién cuando el usuario apruebe, marcá el documento como completo:
 
-3. Crear obligatoriamente el archivo ejecutable del plan:
+```bash
+<skill-dir>/scripts/crear_plan.sh aprobar "<ruta_plan>"
+```
 
-   ```bash
-   <skill-dir>/scripts/plan_state.sh export-file <TICKET_ID> --output "<ruta del plan>.txt"
-   ```
+Si el usuario pide cambios, volvé al paso 3 antes de aprobar.
 
-   Este archivo (texto plano, sin JSON) es la única entrada de `/implementar-plan`. No modificarlo manualmente.
+### 6. Entrega
 
-4. Obtener la salida final consumible por `aprobacion` o `implementacion`:
+Mostrale el archivo final al usuario.
 
-   ```bash
-   <skill-dir>/scripts/plan_state.sh export <TICKET_ID>
-   ```
+## Skills relacionadas
 
-La salida final debe informar el objetivo, la lista de tareas en orden y la ruta del archivo ejecutable creado en el paso 3. No entregar el estado interno del script como sustituto del plan.
-
-## Reglas de decisión
-
-- Una tarea del plan debe tener un único resultado observable y una verificación concreta.
-- Mantener las tareas pequeñas y ordenadas por dependencia.
-- En modo normal, no crear tareas técnicas sin título y descripción generados por `/crear-ticket`. En modo `--internal`, el propio plan debe generar esos campos de forma breve y verificable.
-- No inventar archivos, endpoints, módulos, APIs ni comandos.
-- Separar alcance incluido, fuera de alcance, supuestos, riesgos, verificaciones y deuda técnica.
-- Si falta una decisión de producto o comportamiento, detener el work item e invocar `/entrevistar`; no asumir silenciosamente. Solo el modo normal puede usar `/crear-ticket` para convertir una tarea ya definida en un issue.
-- Si el script devuelve `ERROR: ...` (exit distinto de 0), corregir lo que indique el mensaje y no editar el estado manualmente.
-- Si una tarea queda bloqueada, usar `/entrevistar` para cerrar la decisión y luego ejecutar `task-unblock` con la resolución antes de continuar.
-
-## Resultado final
-
-Entregar solamente un resumen breve y la salida de `plan_state.sh export`, indicando:
-
-- `PLAN_COMPLETE` o el bloqueo actual;
-- cantidad de tareas listas;
-- dependencias o riesgos relevantes;
-- ruta del registro persistido.
+- `/spec`: genera la spec con `Estado: Completo` y los escenarios `RF00NE00N` que esta skill consume como entrada obligatoria.
+- `/entrevistar`: conduce cada entrevista del paso 3, una pregunta a la vez con recomendación.
