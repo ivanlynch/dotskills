@@ -3,7 +3,7 @@ set -euo pipefail
 
 # Genera y completa incrementalmente un spec técnico (changes/<slug>/spec.md)
 # a partir de un PRD ya aprobado por /idea, sin depender de que el LLM
-# recuerde qué requerimientos RF-00N ya tienen escenario y cuáles no.
+# recuerde qué requerimientos RF00N ya tienen escenario y cuáles no.
 #
 # Subcomandos:
 #   crear_spec.sh init <ruta_prd> [ruta_salida]
@@ -13,11 +13,11 @@ set -euo pipefail
 #   crear_spec.sh aprobar <ruta_spec>
 #
 # 'init' lee el PRD (debe estar en Estado Completo), extrae su título y cada
-# encabezado '#### RF-00N: <título>', y genera una sección '## RF-00N: ...'
-# por cada uno, con su propio placeholder de lista '{{ESCENARIOS_RF_00N}}'.
-# Esto hace mecánico que el spec cubra exactamente los requerimientos del
-# PRD: ninguno queda afuera ni se inventa uno nuevo, porque las secciones
-# vienen scaffoldeadas antes de que el LLM escriba nada.
+# encabezado '#### RF00N: <título>', y genera una sección '## RF00N: ...' por
+# cada uno, con su propio placeholder de lista '{{ESCENARIOS_RF00N}}'. Esto
+# hace mecánico que el spec cubra exactamente los requerimientos del PRD:
+# ninguno queda afuera ni se inventa uno nuevo, porque las secciones vienen
+# scaffoldeadas antes de que el LLM escriba nada.
 #
 # A diferencia de crear_prd.sh (placeholders únicos en todo el archivo), acá
 # el marcador de lista de escenarios se repite una vez por cada sección RF.
@@ -42,7 +42,7 @@ EOF
 
 rf_marcador() {
   local rf_id="$1"
-  printf '{{ESCENARIOS_%s}}' "$(printf '%s' "$rf_id" | tr '-' '_')"
+  printf '{{ESCENARIOS_%s}}' "$rf_id"
 }
 
 cmd_init() {
@@ -65,9 +65,9 @@ cmd_init() {
   fi
 
   local rf_lines
-  rf_lines=$(grep -oE '^#### RF-[0-9]+: .*$' "$ruta_prd" || true)
+  rf_lines=$(grep -oE '^#### RF[0-9]+: .*$' "$ruta_prd" || true)
   if [ -z "$rf_lines" ]; then
-    echo "Error: el PRD '$ruta_prd' no tiene ningún requerimiento RF-00N; no se puede generar spec." >&2
+    echo "Error: el PRD '$ruta_prd' no tiene ningún requerimiento RF00N; no se puede generar spec." >&2
     exit 1
   fi
 
@@ -88,8 +88,8 @@ cmd_init() {
     printf -- '---\n'
     while IFS= read -r linea; do
       local id titulo_rf marcador
-      id=$(printf '%s\n' "$linea" | sed -E 's/^#### (RF-[0-9]+): .*$/\1/')
-      titulo_rf=$(printf '%s\n' "$linea" | sed -E 's/^#### RF-[0-9]+: (.*)$/\1/')
+      id=$(printf '%s\n' "$linea" | sed -E 's/^#### (RF[0-9]+): .*$/\1/')
+      titulo_rf=$(printf '%s\n' "$linea" | sed -E 's/^#### RF[0-9]+: (.*)$/\1/')
       marcador=$(rf_marcador "$id")
       printf '\n## %s: %s\n' "$id" "$titulo_rf"
       printf '%s\n' "$marcador"
@@ -100,8 +100,8 @@ cmd_init() {
   echo "Requerimientos a especificar (en orden):"
   while IFS= read -r linea; do
     local id titulo_rf
-    id=$(printf '%s\n' "$linea" | sed -E 's/^#### (RF-[0-9]+): .*$/\1/')
-    titulo_rf=$(printf '%s\n' "$linea" | sed -E 's/^#### RF-[0-9]+: (.*)$/\1/')
+    id=$(printf '%s\n' "$linea" | sed -E 's/^#### (RF[0-9]+): .*$/\1/')
+    titulo_rf=$(printf '%s\n' "$linea" | sed -E 's/^#### RF[0-9]+: (.*)$/\1/')
     echo "$id: $titulo_rf"
   done <<< "$rf_lines"
 }
@@ -117,9 +117,9 @@ patron_escenario() {
 # Inserta un escenario (encabezado con ID propio + bloque Gherkin, varias
 # líneas) antes de la línea de marcador, dejando el marcador para poder
 # seguir agregando escenarios a la misma sección. El ID del escenario
-# (RF001E00N) se asigna automáticamente contando, dentro del rango entre el
+# (RF00NE00N) se asigna automáticamente contando, dentro del rango entre el
 # encabezado de esta sección y su marcador, cuántos escenarios ya tiene —
-# igual que --requerimiento asigna RF-00N en /idea, el LLM no lleva la
+# igual que --requerimiento asigna RF00N en /idea, el LLM no lleva la
 # cuenta.
 agregar_escenario() {
   local ruta="$1" rf_id="$2" marcador="$3" nombre="$4" bloque="$5"
@@ -133,7 +133,7 @@ agregar_escenario() {
   heading_linea=$(grep -nE "^## ${rf_id}: " "$ruta" | head -1 | cut -d: -f1)
   n=$(sed -n "$((heading_linea + 1)),$((linea - 1))p" "$ruta" | grep -cE "$(patron_escenario)" || true)
   siguiente=$((n + 1))
-  escenario_id=$(printf '%sE%03d' "$(printf '%s' "$rf_id" | tr -d '-')" "$siguiente")
+  escenario_id=$(printf '%sE%03d' "$rf_id" "$siguiente")
   local tmp
   tmp=$(mktemp)
   head -n $((linea - 1)) "$ruta" > "$tmp"
@@ -183,12 +183,12 @@ cmd_add_escenario() {
 
   local rf_id="${1:-}"
   if [ -z "$rf_id" ]; then
-    echo "Error: --escenario requiere un RF-ID, ej: --escenario RF-001 \"nombre\" \"bloque\"." >&2
+    echo "Error: --escenario requiere un RF-ID, ej: --escenario RF001 \"nombre\" \"bloque\"." >&2
     uso
     exit 1
   fi
-  if ! printf '%s' "$rf_id" | grep -qE '^RF-[0-9]+$'; then
-    echo "Error: RF-ID inválido: '$rf_id' (formato esperado: RF-00N)." >&2
+  if ! printf '%s' "$rf_id" | grep -qE '^RF[0-9]+$'; then
+    echo "Error: RF-ID inválido: '$rf_id' (formato esperado: RF00N)." >&2
     exit 1
   fi
   shift || true
@@ -219,12 +219,12 @@ cmd_add_escenario() {
     exit 1
   fi
   if [ -z "$nombre" ] && [ -z "$cerrar" ]; then
-    echo "Error: --escenario requiere un nombre y un bloque Gherkin, ej: --escenario RF-001 \"Alta exitosa\" \"Dado ...\"." >&2
+    echo "Error: --escenario requiere un nombre y un bloque Gherkin, ej: --escenario RF001 \"Alta exitosa\" \"Dado ...\"." >&2
     uso
     exit 1
   fi
   if [ -n "$nombre" ] && [ -z "$bloque" ]; then
-    echo "Error: --escenario requiere también el bloque Gherkin (Dado/Cuando/Entonces), ej: --escenario RF-001 \"Alta exitosa\" \"Dado ...\"." >&2
+    echo "Error: --escenario requiere también el bloque Gherkin (Dado/Cuando/Entonces), ej: --escenario RF001 \"Alta exitosa\" \"Dado ...\"." >&2
     exit 1
   fi
 

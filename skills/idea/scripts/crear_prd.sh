@@ -10,7 +10,7 @@ set -euo pipefail
 #   crear_prd.sh add <ruta_del_prd> --problema "<texto>"
 #   crear_prd.sh add <ruta_del_prd> --objetivo "<texto>"
 #   crear_prd.sh add <ruta_del_prd> --paso "<texto>" [--cerrar-lista]                        (repetible)
-#   crear_prd.sh add <ruta_del_prd> --requerimiento "<título>" "<descripción>" [--cerrar-lista]  (repetible, asigna RF-00N)
+#   crear_prd.sh add <ruta_del_prd> --requerimiento "<título>" "<descripción>" [--cerrar-lista]  (repetible, asigna RF00N)
 #   crear_prd.sh add <ruta_del_prd> --exclusion "<texto>" [--cerrar-lista]                   (repetible)
 #   crear_prd.sh add <ruta_del_prd> --paso|--requerimiento|--exclusion --cerrar-lista
 #   crear_prd.sh check <ruta_del_prd>
@@ -37,7 +37,7 @@ Uso:
   $0 add <ruta_del_prd> --problema "<texto>"
   $0 add <ruta_del_prd> --objetivo "<texto>"
   $0 add <ruta_del_prd> --paso "<texto>" [--cerrar-lista]                        (repetible)
-  $0 add <ruta_del_prd> --requerimiento "<título>" "<descripción>" [--cerrar-lista]  (repetible, asigna RF-00N)
+  $0 add <ruta_del_prd> --requerimiento "<título>" "<descripción>" [--cerrar-lista]  (repetible, asigna RF00N)
   $0 add <ruta_del_prd> --exclusion "<texto>" [--cerrar-lista]                   (repetible)
   $0 add <ruta_del_prd> --paso|--requerimiento|--exclusion --cerrar-lista
   $0 check <ruta_del_prd>
@@ -166,12 +166,13 @@ agregar_item_numerado() {
 }
 
 # Inserta un requerimiento funcional (título + descripción, dos líneas) antes
-# del marcador, asignando el próximo ID RF-00N disponible. El ID se calcula
-# contando encabezados '#### RF-NNN:' en todo el archivo, no solo la línea
-# inmediata anterior al marcador (el bloque ocupa varias líneas, a diferencia
-# de un ítem de una sola línea). No agrega una línea en blanco propia: el
-# separador antes de la siguiente sección lo aporta el template, igual que
-# con --paso y --exclusion.
+# del marcador, asignando el próximo ID RF00N disponible (sin guion: mantiene
+# el mismo patrón que los IDs de escenario que /spec deriva de este, como
+# RF001E001). El ID se calcula contando encabezados '#### RFNNN:' en todo el
+# archivo, no solo la línea inmediata anterior al marcador (el bloque ocupa
+# varias líneas, a diferencia de un ítem de una sola línea). No agrega una
+# línea en blanco propia: el separador antes de la siguiente sección lo
+# aporta el template, igual que con --paso y --exclusion.
 agregar_requerimiento() {
   local ruta="$1" marcador="$2" titulo="$3" descripcion="$4"
   local linea
@@ -181,9 +182,9 @@ agregar_requerimiento() {
     exit 1
   fi
   local n siguiente id
-  n=$(grep -cE '^#### RF-[0-9]+: ' "$ruta" || true)
+  n=$(grep -cE '^#### RF[0-9]+: ' "$ruta" || true)
   siguiente=$((n + 1))
-  id=$(printf 'RF-%03d' "$siguiente")
+  id=$(printf 'RF%03d' "$siguiente")
   local tmp
   tmp=$(mktemp)
   head -n $((linea - 1)) "$ruta" > "$tmp"
@@ -259,7 +260,7 @@ cmd_add_requerimiento() {
   fi
 
   [ -n "$titulo" ] && agregar_requerimiento "$ruta" "{{REQUERIMIENTOS}}" "$titulo" "$descripcion"
-  [ "$cerrar" = "--cerrar-lista" ] && cerrar_lista_marcador "$ruta" "{{REQUERIMIENTOS}}" '^#### RF-[0-9]+: '
+  [ "$cerrar" = "--cerrar-lista" ] && cerrar_lista_marcador "$ruta" "{{REQUERIMIENTOS}}" '^#### RF[0-9]+: '
   return 0
 }
 

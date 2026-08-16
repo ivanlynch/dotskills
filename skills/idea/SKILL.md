@@ -43,7 +43,7 @@ Aplicá `/entrevistar` para cada punto, uno por vez con respuesta recomendada, y
    ```bash
    <skill-dir>/scripts/crear_prd.sh add "<ruta>" --paso --cerrar-lista
    ```
-4. Entrevistá al usuario por cada **Requerimiento Funcional**: una capacidad atómica y verificable del sistema, no necesariamente un paso del flujo (también cubre reglas y restricciones que no aparecen en la narrativa del happy path, como validaciones o casos límite). Por cada uno que confirme, registralo con un título corto y una descripción — el script le asigna automáticamente el próximo ID `RF-00N`:
+4. Entrevistá al usuario por cada **Requerimiento Funcional**: una capacidad atómica y verificable del sistema, no necesariamente un paso del flujo (también cubre reglas y restricciones que no aparecen en la narrativa del happy path, como validaciones o casos límite). Por cada uno que confirme, registralo con un título corto y una descripción — el script le asigna automáticamente el próximo ID `RF00N`:
    ```bash
    <skill-dir>/scripts/crear_prd.sh add "<ruta>" --requerimiento "<título corto>" "<descripción confirmada>"
    ```
@@ -72,7 +72,7 @@ Si reporta placeholders pendientes, volvé al paso 2 y completá el campo faltan
 
 ### 4. Aprobación del usuario
 
-`check` en OK no alcanza para dar el PRD por terminado: la completitud del *contenido* la aprueba el usuario, no el script. Presentale un **resumen objetivo** de lo que va a hacer esta tarea (problema, objetivo, flujo principal, cada requerimiento con su ID `RF-00N`, y las exclusiones) y esperá su confirmación explícita.
+`check` en OK no alcanza para dar el PRD por terminado: la completitud del *contenido* la aprueba el usuario, no el script. Presentale un **resumen objetivo** de lo que va a hacer esta tarea (problema, objetivo, flujo principal, cada requerimiento con su ID `RF00N`, y las exclusiones) y esperá su confirmación explícita.
 
 Recién cuando el usuario apruebe, marcá el documento como completo:
 

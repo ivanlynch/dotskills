@@ -102,15 +102,15 @@ fi
 "$TARGET_SCRIPT" add "$TEST_OUTPUT" --requerimiento "Marcar favorito" "Un usuario logueado puede marcar/desmarcar un favorito." > /dev/null
 "$TARGET_SCRIPT" add "$TEST_OUTPUT" --requerimiento "Persistencia" "La lista de favoritos persiste entre sesiones." > /dev/null
 
-if ! grep -q "^#### RF-001: Marcar favorito$" "$TEST_OUTPUT"; then
-  echo "TEST FAIL: El requerimiento 1 no quedó con el ID RF-001 esperado." >&2
+if ! grep -q "^#### RF001: Marcar favorito$" "$TEST_OUTPUT"; then
+  echo "TEST FAIL: El requerimiento 1 no quedó con el ID RF001 esperado." >&2
   exit 1
 fi
-if ! grep -q "^#### RF-002: Persistencia$" "$TEST_OUTPUT"; then
-  echo "TEST FAIL: El requerimiento 2 no quedó con el ID RF-002 esperado." >&2
+if ! grep -q "^#### RF002: Persistencia$" "$TEST_OUTPUT"; then
+  echo "TEST FAIL: El requerimiento 2 no quedó con el ID RF002 esperado." >&2
   exit 1
 fi
-echo "PASS: 'add --requerimiento' asigna IDs RF-00N incrementales sin pisar los anteriores."
+echo "PASS: 'add --requerimiento' asigna IDs RF00N incrementales sin pisar los anteriores."
 
 if ! grep -q "{{REQUERIMIENTOS}}" "$TEST_OUTPUT" || ! grep -q "{{OUT_OF_SCOPE}}" "$TEST_OUTPUT"; then
   echo "TEST FAIL: Los marcadores de lista deberían seguir presentes tras agregar ítems sin --cerrar-lista." >&2

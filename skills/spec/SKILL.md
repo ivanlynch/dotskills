@@ -1,11 +1,11 @@
 ---
 name: spec
-description: Traduce un PRD ya completo en una especificación técnica (changes/<slug>/spec.md) con un escenario Gherkin (Dado/Cuando/Entonces) por cada requerimiento RF-00N. Úsala cuando haya un PRD aprobado y haga falta definir el contrato de comportamiento técnico antes de diseñar o implementar.
+description: Traduce un PRD ya completo en una especificación técnica (changes/<slug>/spec.md) con un escenario Gherkin (Dado/Cuando/Entonces) por cada requerimiento RF00N. Úsala cuando haya un PRD aprobado y haga falta definir el contrato de comportamiento técnico antes de diseñar o implementar.
 ---
 
 # Spec
 
-Traduce un **PRD ya aprobado** (`Estado: Completo`, generado por `/idea`) en una **especificación técnica** (`spec.md`): un escenario Gherkin (Dado/Cuando/Entonces) por cada requerimiento `RF-00N`, mediante un proceso de entrevista interactivo.
+Traduce un **PRD ya aprobado** (`Estado: Completo`, generado por `/idea`) en una **especificación técnica** (`spec.md`): un escenario Gherkin (Dado/Cuando/Entonces) por cada requerimiento `RF00N`, mediante un proceso de entrevista interactivo.
 
 ## Flujo de Trabajo
 
@@ -23,13 +23,13 @@ Necesitás la ruta de un `prd.md` con `**Estado:** Completo`. Si el usuario nomb
 <skill-dir>/scripts/crear_spec.sh init "<ruta_prd>" [ruta_salida]
 ```
 
-Si omitís `ruta_salida`, el script guarda el spec junto al PRD (`changes/<slug>/spec.md`, mismo directorio que `prd.md`). El script lee el PRD, extrae su título y cada requerimiento `#### RF-00N: <título>`, y genera **una sección por cada uno**, cada una con su propio placeholder de lista. No hace falta que vos re-derives la lista de requerimientos del PRD: el script la imprime por stdout, en orden — esa es la agenda de la entrevista.
+Si omitís `ruta_salida`, el script guarda el spec junto al PRD (`changes/<slug>/spec.md`, mismo directorio que `prd.md`). El script lee el PRD, extrae su título y cada requerimiento `#### RF00N: <título>`, y genera **una sección por cada uno**, cada una con su propio placeholder de lista. No hace falta que vos re-derives la lista de requerimientos del PRD: el script la imprime por stdout, en orden — esa es la agenda de la entrevista.
 
 Guardá la ruta del spec y la lista de RF-IDs impresa: las vas a usar en el paso siguiente.
 
 ### 3. Entrevistar y registrar, por cada RF-ID
 
-Para cada `RF-00N` (en el orden que imprimió `init`):
+Para cada `RF00N` (en el orden que imprimió `init`):
 
 1. Aplicá `/entrevistar` para definir el **escenario feliz** de ese requerimiento, en formato Gherkin y en español:
    ```
@@ -37,7 +37,7 @@ Para cada `RF-00N` (en el orden que imprimió `init`):
    Cuando <acción>
    Entonces <resultado>
    ```
-   Podés encadenar pasos adicionales con `Y`. Cuando el usuario confirme el escenario completo, registralo (no le asignes vos un ID: el script calcula automáticamente el próximo `RF00NE00N` dentro de esa sección, igual que asigna `RF-00N` en `/idea`):
+   Podés encadenar pasos adicionales con `Y`. Cuando el usuario confirme el escenario completo, registralo (no le asignes vos un ID: el script calcula automáticamente el próximo `RF00NE00N` dentro de esa sección, igual que asigna `RF00N` en `/idea`):
    ```bash
    <skill-dir>/scripts/crear_spec.sh add "<ruta_spec>" --escenario <RF-ID> "<nombre del escenario>" "<bloque Gherkin>"
    ```
@@ -60,7 +60,7 @@ Si reporta placeholders pendientes, son secciones RF sin cerrar: volvé al paso 
 
 ### 5. Aprobación del usuario
 
-`check` en OK no alcanza para dar el spec por terminado: la completitud del *contenido* la aprueba el usuario, no el script. Presentale un **resumen objetivo** por cada `RF-00N` (ID y nombre de cada escenario registrado, ej. `RF001E001: Alta exitosa`) y esperá su confirmación explícita.
+`check` en OK no alcanza para dar el spec por terminado: la completitud del *contenido* la aprueba el usuario, no el script. Presentale un **resumen objetivo** por cada `RF00N` (ID y nombre de cada escenario registrado, ej. `RF001E001: Alta exitosa`) y esperá su confirmación explícita.
 
 Recién cuando el usuario apruebe, marcá el documento como completo:
 
@@ -76,5 +76,5 @@ Mostrale el archivo final al usuario.
 
 ## Skills relacionadas
 
-- `/idea`: genera el PRD con `Estado: Completo` y los `RF-00N` que esta skill consume como entrada obligatoria.
+- `/idea`: genera el PRD con `Estado: Completo` y los `RF00N` que esta skill consume como entrada obligatoria.
 - `/entrevistar`: conduce cada entrevista del paso 3, una pregunta a la vez con recomendación.
