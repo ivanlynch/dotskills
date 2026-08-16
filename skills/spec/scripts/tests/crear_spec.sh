@@ -115,11 +115,11 @@ fi
 Cuando crea una invitación con email y rol válidos
 Entonces el sistema crea la invitación" > /dev/null
 
-if ! grep -q "^### Escenario: Alta exitosa\$" "$SPEC_OUTPUT"; then
-  echo "TEST FAIL: El escenario no quedó registrado bajo RF-001." >&2
+if ! grep -q "^### RF001E001: Alta exitosa\$" "$SPEC_OUTPUT"; then
+  echo "TEST FAIL: El escenario no quedó registrado bajo RF-001 con el ID RF001E001 esperado." >&2
   exit 1
 fi
-echo "PASS: 'add --escenario' inserta el encabezado y el bloque Gherkin del escenario."
+echo "PASS: 'add --escenario' inserta el encabezado (con ID RF001E00N autoasignado) y el bloque Gherkin del escenario."
 
 if "$TARGET_SCRIPT" add "$SPEC_OUTPUT" --escenario RF-002 --cerrar-lista > /dev/null 2>&1; then
   echo "TEST FAIL: 'add --escenario --cerrar-lista' no debería aceptarse sin ningún escenario cargado antes." >&2
@@ -136,11 +136,23 @@ if grep -qF '{{ESCENARIOS_RF_001}}' "$SPEC_OUTPUT"; then
   echo "TEST FAIL: --cerrar-lista debería haber eliminado el marcador de RF-001." >&2
   exit 1
 fi
-if ! grep -q "^### Escenario: Alta exitosa\$" "$SPEC_OUTPUT" || ! grep -q "^### Escenario: Email sin rol\$" "$SPEC_OUTPUT"; then
-  echo "TEST FAIL: Ambos escenarios de RF-001 deberían seguir presentes tras cerrar la lista." >&2
+if ! grep -q "^### RF001E001: Alta exitosa\$" "$SPEC_OUTPUT" || ! grep -q "^### RF001E002: Email sin rol\$" "$SPEC_OUTPUT"; then
+  echo "TEST FAIL: Ambos escenarios de RF-001 deberían seguir presentes, con IDs RF001E001 y RF001E002 en orden." >&2
   exit 1
 fi
-echo "PASS: 'add --escenario --cerrar-lista' conserva los escenarios previos y cierra solo esa sección."
+echo "PASS: 'add --escenario --cerrar-lista' conserva los escenarios previos (con IDs secuenciales) y cierra solo esa sección."
+
+if ! grep -q "^$" "$SPEC_OUTPUT"; then
+  echo "TEST FAIL: no hay ninguna línea en blanco en el spec (¿los escenarios quedaron pegados?)." >&2
+  exit 1
+fi
+BLANK_ANTES_RF001E002=$(grep -n "^### RF001E002: " "$SPEC_OUTPUT" | head -1 | cut -d: -f1)
+BLANK_ANTES_RF001E002=$((BLANK_ANTES_RF001E002 - 1))
+if [ -n "$(sed -n "${BLANK_ANTES_RF001E002}p" "$SPEC_OUTPUT")" ]; then
+  echo "TEST FAIL: debería haber una línea en blanco antes de cada encabezado de escenario." >&2
+  exit 1
+fi
+echo "PASS: hay una línea en blanco antes de cada encabezado de escenario (no quedan pegados)."
 
 if ! grep -qF '{{ESCENARIOS_RF_002}}' "$SPEC_OUTPUT"; then
   echo "TEST FAIL: cerrar la sección RF-001 no debería afectar el placeholder de RF-002." >&2
@@ -165,6 +177,12 @@ fi
 "$TARGET_SCRIPT" add "$SPEC_OUTPUT" --escenario RF-002 "Aceptación exitosa" "Dado un token válido
 Cuando el destinatario acepta la invitación
 Entonces pasa a formar parte del equipo" --cerrar-lista > /dev/null
+
+if ! grep -q "^### RF002E001: Aceptación exitosa\$" "$SPEC_OUTPUT"; then
+  echo "TEST FAIL: la numeración de escenarios debería ser propia de cada sección (RF002E001, no continuar desde RF001E002)." >&2
+  exit 1
+fi
+echo "PASS: la numeración de escenarios está scopeada por sección RF, no es un contador global."
 
 if ! "$TARGET_SCRIPT" check "$SPEC_OUTPUT" > /dev/null 2>&1; then
   echo "TEST FAIL: 'check' debería pasar una vez cerradas todas las secciones." >&2

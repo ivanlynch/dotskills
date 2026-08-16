@@ -106,32 +106,49 @@ cmd_init() {
   done <<< "$rf_lines"
 }
 
-# Inserta un escenario (encabezado + bloque Gherkin, varias líneas) antes de
-# la línea de marcador, dejando el marcador para poder seguir agregando
-# escenarios a la misma sección.
+# Devuelve (por stdout) el patrón que matchea el encabezado de un escenario
+# ya identificado con su propio ID (RF001E001, RF001E002, ...). Se comparte
+# entre el conteo de siguiente número y el chequeo de cierre de lista, para
+# no tener el mismo regex repetido en dos lugares.
+patron_escenario() {
+  echo '^### RF[0-9]+E[0-9]+: '
+}
+
+# Inserta un escenario (encabezado con ID propio + bloque Gherkin, varias
+# líneas) antes de la línea de marcador, dejando el marcador para poder
+# seguir agregando escenarios a la misma sección. El ID del escenario
+# (RF001E00N) se asigna automáticamente contando, dentro del rango entre el
+# encabezado de esta sección y su marcador, cuántos escenarios ya tiene —
+# igual que --requerimiento asigna RF-00N en /idea, el LLM no lleva la
+# cuenta.
 agregar_escenario() {
-  local ruta="$1" marcador="$2" nombre="$3" bloque="$4"
+  local ruta="$1" rf_id="$2" marcador="$3" nombre="$4" bloque="$5"
   local linea
   linea=$(grep -nF "$marcador" "$ruta" | head -1 | cut -d: -f1)
   if [ -z "$linea" ]; then
     echo "Error: '$marcador' no existe en '$ruta' (RF-ID inválido para este spec, o ya se cerró esa sección)." >&2
     exit 1
   fi
+  local heading_linea n siguiente escenario_id
+  heading_linea=$(grep -nE "^## ${rf_id}: " "$ruta" | head -1 | cut -d: -f1)
+  n=$(sed -n "$((heading_linea + 1)),$((linea - 1))p" "$ruta" | grep -cE "$(patron_escenario)" || true)
+  siguiente=$((n + 1))
+  escenario_id=$(printf '%sE%03d' "$(printf '%s' "$rf_id" | tr -d '-')" "$siguiente")
   local tmp
   tmp=$(mktemp)
   head -n $((linea - 1)) "$ruta" > "$tmp"
   {
-    printf '### Escenario: %s\n' "$nombre"
+    printf '\n### %s: %s\n' "$escenario_id" "$nombre"
     printf '%s\n' "$bloque"
   } >> "$tmp"
   tail -n +"$linea" "$ruta" >> "$tmp"
   mv "$tmp" "$ruta"
-  echo "Agregado escenario '$nombre' a '$marcador' en: $ruta"
+  echo "Agregado escenario '$escenario_id: $nombre' a '$marcador' en: $ruta"
 }
 
 # Cierra la lista de escenarios de UNA sección RF puntual. A diferencia de un
-# cierre de lista de todo el archivo, acota la búsqueda de '### Escenario: '
-# al rango entre el encabezado de esa sección y su propio marcador, para no
+# cierre de lista de todo el archivo, acota la búsqueda de escenarios al
+# rango entre el encabezado de esa sección y su propio marcador, para no
 # confundirse con escenarios que ya tiene otra sección.
 cerrar_lista_seccion() {
   local ruta="$1" rf_id="$2" marcador="$3"
@@ -147,7 +164,7 @@ cerrar_lista_seccion() {
     exit 1
   fi
   local tiene_escenario
-  tiene_escenario=$(sed -n "$((heading_linea + 1)),$((marcador_linea - 1))p" "$ruta" | grep -cE '^### Escenario: ' || true)
+  tiene_escenario=$(sed -n "$((heading_linea + 1)),$((marcador_linea - 1))p" "$ruta" | grep -cE "$(patron_escenario)" || true)
   if [ "$tiene_escenario" -lt 1 ]; then
     echo "Error: no se agregó ningún escenario a '$rf_id' antes de cerrar. Agregá al menos uno antes de usar --cerrar-lista." >&2
     exit 1
@@ -214,7 +231,7 @@ cmd_add_escenario() {
   local marcador
   marcador=$(rf_marcador "$rf_id")
 
-  [ -n "$nombre" ] && agregar_escenario "$ruta" "$marcador" "$nombre" "$bloque"
+  [ -n "$nombre" ] && agregar_escenario "$ruta" "$rf_id" "$marcador" "$nombre" "$bloque"
   [ "$cerrar" = "--cerrar-lista" ] && cerrar_lista_seccion "$ruta" "$rf_id" "$marcador"
   return 0
 }

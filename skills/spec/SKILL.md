@@ -37,7 +37,7 @@ Para cada `RF-00N` (en el orden que imprimió `init`):
    Cuando <acción>
    Entonces <resultado>
    ```
-   Podés encadenar pasos adicionales con `Y`. Cuando el usuario confirme el escenario completo, registralo:
+   Podés encadenar pasos adicionales con `Y`. Cuando el usuario confirme el escenario completo, registralo (no le asignes vos un ID: el script calcula automáticamente el próximo `RF00NE00N` dentro de esa sección, igual que asigna `RF-00N` en `/idea`):
    ```bash
    <skill-dir>/scripts/crear_spec.sh add "<ruta_spec>" --escenario <RF-ID> "<nombre del escenario>" "<bloque Gherkin>"
    ```
@@ -60,7 +60,7 @@ Si reporta placeholders pendientes, son secciones RF sin cerrar: volvé al paso 
 
 ### 5. Aprobación del usuario
 
-`check` en OK no alcanza para dar el spec por terminado: la completitud del *contenido* la aprueba el usuario, no el script. Presentale un **resumen objetivo** por cada `RF-00N` (nombre de cada escenario registrado) y esperá su confirmación explícita.
+`check` en OK no alcanza para dar el spec por terminado: la completitud del *contenido* la aprueba el usuario, no el script. Presentale un **resumen objetivo** por cada `RF-00N` (ID y nombre de cada escenario registrado, ej. `RF001E001: Alta exitosa`) y esperá su confirmación explícita.
 
 Recién cuando el usuario apruebe, marcá el documento como completo:
 
