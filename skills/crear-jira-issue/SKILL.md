@@ -1,6 +1,6 @@
 ---
 name: crear-jira-issue
-description: Entrevista al usuario, genera el título y la descripción de una tarea en portugués de Brasil y crea el issue como subtarea de DTCZE-12424 mediante la API REST de Jira. Usar cuando el usuario necesite definir y registrar una tarea nueva en Jira, especialmente en el proyecto DTCZE o en el board 54142.
+description: Entrevista al usuario, genera el título y la descripción de una tarea en portugués de Brasil y crea un Technical Task independiente en DTCZE mediante la API REST de Jira. Usar cuando el usuario necesite definir y registrar una tarea nueva, especialmente en el proyecto DTCZE o en el board 54142.
 ---
 
 # Crear Jira issue
@@ -10,11 +10,14 @@ Este skill combina el flujo de `/crear-ticket` con la creación efectiva del iss
 ## Configuración fija
 
 - Proyecto Jira: `DTCZE`.
-- Parent: `DTCZE-12424`.
-- Tipo creado: `Sub-task`, porque Jira exige un issue de subtarea para que un issue tenga como parent una tarea estándar.
+- Parent: `DTCZE-12424` (Epic de DTC Zé Courier - BAU).
+- Tipo criado: `Technical Task` (`id: 11737`).
 - Board de referencia: `https://ab-inbev.atlassian.net/jira/software/c/projects/DTCZE/boards/54142/backlog`.
+- Sprint fijo de creación: `Backlog Priorizado` (`customfield_10007`, sprint ID `114686`, board `54142`).
+- Team Name fijo de creación: `ZE_Last_Mile` (`customfield_13230`, opción ID `61436`).
 
-No usar el board para crear el issue: la API REST asigna el proyecto y el parent directamente.
+No usar el board para crear el issue. La API REST crea el proyecto, tipo, parent y Team Name; después de crear el issue, la API Agile lo agrega al sprint.
+El script debe asignar explícitamente `parent`, `Team Name` y `Backlog Priorizado`; no depender de valores predeterminados o automatizaciones de Jira.
 
 ## Flujo de entrevista
 
@@ -83,7 +86,7 @@ Para um bug, adaptar la estructura para incluir reproducibilidad, comportamiento
 
 ## Crear el issue
 
-1. Guardar el título final y la descripción final aprobados en archivos temporales, sin incluir secretos.
+1. Guardar el título final y la descripción final aprobados en archivos temporales, sin incluir secretos. Mantener la descripción en Markdown siguiendo la plantilla; el script la convierte a Atlassian Document Format (ADF) antes de enviarla a Jira. No convertirla manualmente a JSON ni enviarla como texto plano.
 2. Ejecutar una sola vez el script de esta skill:
 
    ```bash
@@ -92,7 +95,7 @@ Para um bug, adaptar la estructura para incluir reproducibilidad, comportamiento
      --description-file "/ruta/a/la/descripcion.md"
    ```
 
-3. El script crea un `Sub-task` en el proyecto `DTCZE` con parent `DTCZE-12424`.
+3. El script crea um `Technical Task` com parent `DTCZE-12424`, `Team Name = ZE_Last_Mile` e o associa ao sprint `Backlog Priorizado` em uma segunda chamada à API Agile.
 4. No reintentar automáticamente una creación fallida: una repetición podría duplicar el issue. Si la respuesta es ambigua, consultar Jira antes de volver a crear.
 5. Informar el JSON devuelto por el script y el enlace al issue creado.
 
@@ -129,7 +132,7 @@ El script utiliza exit code `2` cuando faltan credenciales o Jira responde `401`
 
 ## Otros errores
 
-- Exit code `3`: informar que `DTCZE-12424` no fue encontrado o no puede usarse como parent.
+- Exit code `3`: informar que el proyecto DTCZE o el issue type `Technical Task` no fue encontrado o no puede usarse.
 - Exit code `4`: informar el error de conexión o respuesta de Jira sin exponer secretos.
 - Exit code `5`: informar que faltan `curl` o `jq`.
 - Exit code `6`: informar que título o descripción están vacíos o que Jira rechazó el payload.
@@ -145,11 +148,10 @@ El script devuelve JSON con esta forma:
   "issue_id": "123456",
   "parent": "DTCZE-12424",
   "project": "DTCZE",
-  "issue_type": "Sub-task",
+  "issue_type": "Technical Task",
   "title": "Título de la tarea",
   "url": "https://ab-inbev.atlassian.net/browse/DTCZE-14436"
 }
 ```
 
 Este skill crea issues en Jira después de confirmación; no modifica el repositorio ni crea tickets adicionales fuera del issue solicitado.
-
