@@ -113,6 +113,7 @@ que no hayan sido creados por el instalador.
 | Workflow | Propósito |
 | --- | --- |
 | `entrevistar` | Recorre decisiones pendientes una por una hasta alcanzar entendimiento compartido. |
+| `consultar-metricas` | Muestra cuántas veces se invocó cada skill instalado, a partir de un hook de Claude Code que hay que configurar una vez. |
 
 ## Dependencias de los workflows
 
@@ -130,6 +131,7 @@ workflows esperan capacidades adicionales:
 - `crear-skill` se completa habitualmente validando el resultado con
   `validar-skill`;
 - `crear-pr` necesita un repositorio Git y acceso a GitHub para abrir la PR;
+- `consultar-metricas` solo mide uso en Claude Code, y solo después de agregar a mano el hook que él mismo indica en `~/.claude/settings.json` — sin eso, el log de uso queda vacío;
 
 Estas dependencias pueden existir en tu instalación del asistente o en el
 proyecto donde trabajas. `dotskills` no crea credenciales ni configura
