@@ -1,6 +1,7 @@
 ---
 name: diagnosticar-bugs
 description: Bucle de diagnóstico para bugs difíciles y regresiones de rendimiento. Usar cuando el usuario pida diagnosticar o depurar algo, o informe que algo está roto, lanza errores, falla o funciona lentamente.
+license: MIT (c) Matt Pocock — ver LICENSE en este directorio
 metadata:
   source: https://github.com/mattpocock/skills/tree/main/skills/engineering/diagnosing-bugs
   adaptation: traducción al español
