@@ -41,9 +41,9 @@ forma nativa.
 
 | Herramienta | Invocación | Destino global |
 | --- | --- | --- |
-| Codex | `/plan` | `~/.agents/skills/` |
-| Claude Code | `/plan` | `~/.claude/skills/` |
-| Cursor | `/plan` | `~/.agents/skills/` |
+| Codex | `/cocinar` | `~/.agents/skills/` |
+| Claude Code | `/cocinar` | `~/.claude/skills/` |
+| Cursor | `/cocinar` | `~/.agents/skills/` |
 
 Codex y Cursor comparten `~/.agents/skills/` (ambos lo leen nativamente), así
 que un solo enlace por skill alcanza para las dos. Claude Code solo lee
@@ -54,8 +54,6 @@ que un solo enlace por skill alcanza para las dos. Claude Code solo lee
 La invocación es igual en las tres herramientas:
 
 ```text
-/analizar-alcance
-/plan
 /crear-ticket
 /cocinar PROJ-1234
 ```
@@ -89,22 +87,12 @@ que no hayan sido creados por el instalador.
 
 ## Workflows incluidos
 
-### Definición de producto
-
-| Workflow | Propósito |
-| --- | --- |
-| `crear-prd` | Guía la redacción de un PRD centrado en cliente, problema y evidencia. |
-
 ### Ticket → pull request
 
 | Workflow | Propósito |
 | --- | --- |
-| `analizar-alcance` | Determina si un issue es independiente o debe dividirse. |
 | `crear-ticket` | Produce un ticket de Jira claro y accionable. |
-| `cocinar` | Orquesta el flujo completo desde un ticket hasta una pull request. |
-| `plan` | Convierte un alcance confirmado en tareas implementables. |
-| `implementar-plan` | Ejecuta las tareas de un plan persistido. |
-| `implementar-tarea` | Ejecuta y verifica una tarea individual. |
+| `cocinar` | Carga el contexto verificado de un ticket de Jira y hace handoff a `sdd` para continuar el flujo de desarrollo. |
 | `crear-pr` | Prepara una pull request a partir de cambios implementados. |
 
 ### Documentación (Diátaxis)
@@ -132,8 +120,9 @@ Los archivos se pueden instalar sin configurar servicios externos, pero algunos
 workflows esperan capacidades adicionales:
 
 - `cocinar` espera un workflow de consulta de tickets (`consultar-ticket`),
-  entrevistas y acceso al contexto de Jira;
-- `plan` utiliza `crear-ticket` para producir las tareas;
+  `consultar-subtareas`, acceso al contexto de Jira y la skill `sdd`; después
+  del handoff, `sdd` es responsable del análisis, la planificación, la
+  implementación y la pull request;
 - `documentar` organiza el trabajo internamente en sub-skills privadas
   (clasificación, tutoriales, guías, referencia, explicaciones y validación)
   anidadas en `skills/documentar/skills/`; no se instalan ni se invocan por
@@ -141,7 +130,6 @@ workflows esperan capacidades adicionales:
 - `crear-skill` se completa habitualmente validando el resultado con
   `validar-skill`;
 - `crear-pr` necesita un repositorio Git y acceso a GitHub para abrir la PR;
-- los scripts de estado son bash puro, sin dependencias externas.
 
 Estas dependencias pueden existir en tu instalación del asistente o en el
 proyecto donde trabajas. `dotskills` no crea credenciales ni configura
@@ -160,11 +148,14 @@ dotskills/
 
 Cada `skills/<nombre>/` es un directorio autocontenido: si invoca scripts, van
 en bash puro (sin Python, sin JSON, sin dependencias externas como `jq`) dentro
-de su propio `scripts/`. Un skill que dependa de otro (por ejemplo `implementar-tarea`
-reutilizando `plan_file.sh` de `plan`) lo referencia por nombre de skill vecino,
-nunca copiando el script. `install.sh` no copia contenido en ningún punto: solo
-crea symlinks desde `skills/<nombre>/` hacia las carpetas globales de cada
-herramienta.
+de su propio `scripts/`. Un skill que dependa de otro lo referencia por nombre
+de skill vecino, nunca copiando el script. Cuando una skill solo tiene sentido
+como parte del flujo de otra (por ejemplo, el análisis de alcance y la
+ejecución tarea por tarea de `cocinar`), su contenido vive directamente en
+`references/` y `scripts/` de la skill dueña en vez de existir como skill
+separada — así queda claro que no es invocable por su cuenta. `install.sh` no
+copia contenido en ningún punto: solo crea symlinks desde `skills/<nombre>/`
+hacia las carpetas globales de cada herramienta.
 
 ## Desarrollo
 

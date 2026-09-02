@@ -56,6 +56,6 @@ Mostrar como resultado final la salida de `status <name>` tal cual la imprime el
 
 ## Notas
 
-- El estado de la auditoría vive en `TMPDIR`, fuera del repo (mismo patrón que `workflow_state.sh` de `analizar-alcance`/`cocinar`) — nunca se comitea nada de esto.
+- El estado de la auditoría vive en `TMPDIR`, fuera del repo (mismo patrón que `workflow_state.sh` de `cocinar`) — nunca se comitea nada de esto.
 - `validaciones.md` es la definición estática del checklist, no cambia por corrida. Si el estándar Agent Skills se actualiza, editá `validaciones.md` (y `references/especificacion.md`) directamente; el próximo `init` de cualquier skill lo va a usar.
 - El script rechaza marcar un `id` que no exista en `validaciones.md`, y rechaza `mark` si el hash del skill evaluado no coincide con el del último `init` — no hay forma de que el estado quede desincronizado del contenido real.
