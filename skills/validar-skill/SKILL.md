@@ -21,7 +21,7 @@ Si el contenido no cambió desde el último `init`, conserva el estado y muestra
 
 ### 2. Verificar mecánicamente lo que se pueda
 
-Leer `<skill-dir>/../validaciones.md` para el detalle de cada punto (por qué existe, qué exactamente valida). Para cada ID en `pending`, intentar resolverlo **sin preguntar al usuario**, inspeccionando el skill evaluado: contar caracteres del `name`/`description`, chequear el charset, contar líneas del `SKILL.md`, verificar si existen `scripts/`/`references/`/`assets/`, revisar si las referencias usan rutas relativas de un nivel, etc.
+Leer `<skill-dir>/validaciones.md` para el detalle de cada punto (por qué existe, qué exactamente valida). Para cada ID en `pending`, intentar resolverlo **sin preguntar al usuario**, inspeccionando el skill evaluado: contar caracteres del `name`/`description`, chequear el charset, contar líneas del `SKILL.md`, verificar si existen `scripts/`/`references/`/`assets/`, revisar si las referencias usan rutas relativas de un nivel, etc.
 
 ```bash
 <skill-dir>/scripts/validar_skill.sh pending <name>
