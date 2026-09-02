@@ -7,6 +7,15 @@ description: Prepara y abre pull requests a partir de un ticket de Jira y cambio
 
 Prepara y abre una pull request concisa, verificable y alineada con el repositorio. Esta skill recibe como contexto el ID y el título del ticket de Jira, la branch actual, los cambios implementados y sus verificaciones.
 
+## Metadatos obligatorios de la PR
+
+Toda PR abierta por esta skill debe:
+
+- estar asignada al usuario que ejecuta la skill (`self` / `@me`, según el proveedor);
+- tener el label exacto `squad:last mile`.
+
+Configura ambos metadatos durante la creación siempre que el flujo disponible lo permita. Si la herramienta de creación no los admite, créalos o actualízalos inmediatamente después de abrir la PR y antes de confirmar la tarea como completada. Si no es posible asignar la PR al usuario actual o añadir el label exacto, informa el bloqueo y no declares la tarea completada.
+
 ## Regla obligatoria del título
 
 El título de la PR debe tener exactamente este formato:
@@ -87,11 +96,16 @@ Comprueba antes de abrir la PR:
 - no se exponen secretos, tokens o credenciales;
 - la descripción cumple la plantilla o instrucciones locales.
 
-Si falla una comprobación, no abras la PR. Explica el bloqueo y el siguiente paso exacto.
+Después de abrirla, comprueba también que:
+
+- la PR está asignada al usuario actual;
+- la PR tiene el label exacto `squad:last mile`.
+
+Si falla una comprobación previa, no abras la PR. Si falla una comprobación posterior, corrige el metadato pendiente antes de finalizar; si no puedes corregirlo, informa el bloqueo y no declares la tarea completada.
 
 ### 5. Publicar y confirmar
 
-Sube la branch y abre la PR mediante el flujo disponible del proyecto. Tras la operación, confirma que la PR existe y que su título quedó con el formato obligatorio. Informa únicamente:
+Sube la branch y abre la PR mediante el flujo disponible del proyecto, asignándola al usuario actual y añadiendo el label `squad:last mile`. Tras la operación, confirma que la PR existe, que su título quedó con el formato obligatorio y que ambos metadatos están aplicados. Informa únicamente:
 
 - enlace de la PR;
 - título final;

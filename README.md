@@ -41,9 +41,9 @@ forma nativa.
 
 | Herramienta | Invocación | Destino global |
 | --- | --- | --- |
-| Codex | `/plan` | `~/.agents/skills/` |
-| Claude Code | `/plan` | `~/.claude/skills/` |
-| Cursor | `/plan` | `~/.agents/skills/` |
+| Codex | `/cocinar` | `~/.agents/skills/` |
+| Claude Code | `/cocinar` | `~/.claude/skills/` |
+| Cursor | `/cocinar` | `~/.agents/skills/` |
 
 Codex y Cursor comparten `~/.agents/skills/` (ambos lo leen nativamente), así
 que un solo enlace por skill alcanza para las dos. Claude Code solo lee
@@ -54,9 +54,6 @@ que un solo enlace por skill alcanza para las dos. Claude Code solo lee
 La invocación es igual en las tres herramientas:
 
 ```text
-/idea
-/spec
-/plan
 /crear-ticket
 /cocinar PROJ-1234
 ```
@@ -90,20 +87,12 @@ que no hayan sido creados por el instalador.
 
 ## Workflows incluidos
 
-### Idea → especificación → plan
-
-| Workflow | Propósito |
-| --- | --- |
-| `idea` | Transforma una idea abstracta en un PRD funcional (`changes/<slug>/prd.md`). |
-| `spec` | Traduce un PRD aprobado en una especificación técnica con escenarios Gherkin (`changes/<slug>/spec.md`). |
-| `plan` | Convierte una spec aprobada en un plan de tareas trazables a cada escenario (`changes/<slug>/plan.md`). |
-
 ### Ticket → pull request
 
 | Workflow | Propósito |
 | --- | --- |
 | `crear-ticket` | Produce un ticket de Jira claro y accionable. |
-| `cocinar` | Orquesta de punta a punta el análisis de alcance, la planificación interna, la implementación y la pull request de un ticket de Jira. |
+| `cocinar` | Carga el contexto verificado de un ticket de Jira y hace handoff a `sdd` para continuar el flujo de desarrollo. |
 | `crear-pr` | Prepara una pull request a partir de cambios implementados. |
 
 ### Documentación (Diátaxis)
@@ -131,14 +120,9 @@ Los archivos se pueden instalar sin configurar servicios externos, pero algunos
 workflows esperan capacidades adicionales:
 
 - `cocinar` espera un workflow de consulta de tickets (`consultar-ticket`),
-  entrevistas y acceso al contexto de Jira. El análisis de alcance, la
-  planificación interna y la ejecución tarea por tarea viven como
-  `references/` y `scripts/` propios de `cocinar` (no son skills invocables
-  por separado: no dependen de Jira, pero tampoco tienen sentido fuera de
-  este flujo);
-- `spec` exige un PRD de `idea` con `Estado: Completo`; `plan` exige una spec
-  de `spec` con `Estado: Completo` — cada etapa valida mecánicamente que la
-  anterior esté aprobada antes de arrancar;
+  `consultar-subtareas`, acceso al contexto de Jira y la skill `sdd`; después
+  del handoff, `sdd` es responsable del análisis, la planificación, la
+  implementación y la pull request;
 - `documentar` organiza el trabajo internamente en sub-skills privadas
   (clasificación, tutoriales, guías, referencia, explicaciones y validación)
   anidadas en `skills/documentar/skills/`; no se instalan ni se invocan por
@@ -146,7 +130,6 @@ workflows esperan capacidades adicionales:
 - `crear-skill` se completa habitualmente validando el resultado con
   `validar-skill`;
 - `crear-pr` necesita un repositorio Git y acceso a GitHub para abrir la PR;
-- los scripts de estado son bash puro, sin dependencias externas.
 
 Estas dependencias pueden existir en tu instalación del asistente o en el
 proyecto donde trabajas. `dotskills` no crea credenciales ni configura
