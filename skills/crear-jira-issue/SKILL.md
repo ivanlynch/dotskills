@@ -11,7 +11,7 @@ Este skill combina el flujo de `/crear-ticket` con la creación efectiva del iss
 
 - Proyecto Jira: `DTCZE`.
 - Parent: `DTCZE-12424` (Epic de DTC Zé Courier - BAU).
-- Tipo criado: `Technical Task` (`id: 11737`).
+- Tipo creado: `Technical Task` (`id: 11737`).
 - Board de referencia: `https://ab-inbev.atlassian.net/jira/software/c/projects/DTCZE/boards/54142/backlog`.
 - Sprint fijo de creación: `Backlog Priorizado` (`customfield_10007`, sprint ID `114686`, board `54142`).
 - Team Name fijo de creación: `ZE_Last_Mile` (`customfield_13230`, opción ID `61436`).
@@ -47,46 +47,72 @@ Si un dato no es esencial, declararlo como supuesto o `Não definido` en lugar d
 
 ## Resultado de la entrevista
 
-Antes de crear el issue, presentar en español el entendimiento compartido y pedir confirmación explícita. Después de la confirmación, generar título y descripción naturales en portugués de Brasil (`pt-BR`) con este formato:
+Antes de crear el issue, presentar en español el entendimiento compartido y pedir confirmación explícita. Después de la confirmación, generar el título en portugués de Brasil (`pt-BR`) y completar mecánicamente la descripción con `scripts/render_description.sh` usando `templates/technical-task.md`.
+
+Para toda tarea relacionada con frontend —incluyendo pantallas, componentes, hooks, navegación, estilos, pruebas o configuración de la aplicación cliente— el título debe comenzar exactamente con `[Front] `. Si el prefijo ya existe, no duplicarlo. Para tareas que no sean de frontend, no agregarlo.
 
 ```markdown
-## Título
+## Contexto
 
-[Módulo/Componente]: Breve descrição do objetivo
+[Contexto breve do problema, com a evidência disponível.]
 
-## Contexto ou declaração do problema
+## Problema
 
-[Razão de negócio ou problema técnico.]
+[Problema técnico ou de negócio, com a evidência disponível.]
 
-## Descrição / User Story
+## Objetivo
 
-**Como** [papel do usuário / sistema],
-**quero** [ação ou funcionalidade],
-**para** [benefício ou objetivo].
+[Resultado esperado, em uma frase direta.]
+
+## Escopo
+
+- [Entrega ou comportamento incluído.]
+- [Entrega ou comportamento incluído.]
 
 ## Critérios de aceitação
 
-- **Dado que** [pré-condição], **quando** [ação], **então** [resultado verificável].
-- [ ] [Critério adicional verificável]
+- [ ] [Critério verificável.]
+- [ ] [Critério verificável.]
 
-## Detalhes técnicos e considerações
+## Fora de escopo
 
-- **Endpoints / APIs envolvidas:** [detalhe ou Não se aplica]
-- **Módulos / domínio:** [detalhe ou Não se aplica]
-- **Dependências e restrições:** [detalhe ou Não se aplica]
+- [Item explicitamente excluído ou Jira relacionado.]
 
-## Design / recursos
+## Recursos
 
-- **Figma:** [link ou Não se aplica]
-- **Documentação / RFC:** [link ou Não se aplica]
-- **Outros recursos:** [link, captura, log ou Não se aplica]
+- [Issue, RFC, documentação ou outro recurso relacionado.]
 ```
 
-Para um bug, adaptar la estructura para incluir reproducibilidad, comportamiento esperado, comportamiento actual y evidencia, manteniendo la salida en `pt-BR`.
+La plantilla ejecutable está en `templates/technical-task.md`. Para evitar errores de estructura, guardar el contenido de cada sección en un archivo separado y ejecutar:
+
+```bash
+bash <skill-dir>/scripts/render_description.sh \
+  --context-file /tmp/context.txt \
+  --problem-file /tmp/problem.txt \
+  --objective-file /tmp/objective.txt \
+  --scope-file /tmp/scope.txt \
+  --acceptance-file /tmp/acceptance.txt \
+  --out-of-scope-file /tmp/out-of-scope.txt \
+  --resources-file /tmp/resources.txt \
+  --output-file /tmp/description.md
+```
+
+El script valida que los archivos no estén vacíos y que los encabezados aparezcan en el orden obligatorio. La IA puede redactar el contenido de las secciones durante la entrevista, pero no debe montar manualmente los encabezados ni insertar una sección `## Título` en la descripción.
+
+Reglas de redacción para esta estructura:
+
+- Mantener el formato simple, conciso y orientado a la entrega; evitar introducciones, justificaciones largas y lenguaje genérico.
+- Usar exactamente las secciones `Contexto`, `Problema`, `Objetivo`, `Escopo`, `Critérios de aceitação`, `Fora de escopo` y `Recursos`, en ese orden.
+- Preservar los nombres de archivos, campos, eventos, categorías, orígenes de error, productos y servicios tal como aparecen en el contexto técnico.
+- Escribir criterios como resultados verificables. Mantener `[x]` cuando el usuario informe que el criterio ya se completó; usar `[ ]` cuando aún esté pendiente.
+- Incluir rutas de archivos dentro de `Escopo` solo cuando hayan sido proporcionadas o identificadas en el workspace; no inventar rutas.
+- Si no se informa ningún elemento fuera de alcance, escribir `- Não definido`.
+- No incluir `## Título` dentro de la descripción ni las secciones `Descrição / User Story`, `Detalhes técnicos e considerações` o `Design / recursos`, salvo que el usuario lo solicite explícitamente.
+- Para bugs, mantener la misma estructura compacta y adaptar `Contexto` para indicar comportamiento actual, comportamiento esperado, reproducción y evidencias.
 
 ## Crear el issue
 
-1. Guardar el título final y la descripción final aprobados en archivos temporales, sin incluir secretos. Mantener la descripción en Markdown siguiendo la plantilla; el script la convierte a Atlassian Document Format (ADF) antes de enviarla a Jira. No convertirla manualmente a JSON ni enviarla como texto plano.
+1. Guardar el título final y los archivos de sección aprobados en archivos temporales, sin incluir secretos. Ejecutar `scripts/render_description.sh` para producir la descripción final en Markdown. El script de creación convierte ese Markdown a Atlassian Document Format (ADF) antes de enviarla a Jira. No convertirla manualmente a JSON ni enviarla como texto plano.
 2. Ejecutar una sola vez el script de esta skill:
 
    ```bash
@@ -95,7 +121,7 @@ Para um bug, adaptar la estructura para incluir reproducibilidad, comportamiento
      --description-file "/ruta/a/la/descripcion.md"
    ```
 
-3. El script crea um `Technical Task` com parent `DTCZE-12424`, `Team Name = ZE_Last_Mile` e o associa ao sprint `Backlog Priorizado` em uma segunda chamada à API Agile.
+3. El script crea un `Technical Task` con parent `DTCZE-12424`, `Team Name = ZE_Last_Mile` y lo asocia al sprint `Backlog Priorizado` en una segunda llamada a la API Agile.
 4. No reintentar automáticamente una creación fallida: una repetición podría duplicar el issue. Si la respuesta es ambigua, consultar Jira antes de volver a crear.
 5. Informar el JSON devuelto por el script y el enlace al issue creado.
 
