@@ -1,5 +1,11 @@
 #!/usr/bin/env bash
 # Registro determinístico y fail-closed para el checklist de /validar-skill.
+#
+# Para los puntos del checklist que se pueden comprobar mecánicamente (ver
+# verificar_mecanico más abajo), 'mark' no confía en lo que diga quien
+# invoca: corre la comprobación real (incluye ejecutar scripts/tests/*.sh de
+# verdad) y rechaza el mark si contradice lo que encontró. Nunca se puede
+# marcar DONE un punto mecánico que en los hechos no lo está.
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -88,6 +94,210 @@ print_status() {
   fi
 }
 
+# --- Lectura de frontmatter -------------------------------------------------
+
+# Imprime las líneas del frontmatter YAML (entre el primer '---' y el
+# segundo), sin las líneas delimitadoras.
+frontmatter_lines() {
+  local dir="$1"
+  awk '
+    /^---[[:space:]]*$/ { c++; if (c == 2) exit; next }
+    c == 1 { print }
+  ' "$dir/SKILL.md"
+}
+
+# Valor de un campo de primer nivel del frontmatter (sin indentación), sin
+# comillas envolventes si las tiene. Vacío si el campo no existe.
+frontmatter_field() {
+  local dir="$1" campo="$2"
+  frontmatter_lines "$dir" | grep -m1 -E "^${campo}:" | sed -E "s/^${campo}:[[:space:]]*//; s/^\"(.*)\"\$/\1/"
+}
+
+frontmatter_tiene_campo() {
+  local dir="$1" campo="$2"
+  frontmatter_lines "$dir" | grep -qE "^${campo}:"
+}
+
+# --- Verificación mecánica ---------------------------------------------------
+#
+# Corre la comprobación real para los IDs de validaciones.md que se pueden
+# decidir sin criterio humano. Setea tres variables globales:
+#   VERIFICADO  1 si este ID se pudo decidir mecánicamente, 0 si no.
+#   VEREDICTO   DONE o NA — el único estado válido, cuando VERIFICADO=1.
+#   DETALLE     explicación corta de por qué, para el mensaje de error o la nota.
+#
+# Los IDs que no aparecen acá (VERIFICADO=0) requieren criterio del agente
+# que invoca 'mark' — ver SKILL.md paso 2/3.
+verificar_mecanico() {
+  local dir="$1" id="$2"
+  VERIFICADO=0
+  VEREDICTO=""
+  DETALLE=""
+
+  local name description
+  name="$(frontmatter_field "$dir" name)"
+
+  case "$id" in
+    dir-nombre-coincide)
+      VERIFICADO=1
+      local nombre_dir
+      nombre_dir="$(basename "$dir")"
+      if [ "$nombre_dir" = "$name" ]; then
+        VEREDICTO=DONE; DETALLE="directorio '$nombre_dir' coincide con name '$name'"
+      else
+        VEREDICTO=RECHAZAR; DETALLE="directorio '$nombre_dir' no coincide con name '$name'"
+      fi
+      ;;
+
+    name-longitud)
+      VERIFICADO=1
+      local len=${#name}
+      if [ "$len" -ge 1 ] && [ "$len" -le 64 ]; then
+        VEREDICTO=DONE; DETALLE="$len caracteres, dentro de 1-64"
+      else
+        VEREDICTO=RECHAZAR; DETALLE="$len caracteres, fuera de 1-64"
+      fi
+      ;;
+
+    name-charset)
+      VERIFICADO=1
+      if [[ "$name" =~ ^[a-z0-9-]+$ ]]; then
+        VEREDICTO=DONE; DETALLE="solo minúsculas a-z, dígitos y guiones"
+      else
+        VEREDICTO=RECHAZAR; DETALLE="'$name' tiene caracteres fuera de a-z0-9-"
+      fi
+      ;;
+
+    name-sin-guion-borde)
+      VERIFICADO=1
+      if [[ "$name" != -* && "$name" != *- ]]; then
+        VEREDICTO=DONE; DETALLE="no empieza ni termina con guion"
+      else
+        VEREDICTO=RECHAZAR; DETALLE="'$name' empieza o termina con guion"
+      fi
+      ;;
+
+    name-sin-guion-doble)
+      VERIFICADO=1
+      if [[ "$name" != *--* ]]; then
+        VEREDICTO=DONE; DETALLE="sin guiones consecutivos"
+      else
+        VEREDICTO=RECHAZAR; DETALLE="'$name' tiene guiones consecutivos"
+      fi
+      ;;
+
+    description-longitud)
+      VERIFICADO=1
+      description="$(frontmatter_field "$dir" description)"
+      local len=${#description}
+      if [ "$len" -ge 1 ] && [ "$len" -le 1024 ]; then
+        VEREDICTO=DONE; DETALLE="$len caracteres, dentro de 1-1024"
+      else
+        VEREDICTO=RECHAZAR; DETALLE="$len caracteres, fuera de 1-1024"
+      fi
+      ;;
+
+    cuerpo-longitud)
+      VERIFICADO=1
+      local lineas
+      lineas="$(wc -l < "$dir/SKILL.md" | tr -d ' ')"
+      if [ "$lineas" -lt 500 ]; then
+        VEREDICTO=DONE; DETALLE="$lineas líneas, por debajo de 500"
+      else
+        VEREDICTO=RECHAZAR; DETALLE="$lineas líneas, no está por debajo de 500"
+      fi
+      ;;
+
+    ubicacion-exclusiva)
+      VERIFICADO=1
+      local nombre_dir canonical otras encontrado abs
+      nombre_dir="$(basename "$dir")"
+      canonical="$(cd "$dir" && pwd)"
+      otras=""
+      while IFS= read -r encontrado; do
+        abs="$(cd "$encontrado" && pwd)"
+        [ "$abs" = "$canonical" ] && continue
+        otras="$otras $encontrado"
+      done < <(find . -type d -name "$nombre_dir" -not -path "./.git/*" -not -path "./.git" 2>/dev/null)
+      if [ -z "$otras" ]; then
+        VEREDICTO=DONE; DETALLE="vive únicamente en $dir"
+      else
+        VEREDICTO=RECHAZAR; DETALLE="también existe en:$otras"
+      fi
+      ;;
+
+    scripts-bash-no-python)
+      VERIFICADO=1
+      if [ ! -d "$dir/scripts" ]; then
+        VEREDICTO=NA; DETALLE="no existe scripts/"
+      else
+        local otros
+        otros="$(find "$dir/scripts" -type f \( -name '*.py' -o -name '*.rb' -o -name '*.js' -o -name '*.mjs' -o -name '*.ts' -o -name '*.pl' \) 2>/dev/null | tr '\n' ' ')"
+        if [ -z "$otros" ]; then
+          VEREDICTO=DONE; DETALLE="todo lo que hay en scripts/ es bash"
+        else
+          VEREDICTO=RECHAZAR; DETALLE="scripts no-bash encontrados: $otros"
+        fi
+      fi
+      ;;
+
+    scripts-con-test)
+      VERIFICADO=1
+      if [ ! -d "$dir/scripts" ]; then
+        VEREDICTO=NA; DETALLE="no existe scripts/"
+      else
+        local script base test_file faltan="" fallan=""
+        while IFS= read -r script; do
+          base="$(basename "$script")"
+          test_file="$dir/scripts/tests/$base"
+          [ -f "$test_file" ] || faltan="$faltan $base"
+        done < <(find "$dir/scripts" -maxdepth 1 -type f -name '*.sh' 2>/dev/null)
+
+        while IFS= read -r test_file; do
+          if ! bash "$test_file" >/dev/null 2>&1; then
+            fallan="$fallan $(basename "$test_file")"
+          fi
+        done < <(find "$dir/scripts/tests" -maxdepth 1 -type f -name '*.sh' 2>/dev/null)
+
+        if [ -z "$faltan" ] && [ -z "$fallan" ]; then
+          VEREDICTO=DONE; DETALLE="cada script tiene test y todos los tests pasan (corridos ahora)"
+        else
+          VEREDICTO=RECHAZAR
+          DETALLE="sin test:${faltan:- (ninguno)}; tests que fallan al correrlos ahora:${fallan:- (ninguno)}"
+        fi
+      fi
+      ;;
+
+    license-formato|compatibility-formato|compatibility-necesidad-real|metadata-formato|metadata-claves-unicas|allowed-tools-formato)
+      local campo
+      case "$id" in
+        license-formato) campo="license" ;;
+        compatibility-formato|compatibility-necesidad-real) campo="compatibility" ;;
+        metadata-formato|metadata-claves-unicas) campo="metadata" ;;
+        allowed-tools-formato) campo="allowed-tools" ;;
+      esac
+      if ! frontmatter_tiene_campo "$dir" "$campo"; then
+        VERIFICADO=1; VEREDICTO=NA; DETALLE="el frontmatter no define $campo"
+      fi
+      # Si el campo SÍ existe, no lo decidimos acá (el formato/necesidad real
+      # todavía requiere criterio) — pero cmd_mark igual va a rechazar un
+      # intento de marcarlo NA, porque el campo está presente.
+      ;;
+  esac
+}
+
+# Campo de frontmatter que gatea cada ID condicional de metadata (mismo
+# mapeo que usa verificar_mecanico). Vacío si el ID no es uno de estos.
+campo_condicional_de() {
+  case "$1" in
+    license-formato) echo "license" ;;
+    compatibility-formato|compatibility-necesidad-real) echo "compatibility" ;;
+    metadata-formato|metadata-claves-unicas) echo "metadata" ;;
+    allowed-tools-formato) echo "allowed-tools" ;;
+    *) echo "" ;;
+  esac
+}
+
 cmd_init() {
   local target="$1"
   local dir current_hash path stored_hash
@@ -136,6 +346,23 @@ cmd_mark() {
   esac
 
   checklist_ids | grep -qx "$id" || err "ID desconocido: '$id'. No aparece en validaciones.md."
+
+  local VERIFICADO VEREDICTO DETALLE
+  verificar_mecanico "$dir" "$id"
+
+  if [ "$VERIFICADO" = "1" ]; then
+    if [ "$status" != "$VEREDICTO" ]; then
+      err "Verificación automática de '$id': el estado real es $VEREDICTO, no $status. ($DETALLE)"
+    fi
+    nota="[auto-verificado: $DETALLE]${nota:+ — $nota}"
+  else
+    local campo
+    campo="$(campo_condicional_de "$id")"
+    if [ -n "$campo" ] && [ "$status" = "NA" ] && frontmatter_tiene_campo "$dir" "$campo"; then
+      err "El frontmatter define '$campo'; no se puede marcar '$id' como NA. Revisá el contenido y marcalo DONE con una justificación, o corregí/quitá el campo."
+    fi
+    [ -n "$nota" ] || err "Falta justificación para '$id'. Uso: mark <skill> $id $status \"<justificación>\""
+  fi
 
   local tmp found=0
   tmp="$(mktemp)"
