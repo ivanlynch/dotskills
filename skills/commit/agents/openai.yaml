@@ -1,0 +1,4 @@
+interface:
+  display_name: "Commit"
+  short_description: "Genera commits desde cambios staged"
+  default_prompt: "Usa $commit para analizar los cambios staged y generar un commit Conventional Commits."

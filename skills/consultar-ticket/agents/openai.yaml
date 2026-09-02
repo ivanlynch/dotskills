@@ -1,0 +1,7 @@
+interface:
+  display_name: "Consultar ticket"
+  short_description: "Obtiene títulos y descripciones de tickets Jira"
+  default_prompt: "Usa $consultar-ticket DTCZE-1234 para consultar el título y la descripción del ticket."
+
+policy:
+  allow_implicit_invocation: false
