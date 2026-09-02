@@ -1,0 +1,7 @@
+interface:
+  display_name: "Crear Feature Flag"
+  short_description: "Genera una feature flag a partir de un ticket de Jira"
+  default_prompt: "Usa $crear-feature-flag DTCZE-1234 para obtener el ticket y generar la configuración de la feature flag."
+
+policy:
+  allow_implicit_invocation: false

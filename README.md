@@ -92,6 +92,8 @@ que no hayan sido creados por el instalador.
 | Workflow | Propósito |
 | --- | --- |
 | `crear-ticket` | Produce un ticket de Jira claro y accionable. |
+| `consultar-ticket` | Consulta el título y la descripción de un ticket de Jira. |
+| `crear-feature-flag` | Genera una propuesta de feature flag de Split.io a partir de un ticket Jira. |
 | `cocinar` | Carga el contexto verificado de un ticket de Jira y hace handoff a `sdd` para continuar el flujo de desarrollo. |
 | `crear-pr` | Prepara una pull request a partir de cambios implementados. |
 
@@ -100,6 +102,7 @@ que no hayan sido creados por el instalador.
 | Workflow | Propósito |
 | --- | --- |
 | `documentar` | Coordina la creación o mejora de documentación con Diátaxis. |
+| `crear-readme` | Genera o actualiza un README.md a partir del análisis del proyecto. |
 
 ### Autoría y validación de skills
 
@@ -114,6 +117,7 @@ que no hayan sido creados por el instalador.
 | --- | --- |
 | `entrevistar` | Recorre decisiones pendientes una por una hasta alcanzar entendimiento compartido. |
 | `consultar-metricas` | Muestra cuántas veces se invocó cada skill instalado, a partir de un hook de Claude Code que hay que configurar una vez. |
+| `commit` | Analiza, propone y gestiona commits siguiendo Conventional Commits. |
 
 ## Dependencias de los workflows
 
@@ -124,6 +128,8 @@ workflows esperan capacidades adicionales:
   `consultar-subtareas`, acceso al contexto de Jira y la skill `sdd`; después
   del handoff, `sdd` es responsable del análisis, la planificación, la
   implementación y la pull request;
+- `crear-feature-flag` usa `consultar-ticket` para obtener el contexto Jira
+  antes de generar la propuesta de Split.io;
 - `documentar` organiza el trabajo internamente en sub-skills privadas
   (clasificación, tutoriales, guías, referencia, explicaciones y validación)
   anidadas en `skills/documentar/skills/`; no se instalan ni se invocan por
