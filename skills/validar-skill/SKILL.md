@@ -21,7 +21,7 @@ Si el contenido no cambió desde el último `init`, conserva el estado y muestra
 
 ### 2. Verificar mecánicamente lo que se pueda
 
-Leer `<skill-dir>/../validaciones.md` para el detalle de cada punto (por qué existe, qué exactamente valida). Para cada ID en `pending`, intentar resolverlo **sin preguntar al usuario**, inspeccionando el skill evaluado: contar caracteres del `name`/`description`, chequear el charset, contar líneas del `SKILL.md`, verificar si existen `scripts/`/`references/`/`assets/`, revisar si las referencias usan rutas relativas de un nivel, etc.
+Leer `<skill-dir>/validaciones.md` para el detalle de cada punto (por qué existe, qué exactamente valida). Para cada ID en `pending`, intentar resolverlo **sin preguntar al usuario**, inspeccionando el skill evaluado: contar caracteres del `name`/`description`, chequear el charset, contar líneas del `SKILL.md`, verificar si existen `scripts/`/`references/`/`assets/`, revisar si las referencias usan rutas relativas de un nivel, etc.
 
 ```bash
 <skill-dir>/scripts/validar_skill.sh pending <name>
@@ -35,6 +35,8 @@ Por cada punto resuelto, marcarlo de inmediato:
 ```
 
 Usar `NA` únicamente para puntos condicionales cuyo campo/directorio no existe en el skill evaluado (ver `validaciones.md`). Todo lo demás es `DONE` o queda `PENDING`.
+
+**Un subconjunto de IDs no confía en tu palabra: `mark` los verifica por su cuenta y rechaza el intento (exit 1) si tu `DONE`/`NA` no coincide con lo que encontró.** Entre otros: `scripts-con-test` corre de verdad cada `scripts/tests/*.sh` del skill evaluado en ese mismo momento — si alguno falla o falta, no hay forma de marcarlo `DONE`, por más que "debería" pasar. También son auto-verificados `dir-nombre-coincide`, `name-longitud`, `name-charset`, `name-sin-guion-borde`, `name-sin-guion-doble`, `description-longitud`, `cuerpo-longitud`, `ubicacion-exclusiva`, `scripts-bash-no-python`, y la presencia/ausencia de `license`/`compatibility`/`metadata`/`allowed-tools` (no podés marcar `NA` uno de esos si el campo está presente en el frontmatter). Para estos, no hace falta que vos los "resuelvas": intentá `mark ... DONE "<nota>"` directamente — si el script lo rechaza, el mensaje de error dice el estado real; corregí el skill (no el mark) y volvé a intentar. Nunca reintentes con el otro estado solo para que pase: si el script dice que el veredicto real es otro, el skill evaluado tiene un problema real que hay que arreglar primero.
 
 ### 3. Entrevistar lo genuinamente ambiguo
 

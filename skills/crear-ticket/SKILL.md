@@ -1,6 +1,6 @@
 ---
 name: crear-ticket
-description: Entrevista al usuario hasta alcanzar un entendimiento objetivo, claro y sin ambigüedades, y genera el título y la descripción de un ticket de Jira listo para copiar. Adapta la estructura a una User Story, Task o Bug, con contexto de negocio, intención, criterios de aceptación y consideraciones técnicas.
+description: Entrevista al usuario hasta alcanzar un entendimiento objetivo, claro y sin ambigüedades, y genera el título y la descripción de un ticket de Jira listo para copiar. Adapta la estructura a una User Story, Task o Bug, con contexto de negocio, intención, criterios de aceptación y consideraciones técnicas. Usar cuando el usuario quiera redactar, definir o preparar un ticket de Jira antes de crearlo.
 ---
 
 # Crear Ticket

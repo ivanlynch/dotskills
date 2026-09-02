@@ -44,22 +44,32 @@ main() {
   [[ "${#raw_ids[@]}" -gt 0 ]] || fail "$INVALID_INPUT" "Debe proporcionar al menos un ticket Jira"
   command -v curl >/dev/null 2>&1 || fail "$DEPENDENCY_MISSING" "Falta la dependencia: curl"
   command -v jq >/dev/null 2>&1 || fail "$DEPENDENCY_MISSING" "Falta la dependencia: jq"
+
+  # Validar el formato de todos los ticket-id antes de exigir credenciales:
+  # un input mal formado tiene que fallar con INVALID_INPUT sin importar si
+  # hay credenciales configuradas, no con AUTH_REQUIRED por casualidad de
+  # orden.
+  local -a ticket_ids=()
+  local raw_id ticket_id
+  for raw_id in "${raw_ids[@]}"; do
+    ticket_id="$(printf '%s' "$raw_id" | tr '[:lower:]' '[:upper:]')"
+    [[ "$ticket_id" =~ $ISSUE_PATTERN ]] || \
+      fail "$INVALID_INPUT" "El ticket-id debe tener formato PROJECT-123: $raw_id"
+    ticket_ids+=("$ticket_id")
+  done
+
   required_env JIRA_BASE_URL
   required_env JIRA_EMAIL
   required_env JIRA_API_TOKEN
 
-  local base_url="${JIRA_BASE_URL%/}" ticket_id http_code raw_id
+  local base_url="${JIRA_BASE_URL%/}" http_code
   local response_file result_file
   response_file="$(mktemp)"
   result_file="$(mktemp)"
   trap cleanup EXIT
 
   : >"$result_file"
-  for raw_id in "${raw_ids[@]}"; do
-    ticket_id="$(printf '%s' "$raw_id" | tr '[:lower:]' '[:upper:]')"
-    [[ "$ticket_id" =~ $ISSUE_PATTERN ]] || \
-      fail "$INVALID_INPUT" "El ticket-id debe tener formato PROJECT-123: $raw_id"
-
+  for ticket_id in "${ticket_ids[@]}"; do
     if ! http_code="$(curl --silent --show-error --location \
       --output "$response_file" --write-out '%{http_code}' \
       --user "$JIRA_EMAIL:$JIRA_API_TOKEN" \
