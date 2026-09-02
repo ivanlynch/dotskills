@@ -18,21 +18,14 @@ implementación de `sdd`.
 
 ## Obtener el contexto de Jira
 
-1. Leer y seguir exactamente `/Users/ivanlynch/.codex/skills/consultar-ticket/SKILL.md`.
-2. Ejecutar su implementación obligatoria con el ID normalizado:
-
-   ```bash
-   python3 /Users/ivanlynch/.codex/skills/consultar-ticket/scripts/get_ticket.py <TICKET_ID>
-   ```
-
-3. Usar el resultado como fuente de verdad. Debe contener `ticket_id`, `title`
+1. Invocar `/consultar-ticket` con el ID normalizado.
+2. Usar el resultado como fuente de verdad. Debe contener `ticket_id`, `title`
    y `description`, y el ID debe coincidir con el solicitado.
-4. Leer y seguir `/Users/ivanlynch/.agents/skills/consultar-subtareas/SKILL.md`
-   para consultar las subtareas existentes. Si no hay subtareas, usar
-   `subtasks: []`.
-5. No consultar Jira directamente desde esta skill, no usar herramientas MCP
+3. Invocar `/consultar-subtareas` para consultar las subtareas existentes. Si
+   no hay subtareas, usar `subtasks: []`.
+4. No consultar Jira directamente desde esta skill, no usar herramientas MCP
    de Atlassian y no inventar datos ausentes.
-6. Conservar exactamente el manejo de errores definido por las skills de
+5. Conservar exactamente el manejo de errores definido por las skills de
    consulta: autenticación, conexión, ticket inexistente o herramientas
    faltantes bloquean el handoff y se informan brevemente.
 
