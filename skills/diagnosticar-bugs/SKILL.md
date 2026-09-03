@@ -21,7 +21,7 @@ Si la salida redactada no alcanza para diagnosticar el bug, decilo y pedile info
 
 ## Fases
 
-Recorré las fases en orden. Cada una tiene sus propias instrucciones en un archivo separado — no `SKILL.md` propio para cada una, porque Codex descubre `SKILL.md` de forma recursiva en todo el árbol symlinkeado y expondría cada fase como un comando suelto invocable por su cuenta, cuando en realidad ninguna tiene sentido fuera de este flujo.
+Recorré las fases en orden, leyendo las instrucciones de cada una en su archivo separado y siguiendo su flujo tal cual. No te saltees una fase sin justificación explícita, y no avances a la siguiente hasta cumplir el criterio de cierre de la actual.
 
 | Fase | Instrucciones |
 | --- | --- |
@@ -31,7 +31,3 @@ Recorré las fases en orden. Cada una tiene sus propias instrucciones en un arch
 | 4. Instrumentar | `fases/instrumentar/INSTRUCCIONES.md` |
 | 5. Corregir y agregar el test de regresión | `fases/corregir-testear/INSTRUCCIONES.md` |
 | 6. Limpiar | `fases/limpiar/INSTRUCCIONES.md` |
-
-Leé las instrucciones de la fase que corresponda y seguí su flujo tal cual — es el mismo contenido que cada una tenía antes como sección de este archivo, sin cambios de fondo. No te saltees una fase sin justificación explícita, y no avances a la siguiente hasta cumplir el criterio de cierre de la actual.
-
-**Solo la Fase 1 está mecanizada hoy:** `fases/construir-bucle/` persiste el estado en disco y corre un script que re-verifica de verdad las condiciones de salida, en vez de que las des por cumplidas vos mismo. Las fases 2 a 6 todavía dependen enteramente de tu criterio — se van a mecanizar de a una, siguiendo el mismo patrón.
