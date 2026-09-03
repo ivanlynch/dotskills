@@ -1,15 +1,3 @@
-<!--
-Instrucciones internas de la fase "reproducir y minimizar" de
-diagnosticar-bugs. No es un SKILL.md a propósito: Codex descubre
-SKILL.md de forma recursiva en todo el árbol symlinkeado, y esta fase
-no tiene sentido invocada por su cuenta — solo como parte del flujo de
-diagnosticar-bugs.
-
-Todavía no está mecanizada (a diferencia de fases/construir-bucle/):
-es el mismo contenido que tenía como sección de SKILL.md, movido acá
-sin cambios de fondo.
--->
-
 # Fase 2: reproducir y minimizar
 
 Ejecutá el bucle. Observá cómo se pone en rojo cuando aparece el bug.

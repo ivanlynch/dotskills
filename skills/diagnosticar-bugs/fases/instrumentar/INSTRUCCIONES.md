@@ -1,14 +1,3 @@
-<!--
-Instrucciones internas de la fase "instrumentar" de diagnosticar-bugs.
-No es un SKILL.md a propósito: Codex descubre SKILL.md de forma
-recursiva en todo el árbol symlinkeado, y esta fase no tiene sentido
-invocada por su cuenta — solo como parte del flujo de diagnosticar-bugs.
-
-Todavía no está mecanizada (a diferencia de fases/construir-bucle/):
-es el mismo contenido que tenía como sección de SKILL.md, movido acá
-sin cambios de fondo.
--->
-
 # Fase 4: instrumentar
 
 Cada sondeo debe corresponder a una predicción específica de la Fase 3. **Cambiá una sola variable por vez.**

@@ -1,15 +1,3 @@
-<!--
-Instrucciones internas de la fase "formular hipótesis" de
-diagnosticar-bugs. No es un SKILL.md a propósito: Codex descubre
-SKILL.md de forma recursiva en todo el árbol symlinkeado, y esta fase
-no tiene sentido invocada por su cuenta — solo como parte del flujo de
-diagnosticar-bugs.
-
-Todavía no está mecanizada (a diferencia de fases/construir-bucle/):
-es el mismo contenido que tenía como sección de SKILL.md, movido acá
-sin cambios de fondo.
--->
-
 # Fase 3: formular hipótesis
 
 Generá **3 a 5 hipótesis ordenadas** antes de probar cualquiera. Generar una sola hace que te ancles en la primera idea plausible.

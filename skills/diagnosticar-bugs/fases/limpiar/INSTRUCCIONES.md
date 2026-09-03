@@ -1,14 +1,3 @@
-<!--
-Instrucciones internas de la fase "limpiar" de diagnosticar-bugs. No es
-un SKILL.md a propósito: Codex descubre SKILL.md de forma recursiva en
-todo el árbol symlinkeado, y esta fase no tiene sentido invocada por su
-cuenta — solo como parte del flujo de diagnosticar-bugs.
-
-Todavía no está mecanizada (a diferencia de fases/construir-bucle/):
-es el mismo contenido que tenía como sección de SKILL.md, movido acá
-sin cambios de fondo.
--->
-
 # Fase 6: limpiar
 
 Requisitos antes de declarar terminado el trabajo:
