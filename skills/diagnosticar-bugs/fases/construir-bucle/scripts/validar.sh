@@ -13,11 +13,49 @@ set -uo pipefail
 # Exit 0 + "READY" por stdout  si está completo y las 4 condiciones se cumplen.
 # Exit 1 + "NOT_READY" por stdout, motivos por stderr, en caso contrario.
 #
-# Dependencias: bash, timeout. Nada externo.
+# Dependencias: bash puro. Nada externo — en particular, nada de GNU
+# coreutils: 'timeout' no viene en macOS (ni como 'gtimeout'), así que el
+# límite de tiempo está implementado a mano más abajo (correr_con_limite).
 
 UMBRAL_RAPIDO_S="${DIAGNOSTICAR_BUGS_UMBRAL_RAPIDO_S:-10}"
 
 err() { echo "$*" >&2; }
+
+# Corre "bash -c <comando>" (con stdout/stderr descartados y stdin
+# cerrado) en segundo plano, y lo mata si no terminó a los <segundos>.
+# Deja el exit code en la variable global CORRER_CON_LIMITE_CODIGO: el
+# del comando si terminó solo, o 124 (mismo código que usa GNU 'timeout')
+# si hubo que matarlo. No depende de 'timeout'/'gtimeout' — solo de
+# 'kill', 'wait' y 'sleep', portables entre Linux y macOS.
+#
+# Un solo trabajo en segundo plano, sondeado con kill -0 cada 1s, en vez
+# de un segundo trabajo "watcher" en paralelo esperado con wait: en bash
+# 3.2 (la versión que trae macOS de fábrica, no la actualizan por
+# licencia) esa segunda variante tiene una condición de carrera real y
+# verificada a mano — a veces vuelve al toque, a veces cuelga minutos
+# enteros, según cómo el kernel programe los dos trabajos. Con un solo
+# trabajo en segundo plano y un sondeo síncrono en primer plano no hay
+# dos trabajos compitiendo, así que no hay carrera posible.
+correr_con_limite() {
+  local segundos="$1" comando="$2"
+  bash -c "$comando" >/dev/null 2>&1 </dev/null &
+  local pid=$!
+  local transcurrido=0
+  while kill -0 "$pid" 2>/dev/null; do
+    if [ "$transcurrido" -ge "$segundos" ]; then
+      kill -TERM "$pid" 2>/dev/null
+      sleep 1
+      kill -KILL "$pid" 2>/dev/null
+      wait "$pid" 2>/dev/null
+      CORRER_CON_LIMITE_CODIGO=124
+      return
+    fi
+    sleep 1
+    transcurrido=$((transcurrido + 1))
+  done
+  wait "$pid" 2>/dev/null
+  CORRER_CON_LIMITE_CODIGO=$?
+}
 
 campo() {
   local archivo="$1" nombre="$2"
@@ -114,8 +152,8 @@ main() {
   local i inicio fin codigo
   for i in 1 2 3; do
     inicio=$(date +%s)
-    timeout "$((UMBRAL_RAPIDO_S * 3))" bash -c "$comando" >/dev/null 2>&1 </dev/null
-    codigo=$?
+    correr_con_limite "$((UMBRAL_RAPIDO_S * 3))" "$comando"
+    codigo="$CORRER_CON_LIMITE_CODIGO"
     fin=$(date +%s)
     codigos+=("$codigo")
     tiempos+=("$((fin - inicio))")

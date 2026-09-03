@@ -7,9 +7,11 @@ invocada por su cuenta — solo como parte del flujo de diagnosticar-bugs.
 
 # Fase: Construir bucle de feedback
 
-Esta fase reemplaza a la Fase 1 de `SKILL.md` con una versión mecanizada:
+Esta fase es una versión mecanizada de la Fase 1 descripta en `SKILL.md`:
 en vez de confiar en que vos (el agente) evaluaste bien las 4 condiciones
 de salida, un script las re-verifica corriendo el comando de verdad.
+Todavía no está enganchada como reemplazo — es un piloto paralelo; `SKILL.md`
+sigue teniendo su propia Fase 1 en prosa, sin tocar.
 
 ## Flujo
 
@@ -38,6 +40,15 @@ los métodos en el orden de esa lista, sé agresivo y creativo, no te rindas).
 **No tildes las casillas de "condiciones de salida" vos mismo** — eso lo
 hace el validador en el paso siguiente.
 
+**Cómo decidís `TIPO_BUCLE`:** por defecto es `automatico`. Es `hitl`
+únicamente cuando probaste los primeros 9 métodos de esa lista y ninguno
+te sirvió — es el método #10, el último recurso, no una opción más entre
+las otras. Si llegás ahí, copiá y adaptá
+`<skill-dir>/scripts/hitl-loop.template.sh`, corré esa sesión con la
+persona, y pegá la corrida real bajo `## Corrida real` en el `state.md`
+**antes de pasar al paso 3** — el validador no le va a pedir que repita
+los clicks 3 veces, así que necesita esa evidencia ya escrita.
+
 ### 3. Correr el validador
 
 ```bash
@@ -57,11 +68,6 @@ Valida dos capas, en orden:
 - Imprime `NOT_READY` (exit 1) con el motivo exacto por stderr si no. Volvé
   al paso 2, ajustá lo que falte según lo que diga el error, y volvé a
   correr el validador. No sigas a la fase siguiente sin `READY`.
-
-Si el bug necesita intervención humana (`TIPO_BUCLE: hitl`), copiá y
-adaptá `<skill-dir>/scripts/hitl-loop.template.sh`, corré esa sesión con la
-persona, y pegá la corrida real en el `state.md` antes de este paso — el
-validador no le va a pedir que repita los clicks 3 veces.
 
 ### 4. Capa semántica (todavía manual)
 

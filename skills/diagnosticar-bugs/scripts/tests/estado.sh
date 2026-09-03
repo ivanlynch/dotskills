@@ -16,7 +16,7 @@ echo "Ejecutando tests para estado.sh..."
 REPO_A="$TMP_DIR/proyecto-a"
 mkdir -p "$REPO_A"
 git -C "$REPO_A" init -q
-git -C "$REPO_A" -c user.email="test@test.com" -c user.name="Test" commit -q --allow-empty -m "commit inicial"
+git -C "$REPO_A" -c user.email="test@test.com" -c user.name="Test" -c commit.gpgsign=false commit -q --allow-empty -m "commit inicial"
 git -C "$REPO_A" checkout -q -b feature/export-fix
 git -C "$REPO_A" remote add origin "https://github.com/ivanlynch/proyecto-a.git"
 cd "$REPO_A"
