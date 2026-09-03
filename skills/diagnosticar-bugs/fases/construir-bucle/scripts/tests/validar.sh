@@ -2,12 +2,12 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-SCRIPT="$SCRIPT_DIR/../validar_estructura.sh"
+SCRIPT="$SCRIPT_DIR/../validar.sh"
 
 TMP_DIR=$(mktemp -d)
 trap 'rm -rf "$TMP_DIR"' EXIT
 
-echo "Ejecutando tests para validar_estructura.sh..."
+echo "Ejecutando tests para validar.sh..."
 
 nuevo_state() {
   local archivo="$1"
@@ -15,6 +15,7 @@ nuevo_state() {
   {
     printf 'SINTOMA_USUARIO: algo\n'
     printf 'METODO: test_fallido\n'
+    printf 'AJUSTES: ninguno\n'
     for linea in "$@"; do printf '%s\n' "$linea"; done
     printf '\n## Condiciones de salida\n\n'
     printf '%s\n' \
@@ -25,7 +26,8 @@ nuevo_state() {
   } > "$archivo"
 }
 
-# --- falta COMANDO ---
+# --- Capa 1: completitud estructural ---
+
 state="$TMP_DIR/sin-comando.md"
 nuevo_state "$state" "TIPO_BUCLE: automatico"
 if bash "$SCRIPT" "$state" 2>/dev/null; then
@@ -33,6 +35,55 @@ if bash "$SCRIPT" "$state" 2>/dev/null; then
   exit 1
 fi
 echo "PASS: falta COMANDO -> NOT_READY."
+
+state="$TMP_DIR/sin-sintoma.md"
+{
+  printf 'METODO: test_fallido\n'
+  printf 'AJUSTES: ninguno\n'
+  printf 'TIPO_BUCLE: automatico\n'
+  printf 'COMANDO: false\n'
+} > "$state"
+if bash "$SCRIPT" "$state" 2>/dev/null; then
+  echo "TEST FAIL: sin SINTOMA_USUARIO debería dar NOT_READY." >&2
+  exit 1
+fi
+echo "PASS: falta SINTOMA_USUARIO -> NOT_READY (no llega a re-correr nada)."
+
+state="$TMP_DIR/sin-metodo.md"
+{
+  printf 'SINTOMA_USUARIO: algo\n'
+  printf 'AJUSTES: ninguno\n'
+  printf 'TIPO_BUCLE: automatico\n'
+  printf 'COMANDO: false\n'
+} > "$state"
+if bash "$SCRIPT" "$state" 2>/dev/null; then
+  echo "TEST FAIL: sin METODO debería dar NOT_READY." >&2
+  exit 1
+fi
+echo "PASS: falta METODO -> NOT_READY."
+
+state="$TMP_DIR/sin-ajustes.md"
+{
+  printf 'SINTOMA_USUARIO: algo\n'
+  printf 'METODO: test_fallido\n'
+  printf 'TIPO_BUCLE: automatico\n'
+  printf 'COMANDO: false\n'
+} > "$state"
+if bash "$SCRIPT" "$state" 2>/dev/null; then
+  echo "TEST FAIL: sin AJUSTES debería dar NOT_READY." >&2
+  exit 1
+fi
+echo "PASS: falta AJUSTES -> NOT_READY."
+
+state="$TMP_DIR/tipo-bucle-invalido.md"
+nuevo_state "$state" "TIPO_BUCLE: automatic" "COMANDO: false"
+if bash "$SCRIPT" "$state" 2>/dev/null; then
+  echo "TEST FAIL: un TIPO_BUCLE que no sea 'automatico' ni 'hitl' debería dar NOT_READY (no caer silenciosamente al camino automático)." >&2
+  exit 1
+fi
+echo "PASS: TIPO_BUCLE con un valor inválido (typo) -> NOT_READY, no cae silenciosamente a automático."
+
+# --- Capa 2: verificación mecánica ---
 
 # --- comando que siempre da verde (exit 0): nunca se pone en rojo ---
 state="$TMP_DIR/siempre-verde.md"
@@ -118,4 +169,4 @@ else
   exit 1
 fi
 
-echo "Todos los tests de validar_estructura.sh pasaron."
+echo "Todos los tests de validar.sh pasaron."

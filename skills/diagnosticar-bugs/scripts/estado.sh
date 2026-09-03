@@ -1,26 +1,34 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Estado persistido de un diagnóstico en curso, fuera del repo del proyecto
-# (mismo patrón que investigar/scripts/crear-estructura-investigacion.sh):
-# una carpeta por diagnóstico, con un archivo por fase y un acumulado global.
+# Estado persistido de un diagnóstico en curso, fuera del proyecto (mismo
+# patrón que investigar/scripts/crear-estructura-investigacion.sh), pero
+# anidado por proyecto para no mezclar diagnósticos de repos distintos en
+# una carpeta plana — misma técnica que resolver_proyecto.sh (adaptada de
+# lib/resolver-proyecto.sh en better-sdd): el proyecto se identifica por
+# su remoto git "origin" desde el directorio donde corras este script.
 #
 # Uso:
-#   diagnostico_state.sh init <id>
-#     Crea $DIAGNOSTICOS_ROOT/<id>/ (si no existe) con fases/ adentro y
-#     DIAGNOSTICO.md vacío. No sobrescribe un diagnóstico existente.
-#   diagnostico_state.sh dir <id>
+#   estado.sh init <id>
+#     Crea $DIAGNOSTICOS_ROOT/<slug-proyecto>/<id>/ (si no existe) con
+#     fases/ adentro y DIAGNOSTICO.md vacío. No sobrescribe un
+#     diagnóstico existente.
+#   estado.sh dir <id>
 #     Imprime la ruta de la carpeta del diagnóstico. Falla si no existe.
-#   diagnostico_state.sh ruta-fase <id> <fase>
+#   estado.sh ruta-fase <id> <fase>
 #     Imprime la ruta de fases/<fase>.md dentro del diagnóstico.
-#   diagnostico_state.sh acumular <id> <fase> <titulo>
+#   estado.sh acumular <id> <fase> <titulo>
 #     Agrega el contenido de fases/<fase>.md a DIAGNOSTICO.md, bajo un
 #     encabezado "## <titulo>". No se puede llamar dos veces para la misma
 #     fase (falla si ya está acumulada) — evita duplicar una fase que se
 #     re-valida por error.
 #
-# DIAGNOSTICOS_ROOT (default: ~/Documents/diagnostics) es la raíz de todos
-# los diagnósticos; se puede sobreescribir para tests o para aislar corridas.
+# DIAGNOSTICOS_ROOT (default: ~/Documents/diagnostics) es la raíz de
+# todos los proyectos; se puede sobreescribir para tests o para aislar
+# corridas.
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+RESOLVER="$SCRIPT_DIR/resolver_proyecto.sh"
 
 uso() {
   cat >&2 <<EOF
@@ -38,11 +46,18 @@ id_valido() {
   [[ "$1" =~ ^[a-z0-9][a-z0-9-]{2,62}[a-z0-9]$ ]]
 }
 
+ruta_base() {
+  local slug
+  slug="$("$RESOLVER" slug .)"
+  printf '%s/%s\n' "$ROOT" "$slug"
+}
+
 cmd_init() {
   local id="$1"
   id_valido "$id" || { echo "Error: identificador inválido: '$id' (minúsculas, números y guiones, 4-64 caracteres)." >&2; exit 2; }
 
-  local dir="$ROOT/$id"
+  local dir
+  dir="$(ruta_base)/$id"
   if [ -d "$dir" ]; then
     echo "$dir"
     return 0
@@ -58,8 +73,9 @@ cmd_init() {
 
 cmd_dir() {
   local id="$1"
-  local dir="$ROOT/$id"
-  [ -d "$dir" ] || { echo "Error: no existe el diagnóstico '$id'. Corré primero: diagnostico_state.sh init $id" >&2; exit 1; }
+  local dir
+  dir="$(ruta_base)/$id"
+  [ -d "$dir" ] || { echo "Error: no existe el diagnóstico '$id' para este proyecto. Corré primero: estado.sh init $id" >&2; exit 1; }
   echo "$dir"
 }
 

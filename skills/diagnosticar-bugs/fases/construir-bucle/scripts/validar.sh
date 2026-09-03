@@ -1,14 +1,16 @@
 #!/usr/bin/env bash
 set -uo pipefail
 
-# Capa mecánica del validador de Fase 1: no confía en que el COMANDO
-# declarado en el state.md "puede ponerse en rojo" — lo re-corre de
-# verdad y confirma las 4 condiciones de salida. Nunca decide si el
-# rojo corresponde al síntoma real del usuario: eso es la capa
-# semántica (transversal), no esta.
+# Valida que la fase "construir bucle" esté lista para la siguiente: dos
+# cosas, no una. (1) Completitud estructural — que todos los campos
+# requeridos del state.md estén completos y con un valor válido. (2)
+# Verificación mecánica — re-corre el COMANDO declarado de verdad y
+# confirma las 4 condiciones de salida; no confía en que el agente diga
+# "ya lo probé y anda". Nunca decide si el rojo corresponde al síntoma
+# real del usuario: esa es la capa semántica (transversal), no esta.
 #
-# Uso: validar_estructura.sh <ruta a fases/1-construir-bucle.md>
-# Exit 0 + "READY" por stdout  si las 4 condiciones se cumplen.
+# Uso: validar.sh <ruta a fases/construir-bucle.md>
+# Exit 0 + "READY" por stdout  si está completo y las 4 condiciones se cumplen.
 # Exit 1 + "NOT_READY" por stdout, motivos por stderr, en caso contrario.
 #
 # Dependencias: bash, timeout. Nada externo.
@@ -36,26 +38,52 @@ tildar_confiado() {
   sed -i -E "s/^- \[ \] ${id}\$/- [x] ${id} (${nota})/" "$archivo"
 }
 
+# --- Capa 1: completitud estructural -----------------------------------
+
+validar_completitud() {
+  local archivo="$1" motivos=0
+  local sintoma metodo comando tipo_bucle ajustes
+
+  sintoma="$(campo "$archivo" SINTOMA_USUARIO)"
+  metodo="$(campo "$archivo" METODO)"
+  comando="$(campo "$archivo" COMANDO)"
+  tipo_bucle="$(campo "$archivo" TIPO_BUCLE)"
+  ajustes="$(campo "$archivo" AJUSTES)"
+
+  [ -n "$sintoma" ] || { err "Falta SINTOMA_USUARIO."; motivos=$((motivos + 1)); }
+  [ -n "$metodo" ] || { err "Falta METODO."; motivos=$((motivos + 1)); }
+  [ -n "$comando" ] || { err "Falta COMANDO."; motivos=$((motivos + 1)); }
+  [ -n "$ajustes" ] || { err "Falta AJUSTES (escribí 'ninguno' si no ajustaste nada)."; motivos=$((motivos + 1)); }
+
+  case "$tipo_bucle" in
+    automatico|hitl) ;;
+    "") err "Falta TIPO_BUCLE."; motivos=$((motivos + 1)) ;;
+    *) err "TIPO_BUCLE inválido: '$tipo_bucle' (tiene que ser 'automatico' o 'hitl')."; motivos=$((motivos + 1)) ;;
+  esac
+
+  return "$motivos"
+}
+
+# --- Capa 2: verificación mecánica --------------------------------------
+
 main() {
   local state_file="${1:-}"
-  [ -n "$state_file" ] || { err "Uso: $0 <ruta a fases/1-construir-bucle.md>"; echo "NOT_READY"; exit 1; }
+  [ -n "$state_file" ] || { err "Uso: $0 <ruta a fases/construir-bucle.md>"; echo "NOT_READY"; exit 1; }
   [ -f "$state_file" ] || { err "No existe: $state_file"; echo "NOT_READY"; exit 1; }
 
-  local comando tipo_bucle motivos=0
-
-  comando="$(campo "$state_file" COMANDO)"
-  tipo_bucle="$(campo "$state_file" TIPO_BUCLE)"
-
-  if [ -z "$comando" ]; then
-    err "Falta COMANDO en $state_file."
+  if ! validar_completitud "$state_file"; then
     echo "NOT_READY"; exit 1
   fi
 
+  local comando tipo_bucle motivos=0
+  comando="$(campo "$state_file" COMANDO)"
+  tipo_bucle="$(campo "$state_file" TIPO_BUCLE)"
+
   if [ "$tipo_bucle" = "hitl" ]; then
     # No le pedimos a la persona que repita clicks 3 veces. Confiamos
-    # en la corrida ya hecha; solo confirmamos que el comando exista y
-    # sea ejecutable (sintaxis), y que la sección de corrida real no
-    # esté vacía.
+    # en la corrida ya hecha; solo confirmamos que el comando sea
+    # sintácticamente válido, y que la sección de corrida real no esté
+    # vacía.
     if ! bash -n <(echo "$comando") 2>/dev/null; then
       err "El COMANDO declarado no es sintácticamente válido como bash: $comando"
       motivos=$((motivos + 1))

@@ -1,11 +1,11 @@
 <!--
-Plantilla de la Fase 1 (construir el bucle de feedback). Copiá este
-archivo a fases/1-construir-bucle.md dentro de la carpeta del
-diagnóstico y completá cada campo. No borres los comentarios de
-instrucciones hasta terminar — sirven de guía para completar bien.
+Plantilla de la fase "construir bucle de feedback". Copiá este archivo
+a fases/construir-bucle.md dentro de la carpeta del diagnóstico y
+completá cada campo. No borres los comentarios de instrucciones hasta
+terminar — sirven de guía para completar bien.
 
-Los campos en mayúsculas son los que lee scripts/validar_estructura.sh.
-No cambies sus nombres ni el formato "CAMPO: valor" (una línea).
+Los campos en mayúsculas son los que lee scripts/validar.sh. No
+cambies sus nombres ni el formato "CAMPO: valor" (una línea).
 -->
 
 # Fase 1 — Construir bucle de feedback
@@ -62,7 +62,7 @@ AJUSTES:
 
 ## Condiciones de salida
 
-<!-- No las tildes vos: las tilda scripts/validar_estructura.sh
+<!-- No las tildes vos: las tilda scripts/validar.sh
 después de re-correr el comando. Dejalas así hasta correr el
 validador. -->
 

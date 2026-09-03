@@ -1,11 +1,11 @@
 <!--
-Instrucciones internas de la Fase 1 de diagnosticar-bugs. No es un
-SKILL.md a propósito: Codex descubre SKILL.md de forma recursiva en
-todo el árbol symlinkeado, y esta fase no tiene sentido invocada por
-su cuenta — solo como parte del flujo de diagnosticar-bugs.
+Instrucciones internas de la fase "construir bucle" de diagnosticar-bugs.
+No es un SKILL.md a propósito: Codex descubre SKILL.md de forma
+recursiva en todo el árbol symlinkeado, y esta fase no tiene sentido
+invocada por su cuenta — solo como parte del flujo de diagnosticar-bugs.
 -->
 
-# Fase 1 — Construir bucle de feedback
+# Fase: Construir bucle de feedback
 
 Esta fase reemplaza a la Fase 1 de `SKILL.md` con una versión mecanizada:
 en vez de confiar en que vos (el agente) evaluaste bien las 4 condiciones
@@ -15,10 +15,12 @@ de salida, un script las re-verifica corriendo el comando de verdad.
 
 ### 1. Inicializar el diagnóstico
 
-Si es la primera fase de un diagnóstico nuevo:
+Si es la primera fase de un diagnóstico nuevo, corriendo desde el
+proyecto donde está el bug (el script identifica el proyecto por su
+remoto git, para no mezclar diagnósticos de repos distintos):
 
 ```bash
-<skill-dir>/scripts/diagnostico_state.sh init <id>
+<skill-dir>/scripts/estado.sh init <id>
 ```
 
 `<id>` es un slug corto derivado del bug (minúsculas, guiones — ej.
@@ -27,8 +29,8 @@ Si es la primera fase de un diagnóstico nuevo:
 ### 2. Copiar la plantilla y completarla
 
 ```bash
-cp <skill-dir>/fases/1-construir-bucle/template.md \
-   "$(<skill-dir>/scripts/diagnostico_state.sh ruta-fase <id> 1-construir-bucle)"
+cp <skill-dir>/fases/construir-bucle/TEMPLATE.md \
+   "$(<skill-dir>/scripts/estado.sh ruta-fase <id> construir-bucle)"
 ```
 
 Completá cada campo siguiendo la Fase 1 de `SKILL.md` (mismo criterio: probá
@@ -36,18 +38,25 @@ los métodos en el orden de esa lista, sé agresivo y creativo, no te rindas).
 **No tildes las casillas de "condiciones de salida" vos mismo** — eso lo
 hace el validador en el paso siguiente.
 
-### 3. Correr la capa mecánica
+### 3. Correr el validador
 
 ```bash
-<skill-dir>/fases/1-construir-bucle/scripts/validar_estructura.sh "$(<skill-dir>/scripts/diagnostico_state.sh ruta-fase <id> 1-construir-bucle)"
+<skill-dir>/fases/construir-bucle/scripts/validar.sh "$(<skill-dir>/scripts/estado.sh ruta-fase <id> construir-bucle)"
 ```
 
-- Imprime `READY` (exit 0) si el comando declarado, corrido de verdad 3
-  veces, cumple las 4 condiciones.
+Valida dos capas, en orden:
+
+1. **Completitud estructural**: que `SINTOMA_USUARIO`, `METODO`, `COMANDO`,
+   `TIPO_BUCLE` (con un valor válido: `automatico` o `hitl`) y `AJUSTES`
+   estén completos. Si falta algo, corta acá — ni siquiera intenta correr
+   el comando.
+2. **Verificación mecánica**: re-corre el `COMANDO` declarado de verdad (3
+   veces si es automático) y confirma las 4 condiciones de salida.
+
+- Imprime `READY` (exit 0) si pasa las dos capas.
 - Imprime `NOT_READY` (exit 1) con el motivo exacto por stderr si no. Volvé
-  al paso 2, ajustá el `COMANDO` (o los campos que falten) según lo que
-  diga el error, y volvé a correr el validador. No sigas a la Fase 2 sin
-  `READY`.
+  al paso 2, ajustá lo que falte según lo que diga el error, y volvé a
+  correr el validador. No sigas a la fase siguiente sin `READY`.
 
 Si el bug necesita intervención humana (`TIPO_BUCLE: hitl`), copiá y
 adaptá `<skill-dir>/scripts/hitl-loop.template.sh`, corré esa sesión con la
@@ -72,10 +81,11 @@ de forma explícita, antes de acumular.)*
 Solo después de `READY` **y** de confirmar la capa semántica:
 
 ```bash
-<skill-dir>/scripts/diagnostico_state.sh acumular <id> 1-construir-bucle "Fase 1: Construir bucle de feedback"
+<skill-dir>/scripts/estado.sh acumular <id> construir-bucle "Fase: Construir bucle de feedback"
 ```
 
 Esto agrega el contenido del `state.md` de esta fase a `DIAGNOSTICO.md`, el
-acumulado persistido del diagnóstico completo. La Fase 2 (todavía no
-mecanizada) parte de ese `DIAGNOSTICO.md`, no de esta conversación — así
-sobrevive aunque el contexto se comprima o la sesión se reinicie.
+acumulado persistido del diagnóstico completo (bajo el proyecto actual). La
+fase siguiente (todavía no mecanizada) parte de ese `DIAGNOSTICO.md`, no de
+esta conversación — así sobrevive aunque el contexto se comprima o la
+sesión se reinicie.
