@@ -60,14 +60,14 @@ Detenete y decilo explícitamente. Enumerá lo que intentaste. Pedile al usuario
 
 ### Criterio de finalización: un bucle ajustado que se ponga en rojo
 
-La Fase 1 termina cuando el bucle es ajustado y capaz de ponerse en rojo: podés nombrar **un comando** —ruta de script, invocación de test o curl— que ya ejecutaste al menos una vez, mostrando la invocación y su salida redactada, y que sea:
+La Fase 1 termina cuando el bucle es ajustado y capaz de ponerse en rojo — pero **no lo decidas vos mismo mirando la lista de abajo**. Seguí `fases/construir-bucle/INSTRUCCIONES.md`: persiste el estado en disco y corre `scripts/validar.sh`, que re-verifica de verdad —corriendo el comando, no confiando en tu palabra— cada una de estas 4 condiciones antes de darlas por cumplidas:
 
-- [ ] **Capaz de ponerse en rojo:** recorre el camino real del bug y comprueba el **síntoma exacto del usuario**, de modo que pueda fallar con este bug y pasar una vez corregido. No alcanza con «se ejecuta sin errores».
-- [ ] **Determinista:** produce el mismo veredicto en cada ejecución (para bugs flaky: una tasa de reproducción alta y fijada, según lo anterior).
-- [ ] **Rápido:** segundos, no minutos.
-- [ ] **Ejecutable por el agente:** corre sin supervisión; la intervención humana solo se permite mediante `scripts/hitl-loop.template.sh`.
+- **Capaz de ponerse en rojo:** recorre el camino real del bug y comprueba el **síntoma exacto del usuario**, de modo que pueda fallar con este bug y pasar una vez corregido. No alcanza con «se ejecuta sin errores».
+- **Determinista:** produce el mismo veredicto en cada ejecución (para bugs flaky: una tasa de reproducción alta y fijada, según lo anterior).
+- **Rápido:** segundos, no minutos.
+- **Ejecutable por el agente:** corre sin supervisión; la intervención humana solo se permite mediante `scripts/hitl-loop.template.sh`.
 
-Si te descubrís leyendo código para construir una teoría antes de que exista este comando, detenete: saltar directamente a una hipótesis es exactamente el fallo que este skill previene. Sin un comando capaz de ponerse en rojo, no hay Fase 2.
+Si te descubrís leyendo código para construir una teoría antes de que exista este comando, detenete: saltar directamente a una hipótesis es exactamente el fallo que este skill previene. Sin un `READY` de `scripts/validar.sh`, no hay Fase 2.
 
 ## Fase 2: reproducir y minimizar
 
