@@ -16,6 +16,8 @@ echo "Ejecutando tests para estado.sh..."
 REPO_A="$TMP_DIR/proyecto-a"
 mkdir -p "$REPO_A"
 git -C "$REPO_A" init -q
+git -C "$REPO_A" -c user.email="test@test.com" -c user.name="Test" commit -q --allow-empty -m "commit inicial"
+git -C "$REPO_A" checkout -q -b feature/export-fix
 git -C "$REPO_A" remote add origin "https://github.com/ivanlynch/proyecto-a.git"
 cd "$REPO_A"
 
@@ -26,10 +28,19 @@ if [ ! -d "$dir" ] || [ ! -f "$dir/DIAGNOSTICO.md" ] || [ ! -d "$dir/fases" ]; t
   exit 1
 fi
 case "$dir" in
-  "$DIAGNOSTICOS_ROOT/github.com-ivanlynch-proyecto-a/export-timeout-500") ;;
+  "$DIAGNOSTICOS_ROOT"/github.com-ivanlynch-proyecto-a-????????/export-timeout-500) ;;
   *) echo "TEST FAIL: init no anidó la carpeta bajo el slug del proyecto. dir='$dir'" >&2; exit 1 ;;
 esac
 echo "PASS: init crea carpeta anidada bajo el slug del proyecto, fases/ y DIAGNOSTICO.md."
+
+if ! grep -q "^Proyecto: github.com/ivanlynch/proyecto-a$" "$dir/DIAGNOSTICO.md" \
+   || ! grep -q "^Branch:   feature/export-fix$" "$dir/DIAGNOSTICO.md" \
+   || ! grep -qE "^Commit:   [0-9a-f]+$" "$dir/DIAGNOSTICO.md"; then
+  echo "TEST FAIL: DIAGNOSTICO.md debería grabar proyecto, branch y commit al momento del init." >&2
+  cat "$dir/DIAGNOSTICO.md" >&2
+  exit 1
+fi
+echo "PASS: init graba proyecto, branch y commit en DIAGNOSTICO.md."
 
 # --- init es idempotente (no pisa un diagnóstico existente) ---
 echo "contenido previo" >> "$dir/DIAGNOSTICO.md"

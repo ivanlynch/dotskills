@@ -64,8 +64,21 @@ cmd_init() {
   fi
 
   mkdir -p "$dir/fases"
+
+  # Proyecto, branch y commit quedan grabados en el momento del init, no
+  # en el nombre de la carpeta: los nombres de branch se renombran o se
+  # borran, y meterlos en el path los haría mentir con el tiempo. Esto es
+  # el registro de verdad de "sobre qué estabas parado" al arrancar.
+  local proyecto branch commit
+  proyecto="$("$RESOLVER" identificador .)"
+  branch="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "(sin branch — no es un repo git o está en detached HEAD)")"
+  commit="$(git rev-parse --short HEAD 2>/dev/null || echo "(sin commit)")"
+
   {
     printf '# Diagnóstico: %s\n\n' "$id"
+    printf 'Proyecto: %s\n' "$proyecto"
+    printf 'Branch:   %s\n' "$branch"
+    printf 'Commit:   %s\n\n' "$commit"
     printf 'Generado por diagnosticar-bugs. Cada sección corresponde a una fase completada.\n'
   } > "$dir/DIAGNOSTICO.md"
   echo "$dir"

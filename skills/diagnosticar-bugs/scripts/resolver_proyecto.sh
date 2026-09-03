@@ -11,7 +11,15 @@ set -euo pipefail
 #   resolver_proyecto.sh identificador [<dir>]
 #     Imprime el identificador canónico, ej: github.com/ivanlynch/mi-repo
 #   resolver_proyecto.sh slug [<dir>]
-#     Imprime la versión sanitizada para nombre de carpeta.
+#     Imprime la versión sanitizada para nombre de carpeta: un prefijo
+#     legible cortado a 60 caracteres + 8 caracteres de sha256 del
+#     identificador completo (sin cortar), ej:
+#     github.com-ivanlynch-mi-repo-a3f9c21e
+#     El hash sale siempre del identificador ENTERO, nunca del prefijo ya
+#     cortado — así dos proyectos que truncan al mismo prefijo no
+#     terminan compartiendo carpeta. Longitud total siempre acotada
+#     (~70 caracteres), sin importar cuán largo sea el repo/owner/host
+#     (repos de GitLab con subgrupos anidados, por ejemplo).
 #
 # Si el repo no tiene remoto "origin", usa la ruta local absoluta como
 # identificador temporal y avisa por stderr (no aborta).
@@ -50,12 +58,33 @@ resolver_identificador() {
   printf '%s\n' "$ruta"
 }
 
+sha256_de() {
+  if command -v sha256sum >/dev/null 2>&1; then
+    sha256sum | cut -d' ' -f1
+  elif command -v shasum >/dev/null 2>&1; then
+    shasum -a 256 | cut -d' ' -f1
+  else
+    echo "Error: se necesita sha256sum o shasum para generar el slug." >&2
+    return 1
+  fi
+}
+
+MAX_PREFIJO=60
+
 resolver_slug() {
   local dir="${1:-.}"
   local id
   id=$(resolver_identificador "$dir") || return 1
-  local slug="${id//\//-}"
-  printf '%s\n' "${slug#-}"
+
+  local prefijo="${id//\//-}"
+  prefijo="${prefijo#-}"
+  prefijo="${prefijo:0:$MAX_PREFIJO}"
+  prefijo="${prefijo%-}"
+
+  local hash
+  hash="$(printf '%s' "$id" | sha256_de | cut -c1-8)" || return 1
+
+  printf '%s-%s\n' "$prefijo" "$hash"
 }
 
 main() {
