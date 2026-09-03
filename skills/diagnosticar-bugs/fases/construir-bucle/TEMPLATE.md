@@ -8,7 +8,7 @@ Los campos en mayúsculas son los que lee scripts/validar.sh. No
 cambies sus nombres ni el formato "CAMPO: valor" (una línea).
 -->
 
-# Fase 1 — Construir bucle de feedback
+# Fase — Construir bucle de feedback
 
 ## Síntoma reportado por el usuario
 
@@ -29,8 +29,36 @@ METODO:
 ## Comando
 
 <!-- Un solo comando, ejecutable tal cual desde la raíz del proyecto.
-El validador lo va a correr de verdad — no describas lo que haría,
-pegá el comando real. -->
+El validador lo va a correr de verdad (3 veces, si TIPO_BUCLE es
+automatico) y se fija únicamente en su exit code: 0 = no hay bug
+(verde), cualquier otro número = hay bug (rojo). No mira nada de lo
+que el comando imprime — esa salida se descarta.
+
+Esto importa si tu bug es "el programa termina bien pero imprime algo
+incorrecto" (no crashea, no devuelve un exit code distinto de 0 por sí
+solo). En ese caso, COMANDO no puede ser el programa pelado — tiene
+que ser un chequeo que vos armás, cuyo propio exit code sea el
+veredicto:
+
+- Comparar contra una salida correcta ya guardada:
+
+    diff <(mi-cli exportar) salida-esperada.txt
+
+  diff ya sale con 0 si son iguales (verde) y con 1 si son distintos
+  (rojo) — no hace falta nada más.
+
+- Buscar el texto de un error o un valor incorrecto puntual:
+
+    ! mi-cli exportar | grep -q "Total: 41"
+
+  grep -q sale con 0 si ENCUENTRA "Total: 41" (el valor malo). El `!`
+  adelante da vuelta ese resultado: el conjunto sale con 0 (verde)
+  cuando el valor malo NO aparece, y con 1 (rojo) cuando sí aparece.
+
+Si en cambio tu bug ya crashea o devuelve un exit code distinto de 0
+por su cuenta (la mayoría de los tests fallidos, errores de red,
+excepciones no capturadas), no hace falta nada de esto: pegá el
+comando tal cual. -->
 
 COMANDO:
 
