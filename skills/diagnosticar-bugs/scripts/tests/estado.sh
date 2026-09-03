@@ -28,10 +28,17 @@ if [ ! -d "$dir" ] || [ ! -f "$dir/DIAGNOSTICO.md" ] || [ ! -d "$dir/fases" ]; t
   exit 1
 fi
 case "$dir" in
-  "$DIAGNOSTICOS_ROOT"/github.com-ivanlynch-proyecto-a-????????/export-timeout-500) ;;
+  "$DIAGNOSTICOS_ROOT"/[0-9a-f][0-9a-f]*/export-timeout-500)
+    slug_generado="${dir#"$DIAGNOSTICOS_ROOT"/}"
+    slug_generado="${slug_generado%/export-timeout-500}"
+    if ! [[ "$slug_generado" =~ ^[0-9a-f]{64}$ ]]; then
+      echo "TEST FAIL: el slug de la carpeta debería ser sha256 en hex de 64 chars, es '$slug_generado'." >&2
+      exit 1
+    fi
+    ;;
   *) echo "TEST FAIL: init no anidó la carpeta bajo el slug del proyecto. dir='$dir'" >&2; exit 1 ;;
 esac
-echo "PASS: init crea carpeta anidada bajo el slug del proyecto, fases/ y DIAGNOSTICO.md."
+echo "PASS: init crea carpeta anidada bajo el slug (hash) del proyecto, fases/ y DIAGNOSTICO.md."
 
 if ! grep -q "^Proyecto: github.com/ivanlynch/proyecto-a$" "$dir/DIAGNOSTICO.md" \
    || ! grep -q "^Branch:   feature/export-fix$" "$dir/DIAGNOSTICO.md" \

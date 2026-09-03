@@ -23,11 +23,11 @@ fi
 echo "PASS: normaliza un remoto HTTPS."
 
 slug=$("$TARGET_SCRIPT" slug "$REPO_HTTPS")
-case "$slug" in
-  github.com-ivanlynch-mi-repo-????????) ;;
-  *) echo "TEST FAIL: slug esperado con forma 'github.com-ivanlynch-mi-repo-<8 hex>', obtenido '$slug'." >&2; exit 1 ;;
-esac
-echo "PASS: el slug sanitiza las barras a guiones y agrega un sufijo hash de 8 chars."
+if ! [[ "$slug" =~ ^[0-9a-f]{64}$ ]]; then
+  echo "TEST FAIL: el slug debería ser sha256 en hex (64 caracteres, 0-9a-f), obtenido '$slug' (${#slug} caracteres)." >&2
+  exit 1
+fi
+echo "PASS: el slug es sha256(identificador) en hex, siempre 64 caracteres."
 
 slug2=$("$TARGET_SCRIPT" slug "$REPO_HTTPS")
 if [ "$slug" != "$slug2" ]; then
@@ -76,41 +76,17 @@ if ! grep -qi "no se encontró un remoto" "$STDERR_FILE"; then
 fi
 echo "PASS: sin remoto, usa la ruta local y avisa por stderr sin abortar."
 
-# --- repo con nombre gigante: el slug queda acotado, no crece sin límite ---
+# --- repo con nombre gigante: el slug sigue siendo 64 chars igual ---
 REPO_GIGANTE="${TMP_DIR}/repo-gigante"
 mkdir -p "$REPO_GIGANTE"
 git -C "$REPO_GIGANTE" init -q
 git -C "$REPO_GIGANTE" remote add origin "https://gitlab.com/empresa/equipo-de-plataforma/proyectos-internos/servicio-de-facturacion-legacy-con-nombre-todavia-mas-largo.git"
 
 slug_gigante=$("$TARGET_SCRIPT" slug "$REPO_GIGANTE")
-if [ "${#slug_gigante}" -gt 70 ]; then
-  echo "TEST FAIL: el slug de un repo con nombre gigante no debería superar ~70 caracteres, tiene ${#slug_gigante}: '$slug_gigante'" >&2
+if ! [[ "$slug_gigante" =~ ^[0-9a-f]{64}$ ]]; then
+  echo "TEST FAIL: un repo con nombre gigante debería dar igual un slug de 64 chars, obtenido '$slug_gigante' (${#slug_gigante} caracteres)." >&2
   exit 1
 fi
-echo "PASS: un repo con nombre gigante da un slug acotado (${#slug_gigante} caracteres)."
-
-# --- dos repos que truncan al mismo prefijo de 60 chars no colisionan ---
-REPO_LARGO_A="${TMP_DIR}/repo-largo-a"
-mkdir -p "$REPO_LARGO_A"
-git -C "$REPO_LARGO_A" init -q
-git -C "$REPO_LARGO_A" remote add origin "https://gitlab.com/organizacion-con-nombre-particularmente-largo-de-verdad/proyecto-a.git"
-
-REPO_LARGO_B="${TMP_DIR}/repo-largo-b"
-mkdir -p "$REPO_LARGO_B"
-git -C "$REPO_LARGO_B" init -q
-git -C "$REPO_LARGO_B" remote add origin "https://gitlab.com/organizacion-con-nombre-particularmente-largo-de-verdad/proyecto-b.git"
-
-slug_largo_a=$("$TARGET_SCRIPT" slug "$REPO_LARGO_A")
-slug_largo_b=$("$TARGET_SCRIPT" slug "$REPO_LARGO_B")
-prefijo_a="${slug_largo_a%-????????}"
-prefijo_b="${slug_largo_b%-????????}"
-if [ "$prefijo_a" != "$prefijo_b" ]; then
-  echo "AVISO: este test asumía que los prefijos truncados coincidían para forzar el caso de colisión; no coincidieron ('$prefijo_a' vs '$prefijo_b'), pero igual verificamos que los slugs completos difieran." >&2
-fi
-if [ "$slug_largo_a" = "$slug_largo_b" ]; then
-  echo "TEST FAIL: dos proyectos distintos con el mismo prefijo truncado no deberían terminar con el mismo slug." >&2
-  exit 1
-fi
-echo "PASS: dos proyectos que truncan al mismo prefijo no colisionan (el hash sale del identificador completo)."
+echo "PASS: un repo con nombre gigante da el mismo largo de slug que cualquier otro (64 caracteres)."
 
 echo "Todos los tests de resolver_proyecto.sh pasaron."
