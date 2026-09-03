@@ -7,11 +7,11 @@ invocada por su cuenta — solo como parte del flujo de diagnosticar-bugs.
 
 # Fase: Construir bucle de feedback
 
-Esta fase es la versión mecanizada de la Fase 1 descripta en `SKILL.md`:
-en vez de confiar en que vos (el agente) evaluaste bien las 4 condiciones
-de salida, un script las re-verifica corriendo el comando de verdad.
-`SKILL.md` te manda acá para el criterio de finalización de la Fase 1;
-las fases 2 a 6 siguen en prosa ahí, todavía sin mecanizar.
+Esta es la versión mecanizada de la Fase 1: en vez de confiar en que vos
+(el agente) evaluaste bien las 4 condiciones de salida, un script las
+re-verifica corriendo el comando de verdad. `SKILL.md` orquesta todas las
+fases y te manda acá para esta — las fases 2 a 6 viven en sus propios
+`fases/<fase>/INSTRUCCIONES.md`, todavía sin mecanizar.
 
 ## Flujo
 
