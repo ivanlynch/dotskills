@@ -2,20 +2,7 @@
 
 ## Flujo
 
-### 1. Inicializar el diagnóstico
-
-Si es la primera fase de un diagnóstico nuevo, corriendo desde el
-proyecto donde está el bug (el script identifica el proyecto por su
-remoto git, para no mezclar diagnósticos de repos distintos):
-
-```bash
-<skill-dir>/scripts/estado.sh init <id>
-```
-
-`<id>` es un slug corto derivado del bug (minúsculas, guiones — ej.
-`export-timeout-500`). El comando imprime la ruta de la carpeta creada.
-
-### 2. Copiar la plantilla y completarla
+### 1. Copiar la plantilla y completarla
 
 ```bash
 cp <skill-dir>/fases/construir-bucle/TEMPLATE.md \
@@ -33,10 +20,10 @@ te sirvió — es el método #10, el último recurso, no una opción más entre
 las otras. Si llegás ahí, copiá y adaptá
 `<skill-dir>/scripts/hitl-loop.template.sh`, corré esa sesión con la
 persona, y pegá la corrida real bajo `## Corrida real` en el `state.md`
-**antes de pasar al paso 3** — el validador no le va a pedir que repita
+**antes de pasar al paso 2** — el validador no le va a pedir que repita
 los clicks 3 veces, así que necesita esa evidencia ya escrita.
 
-### 3. Correr el validador
+### 2. Correr el validador
 
 ```bash
 <skill-dir>/fases/construir-bucle/scripts/validar.sh "$(<skill-dir>/scripts/estado.sh ruta-fase <id> construir-bucle)"
@@ -53,10 +40,10 @@ Valida dos capas, en orden:
 
 - Imprime `READY` (exit 0) si pasa las dos capas.
 - Imprime `NOT_READY` (exit 1) con el motivo exacto por stderr si no. Volvé
-  al paso 2, ajustá lo que falte según lo que diga el error, y volvé a
+  al paso 1, ajustá lo que falte según lo que diga el error, y volvé a
   correr el validador. No sigas a la fase siguiente sin `READY`.
 
-### 4. Capa semántica (todavía manual)
+### 3. Capa semántica (todavía manual)
 
 El validador mecánico **no puede saber** si el rojo que produce el comando
 corresponde al síntoma exacto que describió la persona, o a un fallo
@@ -69,7 +56,7 @@ usuario con la duda puntual en vez de asumir.
 diseñar del sistema completo. Por ahora, hacé esta comparación vos mismo,
 de forma explícita, antes de acumular.)*
 
-### 5. Acumular y cerrar la fase
+### 4. Acumular y cerrar la fase
 
 Solo después de `READY` **y** de confirmar la capa semántica:
 

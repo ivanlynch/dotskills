@@ -25,6 +25,7 @@ Recorré las fases en orden, leyendo las instrucciones de cada una en su archivo
 
 | Fase | Instrucciones |
 | --- | --- |
+| 0. Preparación | `fases/preparacion/INSTRUCCIONES.md` |
 | 1. Construir bucle de feedback | `fases/construir-bucle/INSTRUCCIONES.md` |
 | 2. Reproducir y minimizar | `fases/reproducir-minimizar/INSTRUCCIONES.md` |
 | 3. Formular hipótesis | `fases/formular-hipotesis/INSTRUCCIONES.md` |
