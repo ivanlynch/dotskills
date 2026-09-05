@@ -58,7 +58,7 @@ if [ "$slug_https" = "$slug_ssh" ]; then
 fi
 echo "PASS: proyectos distintos producen slugs distintos."
 
-# --- sin remoto: cae a la ruta local, avisa por stderr, no aborta ---
+# --- sin remoto NI commits: último recurso, cae a la ruta local, avisa por stderr, no aborta ---
 REPO_SIN_REMOTO="${TMP_DIR}/repo-sin-remoto"
 mkdir -p "$REPO_SIN_REMOTO"
 git -C "$REPO_SIN_REMOTO" init -q
@@ -67,14 +67,41 @@ RUTA_REAL=$(cd -P "$REPO_SIN_REMOTO" && pwd)
 STDERR_FILE="${TMP_DIR}/stderr.txt"
 id_fallback=$("$TARGET_SCRIPT" identificador "$REPO_SIN_REMOTO" 2>"$STDERR_FILE")
 if [ "$id_fallback" != "$RUTA_REAL" ]; then
-  echo "TEST FAIL: sin remoto, se esperaba la ruta local '$RUTA_REAL', se obtuvo '$id_fallback'." >&2
+  echo "TEST FAIL: sin remoto ni commits, se esperaba la ruta local '$RUTA_REAL', se obtuvo '$id_fallback'." >&2
   exit 1
 fi
 if ! grep -qi "no se encontró un remoto" "$STDERR_FILE"; then
-  echo "TEST FAIL: sin remoto debería avisar por stderr." >&2
+  echo "TEST FAIL: sin remoto ni commits debería avisar por stderr." >&2
   exit 1
 fi
-echo "PASS: sin remoto, usa la ruta local y avisa por stderr sin abortar."
+echo "PASS: sin remoto ni commits, usa la ruta local (último recurso) y avisa por stderr sin abortar."
+
+# --- sin remoto, CON commits: usa el hash del commit raíz, no el path ---
+REPO_SIN_REMOTO_CON_COMMIT="${TMP_DIR}/repo-sin-remoto-con-commit"
+mkdir -p "$REPO_SIN_REMOTO_CON_COMMIT"
+git -C "$REPO_SIN_REMOTO_CON_COMMIT" init -q
+git -C "$REPO_SIN_REMOTO_CON_COMMIT" -c user.email=t@t.com -c user.name=T -c commit.gpgsign=false commit -q --allow-empty -m init
+
+id_raiz=$("$TARGET_SCRIPT" identificador "$REPO_SIN_REMOTO_CON_COMMIT" 2>/dev/null)
+raiz_esperada="sin-remoto:$(git -C "$REPO_SIN_REMOTO_CON_COMMIT" rev-list --max-parents=0 HEAD)"
+if [ "$id_raiz" != "$raiz_esperada" ]; then
+  echo "TEST FAIL: sin remoto pero con commits se esperaba '$raiz_esperada', se obtuvo '$id_raiz'." >&2
+  exit 1
+fi
+echo "PASS: sin remoto pero con commits, usa 'sin-remoto:<hash del commit raíz>', no el path."
+
+# --- mismo historial (mismo commit raíz), clonado en dos paths distintos -> mismo identificador ---
+REPO_CLON="${TMP_DIR}/repo-sin-remoto-clon"
+git clone -q "$REPO_SIN_REMOTO_CON_COMMIT" "$REPO_CLON"
+git -C "$REPO_CLON" remote remove origin
+
+id_original=$("$TARGET_SCRIPT" identificador "$REPO_SIN_REMOTO_CON_COMMIT" 2>/dev/null)
+id_clon=$("$TARGET_SCRIPT" identificador "$REPO_CLON" 2>/dev/null)
+if [ "$id_original" != "$id_clon" ]; then
+  echo "TEST FAIL: el mismo historial en paths distintos debería dar el mismo identificador. '$id_original' != '$id_clon'" >&2
+  exit 1
+fi
+echo "PASS: sin remoto, el mismo historial da el mismo identificador sin importar el path (a diferencia del fallback viejo)."
 
 # --- repo con nombre gigante: el slug sigue siendo 64 chars igual ---
 REPO_GIGANTE="${TMP_DIR}/repo-gigante"
@@ -88,5 +115,40 @@ if ! [[ "$slug_gigante" =~ ^[0-9a-f]{64}$ ]]; then
   exit 1
 fi
 echo "PASS: un repo con nombre gigante da el mismo largo de slug que cualquier otro (64 caracteres)."
+
+# --- submódulo: la identidad siempre queda linkeada al repo padre ---
+SUB_LIB="${TMP_DIR}/sub-lib"
+mkdir -p "$SUB_LIB"
+git -C "$SUB_LIB" init -q
+git -C "$SUB_LIB" -c user.email=t@t.com -c user.name=T -c commit.gpgsign=false commit -q --allow-empty -m init
+git -C "$SUB_LIB" remote add origin "https://github.com/ivanlynch/sub-lib.git"
+
+APP_PADRE="${TMP_DIR}/app-padre"
+mkdir -p "$APP_PADRE"
+git -C "$APP_PADRE" init -q
+git -C "$APP_PADRE" -c user.email=t@t.com -c user.name=T -c commit.gpgsign=false commit -q --allow-empty -m init
+git -C "$APP_PADRE" remote add origin "https://github.com/ivanlynch/app-padre.git"
+git -C "$APP_PADRE" -c protocol.file.allow=always submodule add -q "$SUB_LIB" libs/sub-lib
+git -C "$APP_PADRE" -c user.email=t@t.com -c user.name=T -c commit.gpgsign=false commit -q -m "agrega submodulo"
+
+id_padre=$("$TARGET_SCRIPT" identificador "$APP_PADRE")
+id_desde_submodulo=$("$TARGET_SCRIPT" identificador "${APP_PADRE}/libs/sub-lib")
+if [ "$id_desde_submodulo" != "$id_padre" ]; then
+  echo "TEST FAIL: parado dentro del submódulo, el identificador debería ser el del padre ('$id_padre'), fue '$id_desde_submodulo'." >&2
+  exit 1
+fi
+if [ "$id_desde_submodulo" = "github.com/ivanlynch/sub-lib" ]; then
+  echo "TEST FAIL: el identificador no debería ser el remoto propio del submódulo." >&2
+  exit 1
+fi
+echo "PASS: parado dentro de un submódulo, la identidad queda linkeada al repo padre, no al submódulo."
+
+# --- el mismo submódulo, clonado standalone (sin padre), usa su propio remoto ---
+id_standalone=$("$TARGET_SCRIPT" identificador "$SUB_LIB")
+if [ "$id_standalone" != "github.com/ivanlynch/sub-lib" ]; then
+  echo "TEST FAIL: un repo que es submódulo EN OTRO LADO pero se clona standalone debería usar su propio remoto, fue '$id_standalone'." >&2
+  exit 1
+fi
+echo "PASS: el mismo repo clonado standalone (sin superproyecto) sigue usando su propio remoto."
 
 echo "Todos los tests de resolver_proyecto.sh pasaron."
