@@ -6,8 +6,8 @@ atacar (ver [ADR 0005](../../adr/0005-recepcion-sin-deteccion-de-duplicados.md))
 ## Flujo
 
 Si la descripción ya es precisa (qué pasa, cuándo, esperado vs. real), no
-preguntes nada. Si no, usá `/entrevistar` hasta llegar a un síntoma claro
-y accionable.
+preguntes nada. Si no, usá [`/entrevistar`](../../../entrevistar/SKILL.md)
+hasta llegar a un síntoma claro y accionable.
 
 ## Criterio de cierre
 
