@@ -1,4 +1,4 @@
-# Fase 2: reproducir y minimizar
+# Fase 3: reproducir y minimizar
 
 Ejecutá el bucle. Observá cómo se pone en rojo cuando aparece el bug.
 
@@ -12,6 +12,6 @@ Confirmá:
 
 Una vez en rojo, reducí la reproducción al **escenario más pequeño que todavía se ponga en rojo**. Quitá entradas, callers, configuración, datos y pasos **de a uno**, ejecutando de nuevo el bucle después de cada recorte; conservá solo lo que sea estructural para la falla.
 
-Esto importa porque una reproducción mínima reduce el espacio de hipótesis en la Fase 3 y se convierte en el test de regresión limpio de la Fase 5.
+Esto importa porque una reproducción mínima reduce el espacio de hipótesis en la Fase 4 y se convierte en el test de regresión limpio de la Fase 6.
 
 Terminaste cuando cada elemento restante sea estructural: quitar cualquiera hace que el bucle pase a verde. No avances hasta haber reproducido **y** minimizado.

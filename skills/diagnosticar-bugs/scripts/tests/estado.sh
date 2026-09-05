@@ -178,4 +178,37 @@ if grep -q "contenido previo" "$dir_b/DIAGNOSTICO.md" 2>/dev/null; then
 fi
 echo "PASS: cada proyecto tiene su propio contador independiente, sin mezclarse."
 
+# --- listar: proyecto sin investigaciones todavía -> vacío, sin error ---
+REPO_C="$TMP_DIR/proyecto-c"
+mkdir -p "$REPO_C"
+git -C "$REPO_C" init -q
+git -C "$REPO_C" remote add origin "https://github.com/ivanlynch/proyecto-c.git"
+cd "$REPO_C"
+
+listado_vacio=$(bash "$SCRIPT" listar)
+if [ -n "$listado_vacio" ]; then
+  echo "TEST FAIL: 'listar' en un proyecto sin investigaciones debería estar vacío, fue: '$listado_vacio'." >&2
+  exit 1
+fi
+echo "PASS: 'listar' en un proyecto sin investigaciones no imprime nada (y no falla)."
+
+# --- listar: id + síntoma (si está acumulado) o el aviso de "sin síntoma" ---
+id_c1=$(bash "$SCRIPT" init)
+dir_c1=$(bash "$SCRIPT" dir "$id_c1")
+printf '\n## Fase: Construir bucle de feedback\n\nSINTOMA_USUARIO: el export tarda 500ms de más\nMETODO: cli_fixture\n' >> "$dir_c1/DIAGNOSTICO.md"
+
+id_c2=$(bash "$SCRIPT" init)
+
+listado=$(bash "$SCRIPT" listar)
+esperado="$(printf '%s\t%s\n%s\t%s' "$id_c1" "el export tarda 500ms de más" "$id_c2" "(sin síntoma registrado todavía)")"
+if [ "$listado" != "$esperado" ]; then
+  echo "TEST FAIL: 'listar' no devolvió lo esperado." >&2
+  echo "--- esperado ---" >&2
+  printf '%s\n' "$esperado" >&2
+  echo "--- obtenido ---" >&2
+  printf '%s\n' "$listado" >&2
+  exit 1
+fi
+echo "PASS: 'listar' devuelve cada id con su SINTOMA_USUARIO acumulado, o el aviso de que todavía no lo tiene."
+
 echo "Todos los tests de estado.sh pasaron."

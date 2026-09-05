@@ -13,7 +13,7 @@ cambies sus nombres ni el formato "CAMPO: valor" (una línea).
 ## Síntoma reportado por el usuario
 
 <!-- Copiá o parafraseá exactamente lo que la persona describió. Sin
-interpretar todavía — esto es lo que la Fase 2 va a usar para confirmar
+interpretar todavía — esto es lo que la Fase 3 va a usar para confirmar
 que el bucle detecta ESTE bug y no uno parecido. -->
 
 SINTOMA_USUARIO:

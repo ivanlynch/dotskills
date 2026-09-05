@@ -1,4 +1,4 @@
-# Fase 5: corregir y agregar el test de regresión
+# Fase 6: corregir y agregar el test de regresión
 
 Escribí el test de regresión **antes del arreglo**, pero solo si existe una **frontera correcta** para hacerlo.
 
@@ -12,4 +12,4 @@ Si existe una frontera correcta:
 2. Observá cómo falla.
 3. Aplicá el arreglo.
 4. Observá cómo pasa.
-5. Volvé a ejecutar el bucle de feedback de la Fase 1 contra el escenario original, sin minimizar.
+5. Volvé a ejecutar el bucle de feedback de la Fase 2 contra el escenario original, sin minimizar.

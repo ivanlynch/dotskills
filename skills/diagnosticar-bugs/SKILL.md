@@ -25,10 +25,11 @@ Recorré las fases en orden, leyendo las instrucciones de cada una en su archivo
 
 | Fase | Instrucciones |
 | --- | --- |
-| 0. Preparación | `fases/preparacion/INSTRUCCIONES.md` |
-| 1. Construir bucle de feedback | `fases/construir-bucle/INSTRUCCIONES.md` |
-| 2. Reproducir y minimizar | `fases/reproducir-minimizar/INSTRUCCIONES.md` |
-| 3. Formular hipótesis | `fases/formular-hipotesis/INSTRUCCIONES.md` |
-| 4. Instrumentar | `fases/instrumentar/INSTRUCCIONES.md` |
-| 5. Corregir y agregar el test de regresión | `fases/corregir-testear/INSTRUCCIONES.md` |
-| 6. Limpiar | `fases/limpiar/INSTRUCCIONES.md` |
+| 0. Recepción | `fases/recepcion/INSTRUCCIONES.md` |
+| 1. Iniciar investigación | `fases/iniciar-investigacion/INSTRUCCIONES.md` |
+| 2. Construir bucle de feedback | `fases/construir-bucle/INSTRUCCIONES.md` |
+| 3. Reproducir y minimizar | `fases/reproducir-minimizar/INSTRUCCIONES.md` |
+| 4. Formular hipótesis | `fases/formular-hipotesis/INSTRUCCIONES.md` |
+| 5. Instrumentar | `fases/instrumentar/INSTRUCCIONES.md` |
+| 6. Corregir y agregar el test de regresión | `fases/corregir-testear/INSTRUCCIONES.md` |
+| 7. Limpiar | `fases/limpiar/INSTRUCCIONES.md` |
