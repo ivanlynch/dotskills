@@ -14,5 +14,4 @@ el bug:
 
 ## Criterio de cierre
 
-Guardá el `<id>` que imprimió (ej. `INV007`) — lo vas a pasar como `<id>`
-en todas las fases siguientes.
+Guardá el `<id>` que imprimió (ej. `INV007`).
