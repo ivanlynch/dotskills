@@ -18,18 +18,14 @@ respuesta válida, no un error.
 
 ### 2. Clarificar el síntoma
 
-Preguntale a la persona solo lo que falte para tener una frase
-comparable — qué pasa, cuándo, esperado vs. real. No es una entrevista
-larga: si la descripción ya es precisa, no preguntes nada y seguí
-directo al paso 3.
+Si la descripción ya es precisa (qué pasa, cuándo, esperado vs. real), no
+preguntes nada y seguí directo al paso 3. Si no, usá `/entrevistar` para
+llegar a un síntoma claro y comparable.
 
-**Si la descripción mezcla más de un síntoma distinto:**
-
-- Evaluá cada uno por separado en el paso 3 (match / ambigüedad / nueva).
-- Este flujo trabaja una sola investigación por vez. Si los dos terminan
-  siendo nuevos, confirmá con el usuario cuál arrancar primero. No corras
-  `init` para el que queda afuera — se retoma en una pasada aparte de
-  Recepción cuando llegue su turno.
+Si de esa entrevista salen dos síntomas distintos: evaluá cada uno por
+separado en el paso 3. Este flujo trabaja una sola investigación por
+vez — si los dos terminan siendo nuevos, confirmá con el usuario cuál
+arrancar y no corras `init` para el otro.
 
 ### 3. Comparar contra la lista (manual, a propósito)
 

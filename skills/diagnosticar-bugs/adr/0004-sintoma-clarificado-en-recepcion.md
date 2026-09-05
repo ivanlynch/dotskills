@@ -28,12 +28,9 @@ persista.
 
 1. Recepción gana un paso de clarificación (paso 2, antes de comparar):
    si la descripción de la persona ya es precisa, no se pregunta nada por
-   preguntar; si es vaga o mezcla más de un síntoma, se pide lo mínimo
-   necesario para tener una frase comparable — no una entrevista larga.
-   Se evaluó reusar el skill `entrevistar` para este paso y se descartó:
-   está diseñado para recorrer árboles de decisión sobre un plan o una
-   idea con preguntas iterativas sin límite de vueltas, demasiado pesado
-   y genérico para acotar un síntoma de bug.
+   preguntar; si no, se usa el skill `/entrevistar` para llegar a un
+   síntoma claro y comparable, en vez de reinventar una lógica de
+   preguntas propia en este flujo.
 2. `estado.sh init` pasa a exigir el síntoma ya clarificado como
    argumento obligatorio, y lo graba como `SINTOMA_USUARIO` en la
    cabecera de `DIAGNOSTICO.md` en el momento de crear la investigación
