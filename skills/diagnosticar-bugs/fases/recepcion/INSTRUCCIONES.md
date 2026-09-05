@@ -12,18 +12,11 @@ ya tiene una investigación abierta en este proyecto (ver ADR 0002 en
 <skill-dir>/scripts/estado.sh listar
 ```
 
-Imprime, una por línea, `<id>` y el síntoma registrado, de las
-investigaciones que ya cerraron la Fase 2 (Construir bucle de feedback) y
-lo dejaron documentado — sin eso no hay nada real contra qué comparar.
-Si el proyecto no tiene ninguna que califique, no imprime nada — eso
-también es una respuesta válida, no un error.
-
-Las investigaciones que se quedaron a mitad de camino (nunca llegaron a
-acumular la Fase 2) quedan afuera del listado por default: no tienen
-síntoma con el que comparar, así que solo agregarían ruido acá. Si en
-algún momento hace falta verlas igual (housekeeping, no para comparar),
-`estado.sh listar --todas` las incluye con el aviso `(sin síntoma
-registrado todavía)`.
+Imprime, una por línea, `<id>` y el síntoma registrado — si esa
+investigación ya cerró la Fase 2 (Construir bucle de feedback) y lo dejó
+documentado; si todavía no, vas a ver `(sin síntoma registrado
+todavía)`. Si el proyecto no tiene ninguna investigación abierta, no
+imprime nada — eso también es una respuesta válida, no un error.
 
 ### 2. Comparar contra lo que describe el usuario (manual, a propósito)
 

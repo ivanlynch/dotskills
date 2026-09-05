@@ -16,18 +16,14 @@ set -euo pipefail
 #     llamada arranca una investigación nueva: no es idempotente, y no
 #     acepta un id como argumento — para retomar una investigación
 #     abierta, usá el id que ya te devolvió antes.
-#   estado.sh listar [--todas]
+#   estado.sh listar
 #     Imprime, una por línea ("<id><TAB><sintoma>"), las investigaciones
-#     abiertas del proyecto actual que ya tienen un SINTOMA_USUARIO
-#     acumulado (cerraron la fase "Construir bucle de feedback") — sin
-#     eso no hay nada real contra qué comparar en Recepción, así que por
-#     default quedan afuera. Si el proyecto no tiene ninguna que
-#     califique, no imprime nada — no es un error.
-#     Con --todas también incluye las que todavía no tienen síntoma
-#     ("(sin síntoma registrado todavía)"), para housekeeping manual —
-#     no se borra ni se toca nada en disco, es solo un filtro de vista.
-#     Es la parte mecánica de la Fase 0 (Recepción, ver ADR 0002):
-#     decidir si algo de la lista coincide con lo que describe el
+#     abiertas del proyecto actual y el SINTOMA_USUARIO que hayan
+#     registrado (o "(sin síntoma registrado todavía)" si esa
+#     investigación no llegó a acumular la fase "Construir bucle de
+#     feedback"). Si el proyecto no tiene ninguna, no imprime nada — no
+#     es un error. Es la parte mecánica de la Fase 0 (Recepción, ver ADR
+#     0002): decidir si algo de la lista coincide con lo que describe el
 #     usuario ahora es manual, a propósito.
 #   estado.sh dir <id>
 #     Imprime la ruta de la carpeta del diagnóstico. Falla si no existe.
@@ -50,7 +46,7 @@ uso() {
   cat >&2 <<EOF
 Uso:
   $0 init
-  $0 listar [--todas]
+  $0 listar
   $0 dir <id>
   $0 ruta-fase <id> <fase>
   $0 acumular <id> <fase> <titulo>
@@ -138,13 +134,6 @@ cmd_init() {
 }
 
 cmd_listar() {
-  local incluir_vacias="false"
-  case "${1:-}" in
-    --todas) incluir_vacias="true" ;;
-    "") ;;
-    *) echo "Error: opción desconocida '$1' para 'listar'. Uso: estado.sh listar [--todas]" >&2; exit 2 ;;
-  esac
-
   local proyecto_dir entry id diagnostico sintoma
   proyecto_dir="$(ruta_base)"
   [ -d "$proyecto_dir" ] || return 0
@@ -160,10 +149,7 @@ cmd_listar() {
       # imprime nada si no recibió línea, así que sintoma queda vacío.
       sintoma="$(grep -m1 '^SINTOMA_USUARIO:' "$diagnostico" | sed -E 's/^SINTOMA_USUARIO:[[:space:]]*//')" || true
     fi
-    if [ -z "$sintoma" ]; then
-      [ "$incluir_vacias" = "true" ] || continue
-      sintoma="(sin síntoma registrado todavía)"
-    fi
+    [ -n "$sintoma" ] || sintoma="(sin síntoma registrado todavía)"
     printf '%s\t%s\n' "$id" "$sintoma"
   done
   return 0
@@ -207,7 +193,7 @@ main() {
 
   case "$cmd" in
     init) cmd_init "$@" ;;
-    listar) [ $# -le 1 ] || { uso; exit 2; }; cmd_listar "$@" ;;
+    listar) [ $# -eq 0 ] || { uso; exit 2; }; cmd_listar ;;
     dir) [ $# -eq 1 ] || { uso; exit 2; }; cmd_dir "$1" ;;
     ruta-fase) [ $# -eq 2 ] || { uso; exit 2; }; cmd_ruta_fase "$1" "$2" ;;
     acumular) [ $# -eq 3 ] || { uso; exit 2; }; cmd_acumular "$1" "$2" "$3" ;;
