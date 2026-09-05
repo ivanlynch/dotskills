@@ -57,12 +57,13 @@ que la persona describió (capa semántica de
   un `DIAGNOSTICO.md` sin esa línea queda como fallback defensivo (un
   archivo corrupto o editado a mano), no como un estado esperado del
   flujo.
-- `DIAGNOSTICO.md` puede tener dos apariciones de `SINTOMA_USUARIO`: la de
-  la cabecera (Fase 0/1, síntoma clarificado en el momento) y la de la
-  sección de Fase 2 (síntoma tal como quedó documentado al confirmar la
-  reproducción). `cmd_listar` sigue tomando la primera (`grep -m1`), que
-  es la más temprana — es la decisión correcta: es la que existe apenas
-  se crea la investigación.
+- `DIAGNOSTICO.md` termina con dos apariciones de `SINTOMA_USUARIO`: la de
+  la cabecera (Fase 0/1) y la de la sección de Fase 2. `TEMPLATE.md`
+  instruye copiar tal cual la de la cabecera en Fase 2, no redactarla de
+  nuevo — reduce el riesgo de que las dos digan cosas distintas, aunque
+  no lo elimina (alguien puede editar `fases/construir-bucle.md` a mano
+  después). `cmd_listar` toma la primera (`grep -m1`), que es la más
+  temprana — es la decisión correcta pase lo que pase con la segunda.
 - El síntoma se colapsa a una sola línea antes de grabarse (mismo formato
   `CAMPO: valor` que ya usa `fases/construir-bucle/TEMPLATE.md`) — una
   descripción multilínea pierde saltos de línea en la cabecera. Si hace
