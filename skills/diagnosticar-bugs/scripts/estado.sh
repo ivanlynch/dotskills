@@ -9,10 +9,13 @@ set -euo pipefail
 # su remoto git "origin" desde el directorio donde corras este script.
 #
 # Uso:
-#   estado.sh init <id>
-#     Crea $DIAGNOSTICOS_ROOT/<slug-proyecto>/<id>/ (si no existe) con
-#     fases/ adentro y DIAGNOSTICO.md vacío. No sobrescribe un
-#     diagnóstico existente.
+#   estado.sh init
+#     Genera un id nuevo (INV001, INV002, ... — incremental por proyecto,
+#     ver ADR 0001) y crea $DIAGNOSTICOS_ROOT/<slug-proyecto>/<id>/ con
+#     fases/ adentro y DIAGNOSTICO.md vacío. Imprime el id generado. Cada
+#     llamada arranca una investigación nueva: no es idempotente, y no
+#     acepta un id como argumento — para retomar una investigación
+#     abierta, usá el id que ya te devolvió antes.
 #   estado.sh dir <id>
 #     Imprime la ruta de la carpeta del diagnóstico. Falla si no existe.
 #   estado.sh ruta-fase <id> <fase>
@@ -33,7 +36,7 @@ RESOLVER="$SCRIPT_DIR/resolver_proyecto.sh"
 uso() {
   cat >&2 <<EOF
 Uso:
-  $0 init <id>
+  $0 init
   $0 dir <id>
   $0 ruta-fase <id> <fase>
   $0 acumular <id> <fase> <titulo>
@@ -42,25 +45,61 @@ EOF
 
 ROOT="${DIAGNOSTICOS_ROOT:-$HOME/Documents/diagnostics}"
 
-id_valido() {
-  [[ "$1" =~ ^[a-z0-9][a-z0-9-]{2,62}[a-z0-9]$ ]]
-}
-
 ruta_base() {
   local slug
   slug="$("$RESOLVER" slug .)"
   printf '%s/%s\n' "$ROOT" "$slug"
 }
 
-cmd_init() {
-  local id="$1"
-  id_valido "$id" || { echo "Error: identificador inválido: '$id' (minúsculas, números y guiones, 4-64 caracteres)." >&2; exit 2; }
+# Asigna el siguiente número entero para <proyecto_dir>, leyendo y
+# actualizando $proyecto_dir/.contador. Usa un directorio de lock
+# (mkdir es atómico en POSIX, a diferencia de leer-y-escribir un
+# archivo) para que dos "init" concurrentes en el mismo proyecto nunca
+# se pisen — sin depender de flock, que no viene de fábrica en macOS.
+contador_siguiente() {
+  local proyecto_dir="$1"
+  local contador_file="$proyecto_dir/.contador"
+  local lock_dir="$proyecto_dir/.contador.lock"
+  local intentos=0 actual siguiente
 
-  local dir
-  dir="$(ruta_base)/$id"
-  if [ -d "$dir" ]; then
-    echo "$dir"
-    return 0
+  while ! mkdir "$lock_dir" 2>/dev/null; do
+    intentos=$((intentos + 1))
+    if [ "$intentos" -ge 20 ]; then
+      echo "Error: no se pudo tomar el lock del contador ('$lock_dir') tras 20 intentos. Si quedó de una corrida interrumpida, borralo a mano." >&2
+      return 1
+    fi
+    sleep 1
+  done
+  trap 'rmdir "$lock_dir" 2>/dev/null' EXIT
+
+  actual=0
+  if [ -f "$contador_file" ]; then
+    actual="$(cat "$contador_file")"
+    [[ "$actual" =~ ^[0-9]+$ ]] || actual=0
+  fi
+  siguiente=$((actual + 1))
+  printf '%s' "$siguiente" > "$contador_file"
+
+  rmdir "$lock_dir"
+  trap - EXIT
+
+  printf '%s\n' "$siguiente"
+}
+
+cmd_init() {
+  [ $# -eq 0 ] || { echo "Error: 'init' ya no recibe un id — lo genera automáticamente. Uso: estado.sh init" >&2; exit 2; }
+
+  local proyecto_dir numero id dir
+  proyecto_dir="$(ruta_base)"
+  mkdir -p "$proyecto_dir"
+
+  numero="$(contador_siguiente "$proyecto_dir")"
+  id="$(printf 'INV%03d' "$numero")"
+  dir="$proyecto_dir/$id"
+
+  if [ -e "$dir" ]; then
+    echo "Error interno: '$dir' ya existe pero el contador generó '$id' como nuevo. El contador ('$proyecto_dir/.contador') quedó desincronizado — revisalo a mano." >&2
+    exit 1
   fi
 
   mkdir -p "$dir/fases"
@@ -81,14 +120,14 @@ cmd_init() {
     printf 'Commit:   %s\n\n' "$commit"
     printf 'Generado por diagnosticar-bugs. Cada sección corresponde a una fase completada.\n'
   } > "$dir/DIAGNOSTICO.md"
-  echo "$dir"
+  echo "$id"
 }
 
 cmd_dir() {
   local id="$1"
   local dir
   dir="$(ruta_base)/$id"
-  [ -d "$dir" ] || { echo "Error: no existe el diagnóstico '$id' para este proyecto. Corré primero: estado.sh init $id" >&2; exit 1; }
+  [ -d "$dir" ] || { echo "Error: no existe el diagnóstico '$id' para este proyecto. Si es uno nuevo, corré primero: estado.sh init" >&2; exit 1; }
   echo "$dir"
 }
 
@@ -121,7 +160,7 @@ main() {
   shift
 
   case "$cmd" in
-    init) [ $# -eq 1 ] || { uso; exit 2; }; cmd_init "$1" ;;
+    init) cmd_init "$@" ;;
     dir) [ $# -eq 1 ] || { uso; exit 2; }; cmd_dir "$1" ;;
     ruta-fase) [ $# -eq 2 ] || { uso; exit 2; }; cmd_ruta_fase "$1" "$2" ;;
     acumular) [ $# -eq 3 ] || { uso; exit 2; }; cmd_acumular "$1" "$2" "$3" ;;

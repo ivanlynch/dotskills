@@ -5,17 +5,21 @@ proyecto por su remoto git, para no mezclar diagnósticos de repos
 distintos):
 
 ```bash
-<skill-dir>/scripts/estado.sh init <id>
+<skill-dir>/scripts/estado.sh init
 ```
 
-`<id>` es un slug corto derivado del bug (minúsculas, guiones — ej.
-`export-timeout-500`). El comando es determinista: la ruta depende solo
-del proyecto (hash del remoto git) y de `<id>`. Si esa carpeta ya existe,
-el comando no la toca y solo imprime la ruta — cerrá la fase ahí mismo,
-sin preparar nada más. Si no existe, la crea (con `fases/` y
-`DIAGNOSTICO.md` vacío adentro) y también imprime la ruta.
+El comando no recibe un id: lo genera él mismo, incremental y por
+proyecto (`INV001`, `INV002`, ...), usando un contador persistente con
+lock para que dos investigaciones que arrancan casi al mismo tiempo no
+colisionen (ver ADR 0001 en `adr/`). Cada llamada crea una investigación
+nueva — no es idempotente. Para retomar una investigación ya abierta, no
+vuelvas a correr `init`: usá el id que ya te devolvió antes con `estado.sh
+dir <id>`, `ruta-fase`, etc.
+
+`init` crea la carpeta (con `fases/` y `DIAGNOSTICO.md` vacío adentro) e
+imprime el id generado.
 
 ## Criterio de cierre
 
-El comando imprimió una ruta de carpeta, haya existido antes o la haya
-creado recién.
+El comando imprimió el id generado (ej. `INV007`). Guardalo — es lo que
+vas a pasar como `<id>` en todas las fases siguientes.

@@ -21,16 +21,23 @@ git -C "$REPO_A" checkout -q -b feature/export-fix
 git -C "$REPO_A" remote add origin "https://github.com/ivanlynch/proyecto-a.git"
 cd "$REPO_A"
 
-# --- init crea la carpeta anidada por proyecto y DIAGNOSTICO.md ---
-dir=$(bash "$SCRIPT" init "export-timeout-500")
+# --- init genera el primer id como INV001 y crea la estructura esperada ---
+id=$(bash "$SCRIPT" init)
+if [ "$id" != "INV001" ]; then
+  echo "TEST FAIL: el primer id de un proyecto debería ser 'INV001', fue '$id'." >&2
+  exit 1
+fi
+echo "PASS: init genera 'INV001' como primer id de un proyecto."
+
+dir=$(bash "$SCRIPT" dir "$id")
 if [ ! -d "$dir" ] || [ ! -f "$dir/DIAGNOSTICO.md" ] || [ ! -d "$dir/fases" ]; then
   echo "TEST FAIL: init no creó la estructura esperada." >&2
   exit 1
 fi
 case "$dir" in
-  "$DIAGNOSTICOS_ROOT"/[0-9a-f][0-9a-f]*/export-timeout-500)
+  "$DIAGNOSTICOS_ROOT"/[0-9a-f][0-9a-f]*/"$id")
     slug_generado="${dir#"$DIAGNOSTICOS_ROOT"/}"
-    slug_generado="${slug_generado%/export-timeout-500}"
+    slug_generado="${slug_generado%/"$id"}"
     if ! [[ "$slug_generado" =~ ^[0-9a-f]{64}$ ]]; then
       echo "TEST FAIL: el slug de la carpeta debería ser sha256 en hex de 64 chars, es '$slug_generado'." >&2
       exit 1
@@ -49,24 +56,65 @@ if ! grep -q "^Proyecto: github.com/ivanlynch/proyecto-a$" "$dir/DIAGNOSTICO.md"
 fi
 echo "PASS: init graba proyecto, branch y commit en DIAGNOSTICO.md."
 
-# --- init es idempotente (no pisa un diagnóstico existente) ---
+# --- init NO es idempotente: cada llamada arranca una investigación nueva ---
 echo "contenido previo" >> "$dir/DIAGNOSTICO.md"
-dir2=$(bash "$SCRIPT" init "export-timeout-500")
-if [ "$dir2" != "$dir" ] || ! grep -q "contenido previo" "$dir/DIAGNOSTICO.md"; then
-  echo "TEST FAIL: un segundo init no debería pisar el diagnóstico existente." >&2
+id2=$(bash "$SCRIPT" init)
+if [ "$id2" != "INV002" ]; then
+  echo "TEST FAIL: un segundo init en el mismo proyecto debería generar 'INV002', fue '$id2'." >&2
   exit 1
 fi
-echo "PASS: init no pisa un diagnóstico ya creado."
+if ! grep -q "contenido previo" "$dir/DIAGNOSTICO.md"; then
+  echo "TEST FAIL: el segundo init no debería haber tocado la investigación anterior (INV001)." >&2
+  exit 1
+fi
+dir2=$(bash "$SCRIPT" dir "$id2")
+if [ "$dir2" = "$dir" ]; then
+  echo "TEST FAIL: 'INV001' e 'INV002' no deberían resolver a la misma carpeta." >&2
+  exit 1
+fi
+echo "PASS: cada init genera un id incremental nuevo, sin pisar investigaciones anteriores."
 
-# --- id inválido falla ---
-if bash "$SCRIPT" init "ID CON ESPACIOS" 2>/dev/null; then
-  echo "TEST FAIL: un id inválido debería fallar." >&2
+# --- init ya no acepta argumentos (la interfaz vieja pasaba un <id>) ---
+if bash "$SCRIPT" init "export-timeout-500" 2>/dev/null; then
+  echo "TEST FAIL: 'init' con un argumento debería fallar (ya no recibe un id manual)." >&2
   exit 1
 fi
-echo "PASS: un id inválido (mayúsculas/espacios) es rechazado."
+echo "PASS: 'init' con un argumento (interfaz vieja) es rechazado."
+
+# --- init es atómico bajo concurrencia: N inits en paralelo, N ids únicos ---
+N=15
+ids_file="$TMP_DIR/ids-concurrentes.txt"
+: > "$ids_file"
+pids=()
+for _ in $(seq 1 "$N"); do
+  (bash "$SCRIPT" init >> "$ids_file") &
+  pids+=($!)
+done
+for pid in "${pids[@]}"; do
+  wait "$pid"
+done
+
+if [ "$(wc -l < "$ids_file")" -ne "$N" ]; then
+  echo "TEST FAIL: se esperaban $N ids de $N inits concurrentes, hubo $(wc -l < "$ids_file")." >&2
+  exit 1
+fi
+if [ "$(sort -u "$ids_file" | wc -l)" -ne "$N" ]; then
+  echo "TEST FAIL: $N inits concurrentes deberían generar $N ids únicos (el lock evita colisiones). Ids obtenidos:" >&2
+  cat "$ids_file" >&2
+  exit 1
+fi
+echo "PASS: $N inits concurrentes en el mismo proyecto generan $N ids únicos (sin colisiones)."
+
+# El contador siguió avanzando desde INV002: la próxima debería ser INV018.
+id_post_concurrencia=$(bash "$SCRIPT" init)
+if [ "$id_post_concurrencia" != "INV018" ]; then
+  echo "TEST FAIL: tras 2 + $N inits, el siguiente debería ser 'INV018', fue '$id_post_concurrencia'." >&2
+  exit 1
+fi
+echo "PASS: el contador persiste correctamente el total tras la concurrencia."
 
 # --- dir falla si no existe ---
-if bash "$SCRIPT" dir "no-existe-este" 2>/dev/null; then
+if bash "$SCRIPT" dir "INV999" 2>/dev/null; then
   echo "TEST FAIL: 'dir' sobre un diagnóstico inexistente debería fallar." >&2
   exit 1
 fi
@@ -77,7 +125,7 @@ echo "PASS: 'dir' falla para un diagnóstico que no fue inicializado."
 # $id antes de que la asignación surta efecto: funcionaba por casualidad
 # cuando se llamaba desde otra función con un $id local del mismo
 # nombre, pero fallaba con "unbound variable" al invocarse directo.
-dir_directo=$(bash "$SCRIPT" dir "export-timeout-500")
+dir_directo=$(bash "$SCRIPT" dir "$id")
 if [ "$dir_directo" != "$dir" ]; then
   echo "TEST FAIL: 'dir' invocado directo devolvió '$dir_directo', se esperaba '$dir'." >&2
   exit 1
@@ -85,7 +133,7 @@ fi
 echo "PASS: 'dir' invocado directo (sin anidar) devuelve la ruta correcta."
 
 # --- ruta-fase apunta dentro de fases/ ---
-ruta=$(bash "$SCRIPT" ruta-fase "export-timeout-500" "construir-bucle")
+ruta=$(bash "$SCRIPT" ruta-fase "$id" "construir-bucle")
 if [ "$ruta" != "$dir/fases/construir-bucle.md" ]; then
   echo "TEST FAIL: ruta-fase devolvió '$ruta', se esperaba '$dir/fases/construir-bucle.md'." >&2
   exit 1
@@ -94,35 +142,40 @@ echo "PASS: ruta-fase devuelve la ruta esperada dentro de fases/."
 
 # --- acumular agrega el contenido y falla si se repite ---
 printf 'Contenido de la fase.\n' > "$dir/fases/construir-bucle.md"
-bash "$SCRIPT" acumular "export-timeout-500" "construir-bucle" "Fase: Construir bucle" >/dev/null
+bash "$SCRIPT" acumular "$id" "construir-bucle" "Fase: Construir bucle" >/dev/null
 if ! grep -q "## Fase: Construir bucle" "$dir/DIAGNOSTICO.md" || ! grep -q "Contenido de la fase." "$dir/DIAGNOSTICO.md"; then
   echo "TEST FAIL: acumular no agregó el contenido esperado a DIAGNOSTICO.md." >&2
   exit 1
 fi
 echo "PASS: acumular agrega el contenido de la fase bajo su título."
 
-if bash "$SCRIPT" acumular "export-timeout-500" "construir-bucle" "Fase: Construir bucle" 2>/dev/null; then
+if bash "$SCRIPT" acumular "$id" "construir-bucle" "Fase: Construir bucle" 2>/dev/null; then
   echo "TEST FAIL: acumular la misma fase dos veces debería fallar (evita duplicados)." >&2
   exit 1
 fi
 echo "PASS: acumular la misma fase dos veces falla, no duplica."
 
-# --- dos proyectos distintos, mismo id de diagnóstico: no se mezclan ---
+# --- dos proyectos distintos tienen contadores independientes ---
 REPO_B="$TMP_DIR/proyecto-b"
 mkdir -p "$REPO_B"
 git -C "$REPO_B" init -q
 git -C "$REPO_B" remote add origin "https://github.com/ivanlynch/proyecto-b.git"
 cd "$REPO_B"
 
-dir_b=$(bash "$SCRIPT" init "export-timeout-500")
-if [ "$dir_b" = "$dir" ]; then
-  echo "TEST FAIL: el mismo id de diagnóstico en dos proyectos distintos no debería resolver a la misma carpeta." >&2
+id_b=$(bash "$SCRIPT" init)
+if [ "$id_b" != "INV001" ]; then
+  echo "TEST FAIL: el contador de un proyecto nuevo debería arrancar en 'INV001' sin importar cuánto avanzó el de otro proyecto, fue '$id_b'." >&2
   exit 1
 fi
-if [ -f "$dir_b/DIAGNOSTICO.md" ] && grep -q "contenido previo" "$dir_b/DIAGNOSTICO.md"; then
+dir_b=$(bash "$SCRIPT" dir "$id_b")
+if [ "$dir_b" = "$dir" ]; then
+  echo "TEST FAIL: el mismo id ('INV001') en dos proyectos distintos no debería resolver a la misma carpeta." >&2
+  exit 1
+fi
+if grep -q "contenido previo" "$dir_b/DIAGNOSTICO.md" 2>/dev/null; then
   echo "TEST FAIL: el diagnóstico del proyecto B no debería ver contenido del proyecto A." >&2
   exit 1
 fi
-echo "PASS: dos proyectos con el mismo id de diagnóstico quedan en carpetas separadas, sin mezclarse."
+echo "PASS: cada proyecto tiene su propio contador independiente, sin mezclarse."
 
 echo "Todos los tests de estado.sh pasaron."
