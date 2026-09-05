@@ -14,4 +14,4 @@ el bug:
 
 ## Criterio de cierre
 
-Guardá el `<id>` que imprimió (ej. `INV007`).
+El comando devolvió un `<id>` (ej. `INV007`).
