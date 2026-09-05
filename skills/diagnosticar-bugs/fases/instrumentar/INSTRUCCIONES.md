@@ -1,6 +1,6 @@
-# Fase 4: instrumentar
+# Fase 5: instrumentar
 
-Cada sondeo debe corresponder a una predicción específica de la Fase 3. **Cambiá una sola variable por vez.**
+Cada sondeo debe corresponder a una predicción específica de la Fase 4. **Cambiá una sola variable por vez.**
 
 Preferencia de herramientas:
 
