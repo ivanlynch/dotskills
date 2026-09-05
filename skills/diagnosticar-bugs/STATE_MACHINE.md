@@ -13,11 +13,7 @@ contexto, porque no depende de la conversación.
 stateDiagram-v2
     [*] --> Recepcion
 
-    Recepcion --> Recepcion: síntoma vago o mezcla dos bugs (clarificar)
-    Recepcion --> InvestigacionExistente: coincidencia clara o ambigüedad resuelta como match
-    Recepcion --> IniciarInvestigacion: sin coincidencia (lista vacía o ambigüedad resuelta como nueva)
-
-    InvestigacionExistente --> [*]: retoma en la fase siguiente a la última acumulada en su DIAGNOSTICO.md
+    Recepcion --> IniciarInvestigacion: entrevista produjo un síntoma claro
 
     IniciarInvestigacion --> ConstruirBucle: init "<sintoma>" OK (falla sin síntoma)
 
@@ -40,8 +36,8 @@ stateDiagram-v2
 
 | # | Fase | Entra cuando | Sale cuando (criterio de cierre) |
 | - | --- | --- | --- |
-| 0 | Recepción | Llega una descripción de bug (nueva conversación, o una que retoma trabajo) | Hay una decisión explícita y comunicada: retomar `<id-existente>` o continuar como nueva. `estado.sh listar` corrió al menos una vez, aunque haya sido vacío. |
-| 1 | Iniciar investigación | Recepción confirmó que es una investigación nueva | `estado.sh init "<sintoma>"` devolvió un `<id>` (ej. `INV007`) |
+| 0 | Recepción | Llega una descripción de bug | Hay un síntoma claro y accionable (entrevistado si hacía falta) |
+| 1 | Iniciar investigación | Recepción cerró con un síntoma claro | `estado.sh init "<sintoma>"` devolvió un `<id>` (ej. `INV007`) |
 | 2 | Construir bucle de feedback | Hay un `<id>` de una investigación nueva | `validar.sh` imprime `READY` **y** la capa semántica confirma que el bucle reproduce el síntoma exacto **y** se corrió `acumular` |
 | 3 | Reproducir y minimizar | Fase 2 cerrada | El bucle reproduce el modo de falla del usuario y está reducido al escenario mínimo que sigue en rojo |
 | 4 | Formular hipótesis | Fase 3 cerrada | 3 a 5 hipótesis refutables, ordenadas, mostradas al usuario (checkpoint no bloqueante) |
@@ -51,11 +47,6 @@ stateDiagram-v2
 
 ## Transiciones no lineales
 
-- **Recepción no siempre desemboca en Fase 1.** Si hay coincidencia
-  (clara o ambigüedad resuelta como match), la investigación se retoma
-  directo en la fase que corresponda según lo ya acumulado en su
-  `DIAGNOSTICO.md` — nunca se vuelve a correr `init`, ni se pasa por Fase
-  1 (ver ADR 0002).
 - **Fase 2 tiene un sub-loop propio.** `validar.sh` puede devolver
   `NOT_READY` cualquier cantidad de veces; se ajusta el `state.md` y se
   vuelve a correr hasta `READY`. La capa semántica (manual, ver

@@ -18,13 +18,6 @@ set -euo pipefail
 #     la branch y el commit como texto plano en la cabecera de
 #     DIAGNOSTICO.md, así que la legibilidad vive ahí, no en el nombre
 #     de la carpeta.
-#   resolver_proyecto.sh slug-de <identificador>
-#     Imprime sha256(<identificador>) en hex, igual que 'slug', pero
-#     recibiendo el identificador ya resuelto como texto en vez de
-#     recalcularlo desde un <dir>. Sirve para reconstruir el slug de un
-#     identificador viejo (ej. la URL de un repo antes de un rename) leído
-#     de la cabecera "Proyecto: ..." de un DIAGNOSTICO.md — ver 'estado.sh
-#     migrar'.
 #
 # Si <dir> es un submódulo, resuelve siempre contra el superproyecto (el
 # repo padre más externo, subiendo tantos niveles como haga falta) — la
@@ -41,7 +34,6 @@ uso() {
 Uso:
   $0 identificador [<dir>]
   $0 slug [<dir>]
-  $0 slug-de <identificador>
 EOF
 }
 
@@ -115,10 +107,6 @@ main() {
   case "$subcomando" in
     identificador) resolver_identificador "${2:-.}" ;;
     slug) resolver_slug "${2:-.}" ;;
-    slug-de)
-      [ $# -eq 2 ] || { uso; exit 2; }
-      printf '%s' "$2" | sha256_de
-      ;;
     *) uso; exit 2 ;;
   esac
 }

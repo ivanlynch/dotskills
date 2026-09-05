@@ -16,19 +16,10 @@ set -euo pipefail
 #     llamada arranca una investigación nueva: no es idempotente, y no
 #     acepta un id como argumento — para retomar una investigación
 #     abierta, usá el id que ya te devolvió antes.
-#     <sintoma> es obligatorio: el síntoma ya clarificado en Fase 0
-#     (Recepción, ver ADR 0004), grabado de entrada como SINTOMA_USUARIO
-#     en DIAGNOSTICO.md. No existe una investigación sin síntoma
-#     registrado — 'listar' siempre tiene algo real con qué comparar.
-#   estado.sh listar
-#     Imprime, una por línea ("<id><TAB><sintoma>"), las investigaciones
-#     abiertas del proyecto actual con su SINTOMA_USUARIO (siempre lo
-#     tienen, ver ADR 0004; "(sin síntoma registrado todavía)" solo puede
-#     salir de un DIAGNOSTICO.md corrupto o editado a mano). Si el
-#     proyecto no tiene ninguna, no imprime nada — no es un error. Es la
-#     parte mecánica de la Fase 0 (Recepción, ver ADR 0002): decidir si
-#     algo de la lista coincide con lo que describe el usuario ahora es
-#     manual, a propósito.
+#     <sintoma> es obligatorio: el síntoma entrevistado en Fase 0
+#     (Recepción, ver ADR 0004 y ADR 0005), grabado como SINTOMA_USUARIO
+#     en la cabecera de DIAGNOSTICO.md desde el momento de crear la
+#     investigación.
 #   estado.sh dir <id>
 #     Imprime la ruta de la carpeta del diagnóstico. Falla si no existe.
 #   estado.sh ruta-fase <id> <fase>
@@ -38,14 +29,6 @@ set -euo pipefail
 #     encabezado "## <titulo>". No se puede llamar dos veces para la misma
 #     fase (falla si ya está acumulada) — evita duplicar una fase que se
 #     re-valida por error.
-#   estado.sh migrar <identificador-viejo>
-#     Mueve TODAS las investigaciones de <identificador-viejo> (la URL de
-#     remoto o el "sin-remoto:<hash>" que grabó DIAGNOSTICO.md en su día,
-#     antes de un rename de repo o una migración de host) a la carpeta del
-#     proyecto actual. No decide nada por su cuenta: quien lo corre ya
-#     confirmó que ambos identificadores son el mismo proyecto. Falla si
-#     no hay nada bajo el identificador viejo, o si el proyecto actual ya
-#     tiene una carpeta (no se migra encima de investigaciones existentes).
 #
 # DIAGNOSTICOS_ROOT (default: ~/Documents/diagnostics) es la raíz de
 # todos los proyectos; se puede sobreescribir para tests o para aislar
@@ -58,11 +41,9 @@ uso() {
   cat >&2 <<EOF
 Uso:
   $0 init <sintoma>
-  $0 listar
   $0 dir <id>
   $0 ruta-fase <id> <fase>
   $0 acumular <id> <fase> <titulo>
-  $0 migrar <identificador-viejo>
 EOF
 }
 
@@ -110,12 +91,12 @@ contador_siguiente() {
 }
 
 cmd_init() {
-  [ $# -eq 1 ] || { echo "Error: 'init' recibe exactamente un argumento, el síntoma clarificado en Fase 0 (Recepción). No existe una investigación sin síntoma registrado — ver ADR 0004. Uso: estado.sh init <sintoma>" >&2; exit 2; }
+  [ $# -eq 1 ] || { echo "Error: 'init' recibe exactamente un argumento, el síntoma entrevistado en Fase 0 (Recepción). No existe una investigación sin síntoma registrado — ver ADR 0004. Uso: estado.sh init <sintoma>" >&2; exit 2; }
 
-  # El síntoma es texto libre clarificado en Fase 0 (Recepción, ver ADR
+  # El síntoma es texto libre entrevistado en Fase 0 (Recepción, ver ADR
   # 0004) — se colapsa a una sola línea porque DIAGNOSTICO.md usa el
   # formato "CAMPO: valor" de una línea (mismo que
-  # fases/construir-bucle/TEMPLATE.md, que 'listar' también lee así).
+  # fases/construir-bucle/TEMPLATE.md).
   local sintoma="$1"
   sintoma="$(printf '%s' "$sintoma" | tr '\n' ' ')"
   [ -n "$sintoma" ] || { echo "Error: el síntoma no puede estar vacío." >&2; exit 2; }
@@ -152,43 +133,19 @@ cmd_init() {
     printf 'Proyecto: %s\n' "$proyecto"
     printf 'Branch:   %s\n' "$branch"
     printf 'Commit:   %s\n\n' "$commit"
-    # Obligatorio, no recién al cerrar Fase 2 (Construir bucle de
-    # feedback) — no existe una investigación sin síntoma registrado
-    # (ADR 0004): 'listar' siempre tiene algo real con qué comparar en
-    # Fase 0, aunque la investigación se corte antes de llegar a Fase 2.
+    # Obligatorio (ADR 0004): no existe una investigación sin síntoma
+    # registrado.
     printf 'SINTOMA_USUARIO: %s\n\n' "$sintoma"
     # Si resolver_proyecto.sh no pudo identificar el proyecto por remoto
     # git ni por commit raíz (repo sin origin y sin commits, o directamente
     # fuera de un repo), el aviso queda acá — no solo en stderr, que un
-    # flujo agéntico pierde apenas termina el comando (ver issue #10).
+    # flujo agéntico pierde apenas termina el comando.
     if [ -n "$aviso_identidad" ]; then
       printf '%s\n\n' "$aviso_identidad"
     fi
     printf 'Generado por diagnosticar-bugs. Cada sección corresponde a una fase completada.\n'
   } > "$dir/DIAGNOSTICO.md"
   echo "$id"
-}
-
-cmd_listar() {
-  local proyecto_dir entry id diagnostico sintoma
-  proyecto_dir="$(ruta_base)"
-  [ -d "$proyecto_dir" ] || return 0
-
-  for entry in "$proyecto_dir"/INV*/; do
-    [ -d "$entry" ] || continue
-    id="$(basename "$entry")"
-    diagnostico="${entry}DIAGNOSTICO.md"
-    sintoma=""
-    if [ -f "$diagnostico" ]; then
-      # grep sin match sale con status 1 y, con pipefail, tira todo el
-      # pipeline abajo bajo 'set -e' — el '|| true' lo neutraliza; sed no
-      # imprime nada si no recibió línea, así que sintoma queda vacío.
-      sintoma="$(grep -m1 '^SINTOMA_USUARIO:' "$diagnostico" | sed -E 's/^SINTOMA_USUARIO:[[:space:]]*//')" || true
-    fi
-    [ -n "$sintoma" ] || sintoma="(sin síntoma registrado todavía)"
-    printf '%s\t%s\n' "$id" "$sintoma"
-  done
-  return 0
 }
 
 cmd_dir() {
@@ -222,31 +179,6 @@ cmd_acumular() {
   echo "Acumulado: $titulo -> $global_file"
 }
 
-cmd_migrar() {
-  local identificador_viejo="$1"
-  local slug_viejo origen_dir destino_dir
-
-  slug_viejo="$("$RESOLVER" slug-de "$identificador_viejo")"
-  origen_dir="$ROOT/$slug_viejo"
-  destino_dir="$(ruta_base)"
-
-  [ -d "$origen_dir" ] || { echo "Error: no hay ninguna investigación bajo el identificador '$identificador_viejo' (slug '$slug_viejo')." >&2; exit 1; }
-
-  if [ "$origen_dir" = "$destino_dir" ]; then
-    echo "Error: '$identificador_viejo' ya resuelve al proyecto actual — no hay nada que migrar." >&2
-    exit 1
-  fi
-
-  if [ -e "$destino_dir" ]; then
-    echo "Error: el proyecto actual ya tiene investigaciones en '$destino_dir' — no se migra encima de una carpeta existente." >&2
-    exit 1
-  fi
-
-  mkdir -p "$ROOT"
-  mv "$origen_dir" "$destino_dir"
-  echo "Migrado: $origen_dir -> $destino_dir"
-}
-
 main() {
   local cmd="${1:-}"
   [ -n "$cmd" ] || { uso; exit 2; }
@@ -254,11 +186,9 @@ main() {
 
   case "$cmd" in
     init) cmd_init "$@" ;;
-    listar) [ $# -eq 0 ] || { uso; exit 2; }; cmd_listar ;;
     dir) [ $# -eq 1 ] || { uso; exit 2; }; cmd_dir "$1" ;;
     ruta-fase) [ $# -eq 2 ] || { uso; exit 2; }; cmd_ruta_fase "$1" "$2" ;;
     acumular) [ $# -eq 3 ] || { uso; exit 2; }; cmd_acumular "$1" "$2" "$3" ;;
-    migrar) [ $# -eq 1 ] || { uso; exit 2; }; cmd_migrar "$1" ;;
     *) uso; exit 2 ;;
   esac
 }
