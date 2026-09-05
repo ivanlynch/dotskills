@@ -14,6 +14,13 @@ cambio sea correcto. Mergeá la PR solo cuando el usuario lo pida
 explícitamente para esa PR puntual — abrirla no implica permiso para
 mergearla.
 
+## Branches: nombre en Conventional Commits
+
+**Obligatorio.** El nombre de la rama sigue el mismo tipo que
+Conventional Commits, como prefijo: `tipo/descripción-corta` (ej.
+`feat/nueva-skill-nueva-funcionalidad`, `fix/tal-cosa`,
+`docs/agents-instructions`).
+
 ## Pull requests: título en Conventional Commits
 
 El título de toda PR sigue [Conventional
