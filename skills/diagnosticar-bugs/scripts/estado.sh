@@ -9,22 +9,26 @@ set -euo pipefail
 # su remoto git "origin" desde el directorio donde corras este script.
 #
 # Uso:
-#   estado.sh init
+#   estado.sh init <sintoma>
 #     Genera un id nuevo (INV001, INV002, ... — incremental por proyecto,
 #     ver ADR 0001) y crea $DIAGNOSTICOS_ROOT/<slug-proyecto>/<id>/ con
-#     fases/ adentro y DIAGNOSTICO.md vacío. Imprime el id generado. Cada
+#     fases/ adentro y DIAGNOSTICO.md. Imprime el id generado. Cada
 #     llamada arranca una investigación nueva: no es idempotente, y no
 #     acepta un id como argumento — para retomar una investigación
 #     abierta, usá el id que ya te devolvió antes.
+#     <sintoma> es obligatorio: el síntoma ya clarificado en Fase 0
+#     (Recepción, ver ADR 0004), grabado de entrada como SINTOMA_USUARIO
+#     en DIAGNOSTICO.md. No existe una investigación sin síntoma
+#     registrado — 'listar' siempre tiene algo real con qué comparar.
 #   estado.sh listar
 #     Imprime, una por línea ("<id><TAB><sintoma>"), las investigaciones
-#     abiertas del proyecto actual y el SINTOMA_USUARIO que hayan
-#     registrado (o "(sin síntoma registrado todavía)" si esa
-#     investigación no llegó a acumular la fase "Construir bucle de
-#     feedback"). Si el proyecto no tiene ninguna, no imprime nada — no
-#     es un error. Es la parte mecánica de la Fase 0 (Recepción, ver ADR
-#     0002): decidir si algo de la lista coincide con lo que describe el
-#     usuario ahora es manual, a propósito.
+#     abiertas del proyecto actual con su SINTOMA_USUARIO (siempre lo
+#     tienen, ver ADR 0004; "(sin síntoma registrado todavía)" solo puede
+#     salir de un DIAGNOSTICO.md corrupto o editado a mano). Si el
+#     proyecto no tiene ninguna, no imprime nada — no es un error. Es la
+#     parte mecánica de la Fase 0 (Recepción, ver ADR 0002): decidir si
+#     algo de la lista coincide con lo que describe el usuario ahora es
+#     manual, a propósito.
 #   estado.sh dir <id>
 #     Imprime la ruta de la carpeta del diagnóstico. Falla si no existe.
 #   estado.sh ruta-fase <id> <fase>
@@ -53,7 +57,7 @@ RESOLVER="$SCRIPT_DIR/resolver_proyecto.sh"
 uso() {
   cat >&2 <<EOF
 Uso:
-  $0 init
+  $0 init <sintoma>
   $0 listar
   $0 dir <id>
   $0 ruta-fase <id> <fase>
@@ -106,7 +110,15 @@ contador_siguiente() {
 }
 
 cmd_init() {
-  [ $# -eq 0 ] || { echo "Error: 'init' ya no recibe un id — lo genera automáticamente. Uso: estado.sh init" >&2; exit 2; }
+  [ $# -eq 1 ] || { echo "Error: 'init' recibe exactamente un argumento, el síntoma clarificado en Fase 0 (Recepción). No existe una investigación sin síntoma registrado — ver ADR 0004. Uso: estado.sh init <sintoma>" >&2; exit 2; }
+
+  # El síntoma es texto libre clarificado en Fase 0 (Recepción, ver ADR
+  # 0004) — se colapsa a una sola línea porque DIAGNOSTICO.md usa el
+  # formato "CAMPO: valor" de una línea (mismo que
+  # fases/construir-bucle/TEMPLATE.md, que 'listar' también lee así).
+  local sintoma="$1"
+  sintoma="$(printf '%s' "$sintoma" | tr '\n' ' ')"
+  [ -n "$sintoma" ] || { echo "Error: el síntoma no puede estar vacío." >&2; exit 2; }
 
   local proyecto_dir numero id dir
   proyecto_dir="$(ruta_base)"
@@ -140,6 +152,11 @@ cmd_init() {
     printf 'Proyecto: %s\n' "$proyecto"
     printf 'Branch:   %s\n' "$branch"
     printf 'Commit:   %s\n\n' "$commit"
+    # Obligatorio, no recién al cerrar Fase 2 (Construir bucle de
+    # feedback) — no existe una investigación sin síntoma registrado
+    # (ADR 0004): 'listar' siempre tiene algo real con qué comparar en
+    # Fase 0, aunque la investigación se corte antes de llegar a Fase 2.
+    printf 'SINTOMA_USUARIO: %s\n\n' "$sintoma"
     # Si resolver_proyecto.sh no pudo identificar el proyecto por remoto
     # git ni por commit raíz (repo sin origin y sin commits, o directamente
     # fuera de un repo), el aviso queda acá — no solo en stderr, que un
@@ -178,7 +195,7 @@ cmd_dir() {
   local id="$1"
   local dir
   dir="$(ruta_base)/$id"
-  [ -d "$dir" ] || { echo "Error: no existe el diagnóstico '$id' para este proyecto. Si es uno nuevo, corré primero: estado.sh init" >&2; exit 1; }
+  [ -d "$dir" ] || { echo "Error: no existe el diagnóstico '$id' para este proyecto. Si es uno nuevo, corré primero: estado.sh init <sintoma>" >&2; exit 1; }
   echo "$dir"
 }
 

@@ -22,7 +22,7 @@ git -C "$REPO_A" remote add origin "https://github.com/ivanlynch/proyecto-a.git"
 cd "$REPO_A"
 
 # --- init genera el primer id como INV001 y crea la estructura esperada ---
-id=$(bash "$SCRIPT" init)
+id=$(bash "$SCRIPT" init "el checkout devuelve 500 al pagar")
 if [ "$id" != "INV001" ]; then
   echo "TEST FAIL: el primer id de un proyecto debería ser 'INV001', fue '$id'." >&2
   exit 1
@@ -49,16 +49,17 @@ echo "PASS: init crea carpeta anidada bajo el slug (hash) del proyecto, fases/ y
 
 if ! grep -q "^Proyecto: github.com/ivanlynch/proyecto-a$" "$dir/DIAGNOSTICO.md" \
    || ! grep -q "^Branch:   feature/export-fix$" "$dir/DIAGNOSTICO.md" \
-   || ! grep -qE "^Commit:   [0-9a-f]+$" "$dir/DIAGNOSTICO.md"; then
-  echo "TEST FAIL: DIAGNOSTICO.md debería grabar proyecto, branch y commit al momento del init." >&2
+   || ! grep -qE "^Commit:   [0-9a-f]+$" "$dir/DIAGNOSTICO.md" \
+   || ! grep -q "^SINTOMA_USUARIO: el checkout devuelve 500 al pagar$" "$dir/DIAGNOSTICO.md"; then
+  echo "TEST FAIL: DIAGNOSTICO.md debería grabar proyecto, branch, commit y síntoma al momento del init." >&2
   cat "$dir/DIAGNOSTICO.md" >&2
   exit 1
 fi
-echo "PASS: init graba proyecto, branch y commit en DIAGNOSTICO.md."
+echo "PASS: init graba proyecto, branch, commit y síntoma en DIAGNOSTICO.md (ver ADR 0004)."
 
 # --- init NO es idempotente: cada llamada arranca una investigación nueva ---
 echo "contenido previo" >> "$dir/DIAGNOSTICO.md"
-id2=$(bash "$SCRIPT" init)
+id2=$(bash "$SCRIPT" init "otro síntoma sin relación con el anterior")
 if [ "$id2" != "INV002" ]; then
   echo "TEST FAIL: un segundo init en el mismo proyecto debería generar 'INV002', fue '$id2'." >&2
   exit 1
@@ -74,12 +75,24 @@ if [ "$dir2" = "$dir" ]; then
 fi
 echo "PASS: cada init genera un id incremental nuevo, sin pisar investigaciones anteriores."
 
-# --- init ya no acepta argumentos (la interfaz vieja pasaba un <id>) ---
-if bash "$SCRIPT" init "export-timeout-500" 2>/dev/null; then
-  echo "TEST FAIL: 'init' con un argumento debería fallar (ya no recibe un id manual)." >&2
+# --- init exige el síntoma: no existe una investigación sin síntoma (ADR 0004) ---
+if bash "$SCRIPT" init 2>/dev/null; then
+  echo "TEST FAIL: 'init' sin síntoma debería fallar — no puede existir una investigación sin síntoma registrado." >&2
   exit 1
 fi
-echo "PASS: 'init' con un argumento (interfaz vieja) es rechazado."
+echo "PASS: 'init' sin síntoma es rechazado."
+
+if bash "$SCRIPT" init "" 2>/dev/null; then
+  echo "TEST FAIL: 'init' con síntoma vacío debería fallar." >&2
+  exit 1
+fi
+echo "PASS: 'init' con síntoma vacío es rechazado."
+
+if bash "$SCRIPT" init "sintoma" "extra" 2>/dev/null; then
+  echo "TEST FAIL: 'init' con dos argumentos debería fallar (solo acepta el síntoma)." >&2
+  exit 1
+fi
+echo "PASS: 'init' con más de un argumento es rechazado."
 
 # --- init es atómico bajo concurrencia: N inits en paralelo, N ids únicos ---
 N=15
@@ -87,7 +100,7 @@ ids_file="$TMP_DIR/ids-concurrentes.txt"
 : > "$ids_file"
 pids=()
 for _ in $(seq 1 "$N"); do
-  (bash "$SCRIPT" init >> "$ids_file") &
+  (bash "$SCRIPT" init "sintoma concurrente" >> "$ids_file") &
   pids+=($!)
 done
 for pid in "${pids[@]}"; do
@@ -106,7 +119,7 @@ fi
 echo "PASS: $N inits concurrentes en el mismo proyecto generan $N ids únicos (sin colisiones)."
 
 # El contador siguió avanzando desde INV002: la próxima debería ser INV018.
-id_post_concurrencia=$(bash "$SCRIPT" init)
+id_post_concurrencia=$(bash "$SCRIPT" init "sintoma post concurrencia")
 if [ "$id_post_concurrencia" != "INV018" ]; then
   echo "TEST FAIL: tras 2 + $N inits, el siguiente debería ser 'INV018', fue '$id_post_concurrencia'." >&2
   exit 1
@@ -162,7 +175,7 @@ git -C "$REPO_B" init -q
 git -C "$REPO_B" remote add origin "https://github.com/ivanlynch/proyecto-b.git"
 cd "$REPO_B"
 
-id_b=$(bash "$SCRIPT" init)
+id_b=$(bash "$SCRIPT" init "síntoma del proyecto B")
 if [ "$id_b" != "INV001" ]; then
   echo "TEST FAIL: el contador de un proyecto nuevo debería arrancar en 'INV001' sin importar cuánto avanzó el de otro proyecto, fue '$id_b'." >&2
   exit 1
@@ -192,15 +205,16 @@ if [ -n "$listado_vacio" ]; then
 fi
 echo "PASS: 'listar' en un proyecto sin investigaciones no imprime nada (y no falla)."
 
-# --- listar: id + síntoma (si está acumulado) o el aviso de "sin síntoma" ---
-id_c1=$(bash "$SCRIPT" init)
+# --- listar: toma el SINTOMA_USUARIO de la cabecera (el más temprano), no el que
+# --- Fase 2 vuelva a grabar bajo su propia sección (ver ADR 0004) ---
+id_c1=$(bash "$SCRIPT" init "el export tarda 500ms de más")
 dir_c1=$(bash "$SCRIPT" dir "$id_c1")
-printf '\n## Fase: Construir bucle de feedback\n\nSINTOMA_USUARIO: el export tarda 500ms de más\nMETODO: cli_fixture\n' >> "$dir_c1/DIAGNOSTICO.md"
+printf '\n## Fase: Construir bucle de feedback\n\nSINTOMA_USUARIO: el export tarda 500ms de más y a veces crashea\nMETODO: cli_fixture\n' >> "$dir_c1/DIAGNOSTICO.md"
 
-id_c2=$(bash "$SCRIPT" init)
+id_c2=$(bash "$SCRIPT" init "el login redirige mal tras el SSO")
 
 listado=$(bash "$SCRIPT" listar)
-esperado="$(printf '%s\t%s\n%s\t%s' "$id_c1" "el export tarda 500ms de más" "$id_c2" "(sin síntoma registrado todavía)")"
+esperado="$(printf '%s\t%s\n%s\t%s' "$id_c1" "el export tarda 500ms de más" "$id_c2" "el login redirige mal tras el SSO")"
 if [ "$listado" != "$esperado" ]; then
   echo "TEST FAIL: 'listar' no devolvió lo esperado." >&2
   echo "--- esperado ---" >&2
@@ -209,7 +223,7 @@ if [ "$listado" != "$esperado" ]; then
   printf '%s\n' "$listado" >&2
   exit 1
 fi
-echo "PASS: 'listar' devuelve cada id con su SINTOMA_USUARIO acumulado, o el aviso de que todavía no lo tiene."
+echo "PASS: 'listar' toma el síntoma más temprano (cabecera) aunque Fase 2 haya grabado el suyo después."
 
 # --- init sin origin y sin commits: el aviso queda grabado en DIAGNOSTICO.md, no solo en stderr (issue #10) ---
 REPO_SIN_ORIGIN="$TMP_DIR/proyecto-sin-origin"
@@ -217,7 +231,7 @@ mkdir -p "$REPO_SIN_ORIGIN"
 git -C "$REPO_SIN_ORIGIN" init -q
 cd "$REPO_SIN_ORIGIN"
 
-id_sin_origin=$(bash "$SCRIPT" init 2>/dev/null)
+id_sin_origin=$(bash "$SCRIPT" init "algo se rompe en este repo sin origin" 2>/dev/null)
 dir_sin_origin=$(bash "$SCRIPT" dir "$id_sin_origin")
 if ! grep -qi "no se encontró un remoto" "$dir_sin_origin/DIAGNOSTICO.md"; then
   echo "TEST FAIL: sin origin ni commits, DIAGNOSTICO.md debería grabar el aviso de identidad degradada." >&2
@@ -233,9 +247,7 @@ git -C "$REPO_D" init -q
 git -C "$REPO_D" remote add origin "https://github.com/ivanlynch/proyecto-d-viejo.git"
 cd "$REPO_D"
 
-id_d=$(bash "$SCRIPT" init)
-dir_d_viejo=$(bash "$SCRIPT" dir "$id_d")
-printf '\n## Fase: Construir bucle de feedback\n\nSINTOMA_USUARIO: crashea al exportar CSV\n' >> "$dir_d_viejo/DIAGNOSTICO.md"
+id_d=$(bash "$SCRIPT" init "crashea al exportar CSV")
 
 # Rename: origin pasa a apuntar a otra URL (mismo repo, otro owner/nombre).
 git -C "$REPO_D" remote set-url origin "https://github.com/ivanlynch/proyecto-d-nuevo.git"
@@ -272,14 +284,30 @@ mkdir -p "$REPO_E"
 git -C "$REPO_E" init -q
 git -C "$REPO_E" remote add origin "https://github.com/ivanlynch/proyecto-e-viejo.git"
 cd "$REPO_E"
-bash "$SCRIPT" init >/dev/null
+bash "$SCRIPT" init "síntoma viejo" >/dev/null
 git -C "$REPO_E" remote set-url origin "https://github.com/ivanlynch/proyecto-e-nuevo.git"
-bash "$SCRIPT" init >/dev/null
+bash "$SCRIPT" init "síntoma nuevo" >/dev/null
 
 if bash "$SCRIPT" migrar "github.com/ivanlynch/proyecto-e-viejo" 2>/dev/null; then
   echo "TEST FAIL: 'migrar' no debería pisar una carpeta de destino que ya existe." >&2
   exit 1
 fi
 echo "PASS: 'migrar' falla si el proyecto actual ya tiene investigaciones (no migra encima)."
+
+# --- init <sintoma con saltos de línea>: se colapsa a una sola línea ---
+REPO_F="$TMP_DIR/proyecto-f"
+mkdir -p "$REPO_F"
+git -C "$REPO_F" init -q
+git -C "$REPO_F" remote add origin "https://github.com/ivanlynch/proyecto-f.git"
+cd "$REPO_F"
+
+id_f=$(bash "$SCRIPT" init "$(printf 'primera línea\nsegunda línea')")
+dir_f=$(bash "$SCRIPT" dir "$id_f")
+if ! grep -q "^SINTOMA_USUARIO: primera línea segunda línea$" "$dir_f/DIAGNOSTICO.md"; then
+  echo "TEST FAIL: un síntoma con saltos de línea debería colapsarse a una sola línea en la cabecera." >&2
+  cat "$dir_f/DIAGNOSTICO.md" >&2
+  exit 1
+fi
+echo "PASS: un síntoma con saltos de línea se colapsa a una sola línea (formato CAMPO: valor)."
 
 echo "Todos los tests de estado.sh pasaron."

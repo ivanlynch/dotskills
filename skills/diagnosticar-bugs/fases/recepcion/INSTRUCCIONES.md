@@ -12,13 +12,28 @@ ya tiene una investigación abierta en este proyecto (ver ADR 0002 en
 <skill-dir>/scripts/estado.sh listar
 ```
 
-Imprime, una por línea, `<id>` y el síntoma registrado — si esa
-investigación ya cerró la Fase 2 (Construir bucle de feedback) y lo dejó
-documentado; si todavía no, vas a ver `(sin síntoma registrado
-todavía)`. Si el proyecto no tiene ninguna investigación abierta, no
+Imprime, una por línea, `<id>` y su síntoma — toda investigación tiene
+uno desde que se crea (ver ADR 0004), no hace falta esperar a que cierre
+ninguna fase. Si el proyecto no tiene ninguna investigación abierta, no
 imprime nada — eso también es una respuesta válida, no un error.
 
-### 2. Comparar contra lo que describe el usuario (manual, a propósito)
+### 2. Clarificar el síntoma (solo si hace falta, ver ADR 0004)
+
+La comparación del paso 3 depende de tener un síntoma claro — uno vago
+compara mal contra lo que ya está listado. Si lo que describió la
+persona ya es preciso (qué pasa, cuándo, esperado vs. real), no le
+preguntes nada por preguntar: seguí directo al paso 3. Si es vago, mezcla
+más de un síntoma distinto, o falta esperado-vs-real, preguntale lo
+puntual que falte antes de seguir — no una entrevista larga, lo mínimo
+para tener una frase comparable. Si identificás dos síntomas distintos en
+una sola descripción, tratalos como dos pasadas independientes de este
+flujo (cada uno con su propia decisión de match/ambigüedad/nueva), no
+como una sola.
+
+El resultado de este paso es el síntoma ya clarificado — lo vas a
+necesitar en el paso 3 y, si es una investigación nueva, en la Fase 1.
+
+### 3. Comparar contra lo que describe el usuario (manual, a propósito)
 
 **El listado es mecánico; la comparación no.** Este script no decide por
 vos — lo mismo que la capa semántica de la Fase 2 (ver
