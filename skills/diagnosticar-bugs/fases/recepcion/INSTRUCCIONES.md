@@ -25,9 +25,12 @@ preguntes nada por preguntar: seguí directo al paso 3. Si es vago, mezcla
 más de un síntoma distinto, o falta esperado-vs-real, preguntale lo
 puntual que falte antes de seguir — no una entrevista larga, lo mínimo
 para tener una frase comparable. Si identificás dos síntomas distintos en
-una sola descripción, tratalos como dos pasadas independientes de este
-flujo (cada uno con su propia decisión de match/ambigüedad/nueva), no
-como una sola.
+una sola descripción, no los mezcles bajo una sola decisión: evaluá cada
+uno por separado en el paso 3 (match/ambigüedad/nueva). Este flujo
+trabaja una sola investigación por vez — si los dos terminan siendo
+nuevos, confirmá con el usuario con cuál arrancar y dejá el otro sin
+crear (no corras `init` para el que queda afuera); se retoma como una
+pasada aparte de Recepción cuando llegue su turno.
 
 ### 3. Comparar contra lo que describe el usuario (manual, a propósito)
 
