@@ -34,6 +34,14 @@ set -euo pipefail
 #     encabezado "## <titulo>". No se puede llamar dos veces para la misma
 #     fase (falla si ya está acumulada) — evita duplicar una fase que se
 #     re-valida por error.
+#   estado.sh migrar <identificador-viejo>
+#     Mueve TODAS las investigaciones de <identificador-viejo> (la URL de
+#     remoto o el "sin-remoto:<hash>" que grabó DIAGNOSTICO.md en su día,
+#     antes de un rename de repo o una migración de host) a la carpeta del
+#     proyecto actual. No decide nada por su cuenta: quien lo corre ya
+#     confirmó que ambos identificadores son el mismo proyecto. Falla si
+#     no hay nada bajo el identificador viejo, o si el proyecto actual ya
+#     tiene una carpeta (no se migra encima de investigaciones existentes).
 #
 # DIAGNOSTICOS_ROOT (default: ~/Documents/diagnostics) es la raíz de
 # todos los proyectos; se puede sobreescribir para tests o para aislar
@@ -50,6 +58,7 @@ Uso:
   $0 dir <id>
   $0 ruta-fase <id> <fase>
   $0 acumular <id> <fase> <titulo>
+  $0 migrar <identificador-viejo>
 EOF
 }
 
@@ -118,8 +127,11 @@ cmd_init() {
   # en el nombre de la carpeta: los nombres de branch se renombran o se
   # borran, y meterlos en el path los haría mentir con el tiempo. Esto es
   # el registro de verdad de "sobre qué estabas parado" al arrancar.
-  local proyecto branch commit
-  proyecto="$("$RESOLVER" identificador .)"
+  local proyecto branch commit aviso_identidad resolver_stderr
+  resolver_stderr="$(mktemp)"
+  proyecto="$("$RESOLVER" identificador . 2>"$resolver_stderr")"
+  aviso_identidad="$(cat "$resolver_stderr")"
+  rm -f "$resolver_stderr"
   branch="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "(sin branch — no es un repo git o está en detached HEAD)")"
   commit="$(git rev-parse --short HEAD 2>/dev/null || echo "(sin commit)")"
 
@@ -128,6 +140,13 @@ cmd_init() {
     printf 'Proyecto: %s\n' "$proyecto"
     printf 'Branch:   %s\n' "$branch"
     printf 'Commit:   %s\n\n' "$commit"
+    # Si resolver_proyecto.sh no pudo identificar el proyecto por remoto
+    # git ni por commit raíz (repo sin origin y sin commits, o directamente
+    # fuera de un repo), el aviso queda acá — no solo en stderr, que un
+    # flujo agéntico pierde apenas termina el comando (ver issue #10).
+    if [ -n "$aviso_identidad" ]; then
+      printf '%s\n\n' "$aviso_identidad"
+    fi
     printf 'Generado por diagnosticar-bugs. Cada sección corresponde a una fase completada.\n'
   } > "$dir/DIAGNOSTICO.md"
   echo "$id"
@@ -186,6 +205,31 @@ cmd_acumular() {
   echo "Acumulado: $titulo -> $global_file"
 }
 
+cmd_migrar() {
+  local identificador_viejo="$1"
+  local slug_viejo origen_dir destino_dir
+
+  slug_viejo="$("$RESOLVER" slug-de "$identificador_viejo")"
+  origen_dir="$ROOT/$slug_viejo"
+  destino_dir="$(ruta_base)"
+
+  [ -d "$origen_dir" ] || { echo "Error: no hay ninguna investigación bajo el identificador '$identificador_viejo' (slug '$slug_viejo')." >&2; exit 1; }
+
+  if [ "$origen_dir" = "$destino_dir" ]; then
+    echo "Error: '$identificador_viejo' ya resuelve al proyecto actual — no hay nada que migrar." >&2
+    exit 1
+  fi
+
+  if [ -e "$destino_dir" ]; then
+    echo "Error: el proyecto actual ya tiene investigaciones en '$destino_dir' — no se migra encima de una carpeta existente." >&2
+    exit 1
+  fi
+
+  mkdir -p "$ROOT"
+  mv "$origen_dir" "$destino_dir"
+  echo "Migrado: $origen_dir -> $destino_dir"
+}
+
 main() {
   local cmd="${1:-}"
   [ -n "$cmd" ] || { uso; exit 2; }
@@ -197,6 +241,7 @@ main() {
     dir) [ $# -eq 1 ] || { uso; exit 2; }; cmd_dir "$1" ;;
     ruta-fase) [ $# -eq 2 ] || { uso; exit 2; }; cmd_ruta_fase "$1" "$2" ;;
     acumular) [ $# -eq 3 ] || { uso; exit 2; }; cmd_acumular "$1" "$2" "$3" ;;
+    migrar) [ $# -eq 1 ] || { uso; exit 2; }; cmd_migrar "$1" ;;
     *) uso; exit 2 ;;
   esac
 }

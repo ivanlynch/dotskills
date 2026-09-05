@@ -36,6 +36,14 @@ lo que la persona te describió ahora:
 - **Sin coincidencia** (o la lista vino vacía) → seguí a la Fase 1, es una
   investigación nueva.
 
+Si la lista vino vacía pero el usuario está seguro de que esto ya se
+investigó antes, puede ser que `origin` haya cambiado (rename del repo,
+migración de host): las investigaciones viejas quedan bajo el
+identificador anterior y `listar` no las ve. Antes de asumir que es
+nueva, revisá si corresponde `estado.sh migrar <identificador-viejo>`
+(identificador tal como quedó grabado en la cabecera "Proyecto:" de un
+`DIAGNOSTICO.md` viejo) y volvé a correr `listar`.
+
 ## Criterio de cierre
 
 Tenés una decisión explícita y comunicada: **retomar `<id-existente>`** o

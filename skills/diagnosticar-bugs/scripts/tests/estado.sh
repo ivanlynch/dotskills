@@ -211,4 +211,75 @@ if [ "$listado" != "$esperado" ]; then
 fi
 echo "PASS: 'listar' devuelve cada id con su SINTOMA_USUARIO acumulado, o el aviso de que todavía no lo tiene."
 
+# --- init sin origin y sin commits: el aviso queda grabado en DIAGNOSTICO.md, no solo en stderr (issue #10) ---
+REPO_SIN_ORIGIN="$TMP_DIR/proyecto-sin-origin"
+mkdir -p "$REPO_SIN_ORIGIN"
+git -C "$REPO_SIN_ORIGIN" init -q
+cd "$REPO_SIN_ORIGIN"
+
+id_sin_origin=$(bash "$SCRIPT" init 2>/dev/null)
+dir_sin_origin=$(bash "$SCRIPT" dir "$id_sin_origin")
+if ! grep -qi "no se encontró un remoto" "$dir_sin_origin/DIAGNOSTICO.md"; then
+  echo "TEST FAIL: sin origin ni commits, DIAGNOSTICO.md debería grabar el aviso de identidad degradada." >&2
+  cat "$dir_sin_origin/DIAGNOSTICO.md" >&2
+  exit 1
+fi
+echo "PASS: 'init' sin origin ni commits graba el aviso de identidad degradada en DIAGNOSTICO.md."
+
+# --- migrar: mueve las investigaciones de un identificador viejo (ej. tras un rename de origin) al proyecto actual (issue #11) ---
+REPO_D="$TMP_DIR/proyecto-d"
+mkdir -p "$REPO_D"
+git -C "$REPO_D" init -q
+git -C "$REPO_D" remote add origin "https://github.com/ivanlynch/proyecto-d-viejo.git"
+cd "$REPO_D"
+
+id_d=$(bash "$SCRIPT" init)
+dir_d_viejo=$(bash "$SCRIPT" dir "$id_d")
+printf '\n## Fase: Construir bucle de feedback\n\nSINTOMA_USUARIO: crashea al exportar CSV\n' >> "$dir_d_viejo/DIAGNOSTICO.md"
+
+# Rename: origin pasa a apuntar a otra URL (mismo repo, otro owner/nombre).
+git -C "$REPO_D" remote set-url origin "https://github.com/ivanlynch/proyecto-d-nuevo.git"
+
+listado_tras_rename=$(bash "$SCRIPT" listar)
+if [ -n "$listado_tras_rename" ]; then
+  echo "TEST FAIL: tras el rename de origin, 'listar' no debería ver las investigaciones viejas todavía (identidad distinta hasta migrar a mano)." >&2
+  exit 1
+fi
+echo "PASS: tras un rename de origin, las investigaciones viejas quedan invisibles hasta correr 'migrar'."
+
+bash "$SCRIPT" migrar "github.com/ivanlynch/proyecto-d-viejo" >/dev/null
+
+listado_tras_migrar=$(bash "$SCRIPT" listar)
+esperado_migrado="$(printf '%s\t%s' "$id_d" "crashea al exportar CSV")"
+if [ "$listado_tras_migrar" != "$esperado_migrado" ]; then
+  echo "TEST FAIL: tras 'migrar', 'listar' debería ver la investigación movida." >&2
+  echo "--- esperado ---" >&2; printf '%s\n' "$esperado_migrado" >&2
+  echo "--- obtenido ---" >&2; printf '%s\n' "$listado_tras_migrar" >&2
+  exit 1
+fi
+echo "PASS: 'migrar' mueve las investigaciones del identificador viejo al proyecto actual."
+
+# --- migrar falla si no hay nada bajo el identificador viejo ---
+if bash "$SCRIPT" migrar "github.com/ivanlynch/no-existe" 2>/dev/null; then
+  echo "TEST FAIL: 'migrar' sobre un identificador sin investigaciones debería fallar." >&2
+  exit 1
+fi
+echo "PASS: 'migrar' falla si el identificador viejo no tiene investigaciones."
+
+# --- migrar no pisa una carpeta de destino que ya tiene investigaciones ---
+REPO_E="$TMP_DIR/proyecto-e"
+mkdir -p "$REPO_E"
+git -C "$REPO_E" init -q
+git -C "$REPO_E" remote add origin "https://github.com/ivanlynch/proyecto-e-viejo.git"
+cd "$REPO_E"
+bash "$SCRIPT" init >/dev/null
+git -C "$REPO_E" remote set-url origin "https://github.com/ivanlynch/proyecto-e-nuevo.git"
+bash "$SCRIPT" init >/dev/null
+
+if bash "$SCRIPT" migrar "github.com/ivanlynch/proyecto-e-viejo" 2>/dev/null; then
+  echo "TEST FAIL: 'migrar' no debería pisar una carpeta de destino que ya existe." >&2
+  exit 1
+fi
+echo "PASS: 'migrar' falla si el proyecto actual ya tiene investigaciones (no migra encima)."
+
 echo "Todos los tests de estado.sh pasaron."
