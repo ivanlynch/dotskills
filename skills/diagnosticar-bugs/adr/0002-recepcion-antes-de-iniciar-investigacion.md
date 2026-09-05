@@ -2,7 +2,10 @@
 
 ## Estado
 
-Aceptada
+Superada por ADR 0005 (Recepción ya no lista ni compara contra
+investigaciones abiertas) y por ADR 0006 (Recepción se fusiona con
+Iniciar investigación — la separación en dos fases que decide este ADR
+ya no existe).
 
 ## Contexto
 

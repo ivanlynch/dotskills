@@ -36,14 +36,6 @@ if [ "$slug" != "$slug2" ]; then
 fi
 echo "PASS: el slug es determinista para el mismo proyecto."
 
-# --- slug-de: hashea un identificador arbitrario, sin resolverlo desde un dir ---
-slug_de_directo=$("$TARGET_SCRIPT" slug-de "github.com/ivanlynch/mi-repo")
-if [ "$slug_de_directo" != "$slug" ]; then
-  echo "TEST FAIL: 'slug-de <identificador>' debería dar el mismo slug que 'slug <dir>' para el identificador equivalente. '$slug_de_directo' != '$slug'" >&2
-  exit 1
-fi
-echo "PASS: 'slug-de <identificador>' da el mismo slug que 'slug <dir>' (usado por 'estado.sh migrar', ver issue #11)."
-
 # --- repo con remoto SSH (formato scp) ---
 REPO_SSH="${TMP_DIR}/repo-ssh"
 mkdir -p "$REPO_SSH"

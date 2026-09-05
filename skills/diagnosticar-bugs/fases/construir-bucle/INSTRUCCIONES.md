@@ -9,7 +9,7 @@ cp <skill-dir>/fases/construir-bucle/TEMPLATE.md \
    "$(<skill-dir>/scripts/estado.sh ruta-fase <id> construir-bucle)"
 ```
 
-Completá cada campo siguiendo la Fase 2 de `SKILL.md` (mismo criterio: probá
+Completá cada campo siguiendo la Fase 1 de `SKILL.md` (mismo criterio: probá
 los métodos en el orden de esa lista, sé agresivo y creativo, no te rindas).
 **No tildes las casillas de "condiciones de salida" vos mismo** — eso lo
 hace el validador en el paso siguiente.

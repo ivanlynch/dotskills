@@ -1,4 +1,4 @@
-# Fase 4: formular hipótesis
+# Fase 3: formular hipótesis
 
 Generá **3 a 5 hipótesis ordenadas** antes de probar cualquiera. Generar una sola hace que te ancles en la primera idea plausible.
 
