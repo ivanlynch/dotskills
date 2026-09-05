@@ -1,12 +1,12 @@
 # Fase 1: Iniciar investigación
 
-Corré, desde el proyecto donde está el bug:
+Reemplazá `<sintoma>` por el texto real que obtuviste en Fase 0 y corré,
+desde el proyecto donde está el bug — el comando no pregunta nada por
+consola:
 
 ```bash
 <skill-dir>/scripts/estado.sh init "<sintoma>"
 ```
-
-Pasale el síntoma que obtuviste en Fase 0.
 
 ## Criterio de cierre
 
