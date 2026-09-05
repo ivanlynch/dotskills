@@ -19,8 +19,15 @@ set -euo pipefail
 #     DIAGNOSTICO.md, así que la legibilidad vive ahí, no en el nombre
 #     de la carpeta.
 #
-# Si el repo no tiene remoto "origin", usa la ruta local absoluta como
-# identificador temporal y avisa por stderr (no aborta).
+# Si <dir> es un submódulo, resuelve siempre contra el superproyecto (el
+# repo padre más externo, subiendo tantos niveles como haga falta) — la
+# investigación queda linkeada al repo, nunca al submódulo, sin importar
+# desde qué carpeta se invoque.
+#
+# Si no hay remoto "origin", usa el hash del commit raíz del repo (estable
+# ante renombres de carpeta o clones a otro path, a diferencia de un path).
+# Si ni eso hay (repo sin commits todavía), recién ahí cae a la ruta local
+# absoluta como último recurso, y avisa por stderr (no aborta).
 
 uso() {
   cat >&2 <<EOF
@@ -45,14 +52,35 @@ normalizar_remoto() {
 
 resolver_identificador() {
   local dir="${1:-.}"
+
+  # Si estamos dentro de un submódulo, subir al superproyecto — tantas
+  # veces como haga falta, por si hay submódulos anidados.
+  local super
+  while super="$(git -C "$dir" rev-parse --show-superproject-working-tree 2>/dev/null)" && [ -n "$super" ]; do
+    dir="$super"
+  done
+
   local url
   if url=$(git -C "$dir" remote get-url origin 2>/dev/null); then
     normalizar_remoto "$url"
     return 0
   fi
+
+  # Sin remoto: el hash del commit raíz identifica al repo sin importar
+  # en qué path viva. Un repo con historias no relacionadas puede tener
+  # más de una raíz — se ordenan para que el identificador sea siempre
+  # el mismo sin importar el orden en que git las liste.
+  local raiz
+  raiz="$(git -C "$dir" rev-list --max-parents=0 HEAD 2>/dev/null | sort | tr '\n' ',')" || true
+  raiz="${raiz%,}"
+  if [ -n "$raiz" ]; then
+    printf 'sin-remoto:%s\n' "$raiz"
+    return 0
+  fi
+
   local ruta
   ruta=$(git -C "$dir" rev-parse --show-toplevel 2>/dev/null) || ruta=$(cd "$dir" && pwd)
-  echo "Aviso: no se encontró un remoto 'origin' en '$dir'; usando la ruta local como identificador temporal de proyecto." >&2
+  echo "Aviso: no se encontró un remoto 'origin' ni commits en '$dir'; usando la ruta local como identificador temporal de proyecto." >&2
   printf '%s\n' "$ruta"
 }
 

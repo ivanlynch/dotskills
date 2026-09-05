@@ -192,7 +192,7 @@ if [ -n "$listado_vacio" ]; then
 fi
 echo "PASS: 'listar' en un proyecto sin investigaciones no imprime nada (y no falla)."
 
-# --- listar: id + síntoma (si está acumulado) o el aviso de "sin síntoma" ---
+# --- listar: por default, solo las que tienen SINTOMA_USUARIO acumulado ---
 id_c1=$(bash "$SCRIPT" init)
 dir_c1=$(bash "$SCRIPT" dir "$id_c1")
 printf '\n## Fase: Construir bucle de feedback\n\nSINTOMA_USUARIO: el export tarda 500ms de más\nMETODO: cli_fixture\n' >> "$dir_c1/DIAGNOSTICO.md"
@@ -200,15 +200,35 @@ printf '\n## Fase: Construir bucle de feedback\n\nSINTOMA_USUARIO: el export tar
 id_c2=$(bash "$SCRIPT" init)
 
 listado=$(bash "$SCRIPT" listar)
-esperado="$(printf '%s\t%s\n%s\t%s' "$id_c1" "el export tarda 500ms de más" "$id_c2" "(sin síntoma registrado todavía)")"
+esperado="$(printf '%s\t%s' "$id_c1" "el export tarda 500ms de más")"
 if [ "$listado" != "$esperado" ]; then
-  echo "TEST FAIL: 'listar' no devolvió lo esperado." >&2
+  echo "TEST FAIL: 'listar' sin flags no devolvió lo esperado (debería omitir '$id_c2', sin síntoma todavía)." >&2
   echo "--- esperado ---" >&2
   printf '%s\n' "$esperado" >&2
   echo "--- obtenido ---" >&2
   printf '%s\n' "$listado" >&2
   exit 1
 fi
-echo "PASS: 'listar' devuelve cada id con su SINTOMA_USUARIO acumulado, o el aviso de que todavía no lo tiene."
+echo "PASS: 'listar' sin flags omite las investigaciones sin síntoma acumulado."
+
+# --- listar --todas: también muestra las que no tienen síntoma ---
+listado_todas=$(bash "$SCRIPT" listar --todas)
+esperado_todas="$(printf '%s\t%s\n%s\t%s' "$id_c1" "el export tarda 500ms de más" "$id_c2" "(sin síntoma registrado todavía)")"
+if [ "$listado_todas" != "$esperado_todas" ]; then
+  echo "TEST FAIL: 'listar --todas' no devolvió lo esperado." >&2
+  echo "--- esperado ---" >&2
+  printf '%s\n' "$esperado_todas" >&2
+  echo "--- obtenido ---" >&2
+  printf '%s\n' "$listado_todas" >&2
+  exit 1
+fi
+echo "PASS: 'listar --todas' incluye también las investigaciones sin síntoma, con el aviso correspondiente."
+
+# --- listar: una opción desconocida falla en vez de ignorarse en silencio ---
+if bash "$SCRIPT" listar --raro 2>/dev/null; then
+  echo "TEST FAIL: 'listar' con una opción desconocida debería fallar." >&2
+  exit 1
+fi
+echo "PASS: 'listar' con una opción desconocida falla en vez de ignorarla."
 
 echo "Todos los tests de estado.sh pasaron."
