@@ -12,10 +12,9 @@ ya tiene una investigación abierta en este proyecto (ver ADR 0002 en
 <skill-dir>/scripts/estado.sh listar
 ```
 
-Imprime, una por línea, `<id>` y su síntoma — toda investigación tiene
-uno desde que se crea (ver ADR 0004), no hace falta esperar a que cierre
-ninguna fase. Si el proyecto no tiene ninguna investigación abierta, no
-imprime nada — eso también es una respuesta válida, no un error.
+Imprime, una por línea, `<id>` y su síntoma. Si el proyecto no tiene
+ninguna investigación abierta, no imprime nada — eso también es una
+respuesta válida, no un error.
 
 ### 2. Clarificar el síntoma (solo si hace falta, ver ADR 0004)
 
