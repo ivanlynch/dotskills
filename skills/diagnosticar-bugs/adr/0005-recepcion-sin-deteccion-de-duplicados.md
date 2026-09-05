@@ -2,7 +2,10 @@
 
 ## Estado
 
-Aceptada. Supera ADR 0002.
+Aceptada. Supera ADR 0002. Parcialmente superada por ADR 0006: una vez
+sin detección de duplicados, Recepción se fusiona con Iniciar
+investigación — la decisión de fondo de este ADR (no detectar
+duplicados) sigue en pie.
 
 ## Contexto
 
@@ -34,11 +37,10 @@ investigación. Se elimina:
   Recepción anterior) y sus casos borde (ambigüedad, coincidencia
   parcial, listas vacías por rename de `origin`).
 
-Se mantiene: la Fase 0 se sigue llamando Recepción y sigue precediendo a
-Fase 1 (no hay razón para volver a fusionarlas — cada una conserva una
-responsabilidad única: entrevistar vs. crear). El síntoma sigue siendo
-obligatorio en `init` (ADR 0004) — eso no dependía de la detección de
-duplicados, es valioso por sí solo como registro del diagnóstico.
+El síntoma sigue siendo obligatorio en `init` (ADR 0004) — eso no
+dependía de la detección de duplicados, es valioso por sí solo como
+registro del diagnóstico. (Este ADR originalmente mantenía Recepción como
+fase separada de Iniciar investigación; ADR 0006 las fusiona.)
 
 ## Consecuencias
 
@@ -53,5 +55,5 @@ duplicados, es valioso por sí solo como registro del diagnóstico.
   `listar`/`migrar`, quedan sin efecto: el código que arreglaban ya no
   existe.
 - `fases/iniciar-investigacion/INSTRUCCIONES.md` ya no depende de que
-  Recepción haya "confirmado que es nueva" — toda llamada a Fase 1 crea
+  Recepción haya "confirmado que es nueva" — toda llamada a Fase 0 crea
   una investigación nueva, sin condición previa.

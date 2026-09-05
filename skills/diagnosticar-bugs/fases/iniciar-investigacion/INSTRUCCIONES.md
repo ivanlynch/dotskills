@@ -1,7 +1,12 @@
-# Fase 1: Iniciar investigación
+# Fase 0: Iniciar investigación
 
-Reemplazá `<sintoma>` por el texto real que obtuviste en Fase 0. Corré
-esto desde el proyecto donde está el bug:
+Si la descripción del bug ya es precisa (qué pasa, cuándo, esperado vs.
+real), seguí directo al paso siguiente. Si no, usá
+[`/entrevistar`](../../../entrevistar/SKILL.md) hasta tener un síntoma
+claro.
+
+Reemplazá `<sintoma>` por ese texto y corré, desde el proyecto donde está
+el bug:
 
 ```bash
 <skill-dir>/scripts/estado.sh init "<sintoma>"

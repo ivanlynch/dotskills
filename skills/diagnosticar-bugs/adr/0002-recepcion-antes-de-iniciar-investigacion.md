@@ -2,10 +2,10 @@
 
 ## Estado
 
-Superada por ADR 0005. Se mantiene el nombre y el orden de las fases
-("Recepción" antes de "Iniciar investigación"), pero Recepción ya no
-lista ni compara contra investigaciones abiertas — ver ADR 0005 para el
-razonamiento actual.
+Superada por ADR 0005 (Recepción ya no lista ni compara contra
+investigaciones abiertas) y por ADR 0006 (Recepción se fusiona con
+Iniciar investigación — la separación en dos fases que decide este ADR
+ya no existe).
 
 ## Contexto
 

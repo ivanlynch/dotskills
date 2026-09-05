@@ -13,8 +13,8 @@ cambies sus nombres ni el formato "CAMPO: valor" (una línea).
 ## Síntoma reportado por el usuario
 
 <!-- Copiá tal cual el SINTOMA_USUARIO que ya quedó grabado en la
-cabecera de DIAGNOSTICO.md (Fase 0/1, ver ADR 0004) — no lo redactes de
-nuevo. Sin interpretar todavía — esto es lo que la Fase 3 va a usar para
+cabecera de DIAGNOSTICO.md (Fase 0, ver ADR 0004) — no lo redactes de
+nuevo. Sin interpretar todavía — esto es lo que la Fase 2 va a usar para
 confirmar que el bucle detecta ESTE bug y no uno parecido. -->
 
 SINTOMA_USUARIO:
