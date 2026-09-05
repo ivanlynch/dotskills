@@ -14,6 +14,30 @@ cambio sea correcto. Mergeá la PR solo cuando el usuario lo pida
 explícitamente para esa PR puntual — abrirla no implica permiso para
 mergearla.
 
+## Pull requests: título en Conventional Commits
+
+El título de toda PR sigue [Conventional
+Commits](https://www.conventionalcommits.org/en/v1.0.0/): `tipo(scope):
+descripción` (ej. `docs(diagnosticar-bugs): agregar ADR 0003`). El scope,
+cuando aplica, es el nombre de la skill afectada.
+
+## Commits: identidad real de quien pide el cambio, nunca un agente
+
+**Obligatorio.** Todo commit se hace con la identidad git (`user.name` /
+`user.email`) de la persona que pidió el cambio — nunca con una identidad
+de agente/bot (ej. "claude"). No se modifica la configuración de git para
+simular otra identidad: se usa la que ya está configurada en el entorno
+donde corre el agente. Tampoco se agregan líneas de coautoría/atribución
+a un agente en el mensaje del commit.
+
+## Commits: Conventional Commits
+
+Los mensajes de commit siguen [Conventional
+Commits](https://www.conventionalcommits.org/en/v1.0.0/): `tipo(scope):
+descripción` en el asunto (`feat`, `fix`, `docs`, `refactor`, `test`,
+`chore`, etc.), cuerpo opcional explicando el "por qué". Mismo criterio
+de scope que en las PRs.
+
 ## Issues para problemas identificados sin solución decidida
 
 Cuando encuentres un problema real pero la solución todavía no está
@@ -33,3 +57,10 @@ Ver los issues [#8](https://github.com/ivanlynch/dotskills/issues/8),
 [#10](https://github.com/ivanlynch/dotskills/issues/10) y
 [#11](https://github.com/ivanlynch/dotskills/issues/11) como ejemplos del
 patrón.
+
+## Issues: label de la skill correspondiente
+
+Todo issue se etiqueta con el nombre de la skill a la que corresponde
+(ej. `diagnosticar-bugs`). Si el label todavía no existe en el
+repositorio, crealo primero (`gh label create <nombre-skill>`) antes de
+abrir el issue.
