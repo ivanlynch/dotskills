@@ -33,13 +33,3 @@ Ver los issues [#8](https://github.com/ivanlynch/dotskills/issues/8),
 [#10](https://github.com/ivanlynch/dotskills/issues/10) y
 [#11](https://github.com/ivanlynch/dotskills/issues/11) como ejemplos del
 patrón.
-
-## Identidad de proyecto es siempre a nivel de repo
-
-Donde una skill necesite identificar "en qué proyecto estoy" (ver
-`skills/diagnosticar-bugs/scripts/resolver_proyecto.sh`), la identidad es
-siempre el repo entero (remoto git / commit raíz) — nunca se fragmenta
-por subcarpeta, ni siquiera dentro de un monorepo con subproyectos
-claramente separados. Un monorepo sigue siendo 1 solo repo; ver
-[issue #8](https://github.com/ivanlynch/dotskills/issues/8) para el
-razonamiento completo.
