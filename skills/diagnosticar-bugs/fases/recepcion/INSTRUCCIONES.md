@@ -1,7 +1,7 @@
 # Fase 0: Recepción
 
 Entrevistá al usuario para llegar a un síntoma claro del bug que querés
-atacar (ver [ADR 0005](../../adr/0005-recepcion-sin-deteccion-de-duplicados.md)).
+atacar.
 
 ## Flujo
 

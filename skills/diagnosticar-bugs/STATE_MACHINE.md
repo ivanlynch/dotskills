@@ -15,7 +15,7 @@ stateDiagram-v2
 
     Recepcion --> IniciarInvestigacion: Entrevistar hasta tener un sintoma claro
 
-    IniciarInvestigacion --> ConstruirBucle: init "<sintoma>"
+    IniciarInvestigacion --> ConstruirBucle
 
     ConstruirBucle --> ConstruirBucle: validar.sh NOT_READY, o capa semántica detecta ambigüedad
     ConstruirBucle --> ReproducirMinimizar: validar.sh READY + capa semántica confirma + acumular
