@@ -13,9 +13,9 @@ contexto, porque no depende de la conversación.
 stateDiagram-v2
     [*] --> Recepcion
 
-    Recepcion --> IniciarInvestigacion: entrevista produjo un síntoma claro
+    Recepcion --> IniciarInvestigacion: Entrevistar hasta tener un sintoma claro
 
-    IniciarInvestigacion --> ConstruirBucle: init "<sintoma>" OK (falla sin síntoma)
+    IniciarInvestigacion --> ConstruirBucle: init "<sintoma>"
 
     ConstruirBucle --> ConstruirBucle: validar.sh NOT_READY, o capa semántica detecta ambigüedad
     ConstruirBucle --> ReproducirMinimizar: validar.sh READY + capa semántica confirma + acumular
