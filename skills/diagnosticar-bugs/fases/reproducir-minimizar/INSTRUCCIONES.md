@@ -1,17 +1,52 @@
 # Fase 2: reproducir y minimizar
 
-Ejecutá el bucle. Observá cómo se pone en rojo cuando aparece el bug.
+## Flujo
 
-Confirmá:
+### 1. Iniciar la fase
 
-- [ ] El bucle produce el modo de falla que describió el **usuario**, no otro fallo cercano. Bug equivocado = arreglo equivocado.
-- [ ] El fallo se reproduce en varias ejecuciones (o, para bugs no deterministas, con una tasa suficientemente alta para depurarlo).
-- [ ] Capturaste el síntoma exacto (mensaje de error, salida incorrecta o tiempo lento) para que las fases posteriores puedan verificar que el arreglo realmente lo resuelve.
+```bash
+<skill-dir>/fases/reproducir-minimizar/scripts/iniciar.sh <id>
+```
 
-## Minimizar
+Copia la plantilla y precarga `SINTOMA_USUARIO` y `COMANDO_MINIMIZADO`
+con los valores que ya quedaron en `DIAGNOSTICO.md` (Fase 0 y Fase 1
+acumulada) — no hace falta que los copies vos.
 
-Una vez en rojo, reducí la reproducción al **escenario más pequeño que todavía se ponga en rojo**. Quitá entradas, callers, configuración, datos y pasos **de a uno**, ejecutando de nuevo el bucle después de cada recorte; conservá solo lo que sea estructural para la falla.
+### 2. Minimizar y completar la plantilla
 
-Esto importa porque una reproducción mínima reduce el espacio de hipótesis en la Fase 3 y se convierte en el test de regresión limpio de la Fase 5.
+Completá los campos del archivo copiado (`fases/reproducir-minimizar.md`,
+dentro de la carpeta del diagnóstico), siguiendo sus comentarios.
 
-Terminaste cuando cada elemento restante sea estructural: quitar cualquiera hace que el bucle pase a verde. No avances hasta haber reproducido **y** minimizado.
+### 3. Correr el validador
+
+```bash
+<skill-dir>/fases/reproducir-minimizar/scripts/validar.sh "$(<skill-dir>/scripts/estado.sh ruta-fase <id> reproducir-minimizar)"
+```
+
+Esto **ejecuta tu `COMANDO_MINIMIZADO` de verdad** (3 veces) para
+confirmar mecánicamente que sigue reproduciendo el bug y sigue siendo
+determinista — no confía en tu palabra de que ya lo probaste.
+
+- Imprime `READY` (exit 0) si todo está en orden.
+- Imprime `NOT_READY` (exit 1) con el motivo exacto por stderr si no. Volvé
+  al paso 2, ajustá lo que falte según lo que diga el error, y volvé a
+  correr el validador. No sigas a la fase siguiente sin `READY`.
+
+### 4. Capa semántica
+
+El validador mecánico **no puede saber** si el fallo que reproduce
+`COMANDO_MINIMIZADO` corresponde al síntoma exacto que describió la
+persona, ni si el escenario es realmente mínimo — eso ya lo declaraste
+en `ES_MINIMO`, con tu propio criterio del código. Antes de dar la fase
+por cerrada, releé vos mismo `SINTOMA_USUARIO` contra `## Corrida real`
+y confirmá explícitamente que coinciden. Si hay ambigüedad, no sigas —
+volvé al usuario con la duda puntual usando `/entrevistar` en vez de
+asumir.
+
+### 5. Acumular y cerrar la fase
+
+Solo después de `READY` **y** de confirmar la capa semántica ejecutá:
+
+```bash
+<skill-dir>/scripts/estado.sh acumular <id> reproducir-minimizar "Fase: Reproducir y minimizar"
+```

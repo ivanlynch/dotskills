@@ -29,6 +29,13 @@ set -euo pipefail
 #     encabezado "## <titulo>". No se puede llamar dos veces para la misma
 #     fase (falla si ya está acumulada) — evita duplicar una fase que se
 #     re-valida por error.
+#   estado.sh campo <id> <nombre-campo>
+#     Imprime el valor de la primera línea "<nombre-campo>: valor" que
+#     encuentra en DIAGNOSTICO.md (mismo formato que usan las plantillas
+#     de cada fase). Vacío si el campo no existe. Sirve para que una
+#     fase lea, sin retipearlo a mano, un valor que ya grabó una fase
+#     anterior (ej. SINTOMA_USUARIO de Fase 0, o COMANDO ya acumulado de
+#     Fase 1).
 #
 # DIAGNOSTICOS_ROOT (default: ~/Documents/diagnostics) es la raíz de
 # todos los proyectos; se puede sobreescribir para tests o para aislar
@@ -44,6 +51,7 @@ Uso:
   $0 dir <id>
   $0 ruta-fase <id> <fase>
   $0 acumular <id> <fase> <titulo>
+  $0 campo <id> <nombre-campo>
 EOF
 }
 
@@ -179,6 +187,16 @@ cmd_acumular() {
   echo "Acumulado: $titulo -> $global_file"
 }
 
+cmd_campo() {
+  local id="$1" nombre="$2" dir archivo
+  dir="$(cmd_dir "$id")"
+  archivo="$dir/DIAGNOSTICO.md"
+  # El "|| true" evita que un campo inexistente (grep sin match, exit 1)
+  # aborte el script entero bajo 'set -e': acá no encontrarlo es un
+  # resultado válido (cadena vacía), no un error.
+  grep -m1 -E "^${nombre}:" "$archivo" | sed -E "s/^${nombre}:[[:space:]]*//" || true
+}
+
 main() {
   local cmd="${1:-}"
   [ -n "$cmd" ] || { uso; exit 2; }
@@ -189,6 +207,7 @@ main() {
     dir) [ $# -eq 1 ] || { uso; exit 2; }; cmd_dir "$1" ;;
     ruta-fase) [ $# -eq 2 ] || { uso; exit 2; }; cmd_ruta_fase "$1" "$2" ;;
     acumular) [ $# -eq 3 ] || { uso; exit 2; }; cmd_acumular "$1" "$2" "$3" ;;
+    campo) [ $# -eq 2 ] || { uso; exit 2; }; cmd_campo "$1" "$2" ;;
     *) uso; exit 2 ;;
   esac
 }

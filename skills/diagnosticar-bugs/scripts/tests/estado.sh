@@ -57,6 +57,21 @@ if ! grep -q "^Proyecto: github.com/ivanlynch/proyecto-a$" "$dir/DIAGNOSTICO.md"
 fi
 echo "PASS: init graba proyecto, branch, commit y síntoma en DIAGNOSTICO.md (ver ADR 0004)."
 
+# --- campo extrae el valor de un "CAMPO: valor" existente en DIAGNOSTICO.md ---
+valor=$(bash "$SCRIPT" campo "$id" "SINTOMA_USUARIO")
+if [ "$valor" != "el checkout devuelve 500 al pagar" ]; then
+  echo "TEST FAIL: campo debería devolver el SINTOMA_USUARIO grabado en el init, devolvió '$valor'." >&2
+  exit 1
+fi
+echo "PASS: campo extrae el valor de un campo existente en DIAGNOSTICO.md."
+
+valor_inexistente=$(bash "$SCRIPT" campo "$id" "CAMPO_QUE_NO_EXISTE")
+if [ -n "$valor_inexistente" ]; then
+  echo "TEST FAIL: campo debería devolver vacío para un campo inexistente, devolvió '$valor_inexistente'." >&2
+  exit 1
+fi
+echo "PASS: campo devuelve vacío para un campo que no existe."
+
 # --- init NO es idempotente: cada llamada arranca una investigación nueva ---
 echo "contenido previo" >> "$dir/DIAGNOSTICO.md"
 id2=$(bash "$SCRIPT" init "otro síntoma sin relación con el anterior")
