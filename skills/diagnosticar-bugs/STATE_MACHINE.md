@@ -11,23 +11,23 @@ contexto, porque no depende de la conversación.
 
 ```mermaid
 stateDiagram-v2
-    [*] --> IniciarInvestigacion: entrevistar hasta tener un síntoma claro
+    [*] --> IniciarInvestigacion: Entrevistar hasta tener un síntoma claro
 
     IniciarInvestigacion --> ConstruirBucle
 
-    ConstruirBucle --> ConstruirBucle: validar.sh NOT_READY, o capa semántica detecta ambigüedad
-    ConstruirBucle --> ReproducirMinimizar: validar.sh READY + capa semántica confirma + acumular
+    ConstruirBucle --> ConstruirBucle: El validador dice NOT_READY, o hay ambigüedad en la capa semántica
+    ConstruirBucle --> ReproducirMinimizar: El validador dice READY, la capa semántica confirma, y se acumula
 
-    ReproducirMinimizar --> FormularHipotesis: reproducido y minimizado (checklist completo)
+    ReproducirMinimizar --> FormularHipotesis: Ya está reproducido y minimizado (checklist completo)
 
-    FormularHipotesis --> Instrumentar: 3-5 hipótesis refutables, ordenadas, mostradas al usuario
+    FormularHipotesis --> Instrumentar: Se muestran 3 a 5 hipótesis, ordenadas, al usuario
 
-    Instrumentar --> Instrumentar: sondeo no confirma ninguna hipótesis (siguiente hipótesis de la lista)
-    Instrumentar --> CorregirTestear: hipótesis confirmada
+    Instrumentar --> Instrumentar: El sondeo no confirma nada, se prueba la hipótesis siguiente
+    Instrumentar --> CorregirTestear: La hipótesis queda confirmada
 
-    CorregirTestear --> Limpiar: arreglo aplicado y verificado (con test de regresión, o con la ausencia de frontera documentada)
+    CorregirTestear --> Limpiar: El arreglo queda aplicado y verificado (con test de regresión, o sin frontera documentada)
 
-    Limpiar --> [*]: checklist de cierre completo
+    Limpiar --> [*]: El checklist de cierre queda completo
 ```
 
 ## Estados
@@ -45,8 +45,8 @@ stateDiagram-v2
 ## Transiciones no lineales
 
 - **Fase 1 tiene un sub-loop propio.** `validar.sh` puede devolver
-  `NOT_READY` cualquier cantidad de veces; se ajusta el `state.md` y se
-  vuelve a correr hasta `READY`. La capa semántica (manual, ver
+  `NOT_READY` cualquier cantidad de veces; se ajusta el archivo de la
+  fase y se vuelve a correr hasta `READY`. La capa semántica (manual, ver
   `fases/construir-bucle/INSTRUCCIONES.md`) es un segundo gate después de
   `READY`, antes de poder acumular.
 - **Fase 4 puede volver sobre sí misma.** Si el sondeo no confirma la

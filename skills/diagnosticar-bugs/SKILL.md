@@ -13,11 +13,7 @@ Una disciplina para bugs difíciles. Omití fases únicamente cuando exista una 
 
 Al explorar el código, leé `CONTEXT.md` (si existe) para construir un modelo mental claro de los módulos relevantes y revisá los ADR del área que estás modificando.
 
-## Redactar secretos
-
-Este skill requiere mostrar comandos, salidas y artefactos capturados. **Redactá primero todos los secretos**: reemplazalos por `<REDACTED>`. Construí los bucles usando variables de entorno, para que la credencial permanezca en el entorno y no aparezca en lo que mostrás. Los artefactos capturados pueden contener encabezados de autenticación: citá únicamente las líneas que contienen la señal relevante.
-
-Si la salida redactada no alcanza para diagnosticar el bug, decilo y pedile información al usuario.
+Si la salida no alcanza para diagnosticar el bug, decilo y pedile información al usuario.
 
 ## Fases
 

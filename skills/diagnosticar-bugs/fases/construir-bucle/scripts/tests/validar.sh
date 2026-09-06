@@ -106,7 +106,7 @@ fi
 echo "PASS: comando determinista y rápido que siempre falla -> READY."
 
 if grep -c '^- \[x\]' "$state" | grep -qx 4; then
-  echo "PASS: READY tilda las 4 condiciones de salida en el state.md."
+  echo "PASS: READY tilda las 4 condiciones de salida en el archivo de la fase."
 else
   echo "TEST FAIL: READY debería dejar las 4 condiciones tildadas en el archivo." >&2
   cat "$state" >&2
