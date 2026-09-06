@@ -3,8 +3,8 @@ set -uo pipefail
 
 # Valida que la fase "construir bucle" esté lista para la siguiente: dos
 # cosas, no una. (1) Completitud estructural — que todos los campos
-# requeridos del state.md estén completos y con un valor válido. (2)
-# Verificación mecánica — re-corre el COMANDO declarado de verdad y
+# requeridos del archivo de la fase estén completos y con un valor
+# válido. (2) Verificación mecánica — re-corre el COMANDO declarado de verdad y
 # confirma las 4 condiciones de salida; no confía en que el agente diga
 # "ya lo probé y anda". Nunca decide si el rojo corresponde al síntoma
 # real del usuario: esa es la capa semántica (transversal), no esta.
@@ -62,7 +62,7 @@ campo() {
   grep -m1 -E "^${nombre}:" "$archivo" | sed -E "s/^${nombre}:[[:space:]]*//"
 }
 
-# Tilda "- [ ] <id>" -> "- [x] <id>" en el state.md. Idempotente: si ya
+# Tilda "- [ ] <id>" -> "- [x] <id>" en el archivo de la fase. Idempotente: si ya
 # está tildada, no hace nada.
 tildar() {
   local archivo="$1" id="$2"
