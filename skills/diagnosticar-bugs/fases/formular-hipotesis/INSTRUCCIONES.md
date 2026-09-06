@@ -51,10 +51,3 @@ y 2, acá no hace falta su confirmación explícita para acumular.
 ```bash
 <skill-dir>/scripts/estado.sh acumular <id> formular-hipotesis "Fase: Formular hipótesis"
 ```
-
-Esto agrega el contenido del archivo de esta fase a `DIAGNOSTICO.md`,
-el acumulado persistido del diagnóstico completo (bajo el proyecto
-actual) — ver `../../STATE_MACHINE.md` sobre por qué este estado
-sobrevive a la sesión y a la conversación. La Fase 4 (Instrumentar)
-depende de que esta lista quede acumulada acá: cada sondeo tiene que
-corresponder a una hipótesis puntual de esta fase.
