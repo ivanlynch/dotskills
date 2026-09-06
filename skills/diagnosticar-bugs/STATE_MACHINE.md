@@ -21,7 +21,8 @@ stateDiagram-v2
     ReproducirMinimizar --> ReproducirMinimizar: El validador dice NOT_READY, o hay ambigüedad en la capa semántica
     ReproducirMinimizar --> FormularHipotesis: El validador dice READY, la capa semántica confirma, y se acumula
 
-    FormularHipotesis --> Instrumentar: Se muestran 3 a 5 hipótesis, ordenadas, al usuario
+    FormularHipotesis --> FormularHipotesis: El validador dice NOT_READY
+    FormularHipotesis --> Instrumentar: El validador dice READY, se le muestra la lista al usuario, y se acumula
 
     Instrumentar --> Instrumentar: El sondeo no confirma nada, se prueba la hipótesis siguiente
     Instrumentar --> CorregirTestear: La hipótesis queda confirmada
@@ -38,19 +39,22 @@ stateDiagram-v2
 | 0 | Iniciar investigación | Llega una descripción de bug | `estado.sh init "<sintoma>"` devolvió un `<id>` (ej. `INV007`) — entrevistado primero si hacía falta |
 | 1 | Construir bucle de feedback | Hay un `<id>` de una investigación nueva | `validar.sh` imprime `READY` **y** la capa semántica confirma que el bucle reproduce el síntoma exacto **y** se corrió `acumular` |
 | 2 | Reproducir y minimizar | Fase 1 cerrada | `validar.sh` imprime `READY` **y** la capa semántica confirma que `COMANDO_MINIMIZADO` reproduce el síntoma exacto **y** se corrió `acumular` |
-| 3 | Formular hipótesis | Fase 2 cerrada | 3 a 5 hipótesis refutables, ordenadas, mostradas al usuario (checkpoint no bloqueante) |
+| 3 | Formular hipótesis | Fase 2 cerrada | `validar.sh` imprime `READY` (completitud y formato refutable) **y** se corrió `acumular` — mostrarle la lista al usuario es un checkpoint no bloqueante, no un gate |
 | 4 | Instrumentar | Fase 3 cerrada | Un sondeo confirma o descarta la hipótesis en curso — si la descarta, se vuelve a este mismo estado con la siguiente hipótesis de la lista |
 | 5 | Corregir y testear | Una hipótesis quedó confirmada | Arreglo aplicado y verificado: con test de regresión en una frontera correcta, o con la ausencia de esa frontera documentada como hallazgo |
 | 6 | Limpiar | Fase 5 cerrada | Checklist completo: reproducción original ya no ocurre, test de regresión (o su ausencia documentada), instrumentación `[DEBUG-...]` eliminada, prototipos descartables eliminados o movidos, hipótesis correcta en el commit/PR |
 
 ## Transiciones no lineales
 
-- **Fases 1 y 2 tienen un sub-loop propio.** Sus `validar.sh` pueden
+- **Fases 1, 2 y 3 tienen un sub-loop propio.** Sus `validar.sh` pueden
   devolver `NOT_READY` cualquier cantidad de veces; se ajusta el archivo
-  de la fase y se vuelve a correr hasta `READY`. La capa semántica
-  (manual, ver `fases/construir-bucle/INSTRUCCIONES.md` y
+  de la fase y se vuelve a correr hasta `READY`. En las Fases 1 y 2, la
+  capa semántica (manual, ver `fases/construir-bucle/INSTRUCCIONES.md` y
   `fases/reproducir-minimizar/INSTRUCCIONES.md`) es un segundo gate
-  después de `READY`, antes de poder acumular.
+  después de `READY`, antes de poder acumular. La Fase 3 no tiene ese
+  segundo gate: mostrarle la lista al usuario es un checkpoint no
+  bloqueante (ver `fases/formular-hipotesis/INSTRUCCIONES.md`), no algo
+  que haya que confirmar antes de acumular.
 - **Fase 4 puede volver sobre sí misma.** Si el sondeo no confirma la
   hipótesis en curso, se prueba la siguiente de la lista generada en Fase
   3 — no se retrocede a Fase 3 a menos que las 3-5 hipótesis originales se
