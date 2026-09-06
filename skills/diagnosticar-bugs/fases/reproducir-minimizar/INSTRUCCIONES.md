@@ -8,9 +8,10 @@
 <skill-dir>/fases/reproducir-minimizar/scripts/iniciar.sh <id>
 ```
 
-Copia la plantilla y precarga `SINTOMA_USUARIO` y `COMANDO_MINIMIZADO`
-con los valores que ya quedaron en `DIAGNOSTICO.md` (Fase 0 y Fase 1
-acumulada) — no hace falta que los copies vos.
+Copia la plantilla y completa `SINTOMA_USUARIO` y `COMANDO_MINIMIZADO`
+automáticamente, usando los valores ya grabados en `DIAGNOSTICO.md`
+(Fase 0 y Fase 1 acumulada). No hace falta escribir esos valores a
+mano.
 
 ### 2. Minimizar y completar la plantilla
 

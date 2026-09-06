@@ -8,8 +8,9 @@
 <skill-dir>/fases/formular-hipotesis/scripts/iniciar.sh <id>
 ```
 
-Copia la plantilla y precarga `SINTOMA_USUARIO` con el valor que ya
-quedó en `DIAGNOSTICO.md` — no hace falta que lo copies vos.
+Copia la plantilla y completa `SINTOMA_USUARIO` automáticamente,
+usando el valor ya grabado en `DIAGNOSTICO.md`. No hace falta escribir
+ese valor a mano.
 
 ### 2. Completar la plantilla
 
