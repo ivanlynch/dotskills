@@ -33,12 +33,44 @@ if ! grep -q "^SINTOMA_USUARIO: el checkout devuelve 500 al pagar$" "$destino"; 
 fi
 echo "PASS: SINTOMA_USUARIO queda precargado desde DIAGNOSTICO.md."
 
-if grep -q "^HIPOTESIS_1:$" "$destino" && grep -q "^JUSTIFICACION_MENOS_DE_3:$" "$destino"; then
-  echo "PASS: el resto de los campos queda vacío, sin tocar."
-else
-  echo "TEST FAIL: HIPOTESIS_1 y JUSTIFICACION_MENOS_DE_3 deberían seguir vacíos tal como vienen del template." >&2
+for n in 01 02 03 04 05; do
+  if ! grep -q "^ID: H${n}$" "$destino"; then
+    echo "TEST FAIL: debería existir el registro ID: H${n} (primera ronda, arranca en H01)." >&2
+    cat "$destino" >&2
+    exit 1
+  fi
+done
+echo "PASS: primera ronda agrega los registros H01 a H05."
+
+if [ "$(grep -c '^HIPOTESIS:$' "$destino")" -ne 5 ]; then
+  echo "TEST FAIL: debería haber exactamente 5 campos HIPOTESIS: vacíos." >&2
   cat "$destino" >&2
   exit 1
 fi
+echo "PASS: cada registro trae su campo HIPOTESIS: vacío."
+
+if grep -q "^ID: H06$" "$destino"; then
+  echo "TEST FAIL: la primera ronda no debería llegar a H06." >&2
+  exit 1
+fi
+echo "PASS: la primera ronda no genera de más."
+
+# --- segunda ronda: arranca en H06, no repite H01-H05 ---
+printf '\n## Fase: Formular hipótesis (H01-H05)\n\nID: H01\nHIPOTESIS: algo\n\nID: H02\nHIPOTESIS: algo\n\nID: H03\nHIPOTESIS: algo\n\nID: H04\nHIPOTESIS:\n\nID: H05\nHIPOTESIS:\n' >> "$(bash "$ESTADO_SH" dir "$id")/DIAGNOSTICO.md"
+
+destino2=$(bash "$SCRIPT" "$id")
+for n in 06 07 08 09 10; do
+  if ! grep -q "^ID: H${n}$" "$destino2"; then
+    echo "TEST FAIL: una segunda ronda debería agregar H06 a H10, arrancando después del más alto ya usado." >&2
+    cat "$destino2" >&2
+    exit 1
+  fi
+done
+if grep -qE "^ID: H0[1-5]$" "$destino2"; then
+  echo "TEST FAIL: una segunda ronda no debería reintroducir H01-H05 en el archivo nuevo." >&2
+  cat "$destino2" >&2
+  exit 1
+fi
+echo "PASS: una segunda ronda arranca en H06, sin repetir los IDs de la ronda anterior."
 
 echo "Todos los tests de iniciar.sh (formular-hipotesis) pasaron."

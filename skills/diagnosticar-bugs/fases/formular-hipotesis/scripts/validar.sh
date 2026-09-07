@@ -10,6 +10,11 @@ set -uo pipefail
 # queda para el criterio del agente y para cuando el usuario revisa la
 # lista (ver INSTRUCCIONES.md).
 #
+# Cada hipótesis es un registro "ID: H##" + "HIPOTESIS: valor" — no
+# son campos fijos: cada ronda arranca en un ID distinto (ver
+# estado.sh proximo-id-hipotesis), así que este script los descubre
+# dinámicamente en vez de buscar nombres hardcodeados.
+#
 # Uso: validar.sh <ruta a fases/formular-hipotesis.md>
 # Exit 0 + "READY" por stdout si está completo. Exit 1 + "NOT_READY"
 # por stdout, motivos por stderr, en caso contrario.
@@ -21,6 +26,19 @@ err() { echo "$*" >&2; }
 campo() {
   local archivo="$1" nombre="$2"
   grep -m1 -E "^${nombre}:" "$archivo" | sed -E "s/^${nombre}:[[:space:]]*//"
+}
+
+# Extrae "<campo>: valor" de DENTRO del registro delimitado por
+# "ID: <id_h>" — no del archivo entero. Necesario porque "HIPOTESIS:"
+# se repite una vez por registro, a diferencia de un campo único como
+# SINTOMA_USUARIO.
+campo_de_registro() {
+  local archivo="$1" id_h="$2" nombre="$3"
+  awk -v id="ID: $id_h" -v campo="^${nombre}:" '
+    $0 == id { activo=1; next }
+    activo && /^ID: / { activo=0 }
+    activo && $0 ~ campo { sub(campo "[[:space:]]*", ""); print; exit }
+  ' "$archivo"
 }
 
 # Tilda "- [ ] <id>" -> "- [x] <id>" en el archivo de la fase.
@@ -43,26 +61,32 @@ main() {
   [ -n "$state_file" ] || { err "Uso: $0 <ruta a fases/formular-hipotesis.md>"; echo "NOT_READY"; exit 1; }
   [ -f "$state_file" ] || { err "No existe: $state_file"; echo "NOT_READY"; exit 1; }
 
-  local motivos=0 sintoma justificacion cantidad=0 i
-  local -a hipotesis
+  local motivos=0 sintoma justificacion cantidad=0 id_h valor
 
   sintoma="$(campo "$state_file" SINTOMA_USUARIO)"
   [ -n "$sintoma" ] || { err "Falta SINTOMA_USUARIO."; motivos=$((motivos + 1)); }
 
-  for i in 1 2 3 4 5; do
-    hipotesis[$i]="$(campo "$state_file" "HIPOTESIS_$i")"
-    [ -n "${hipotesis[$i]}" ] && cantidad=$((cantidad + 1))
-  done
+  # Descubre los registros "ID: H##" presentes en el archivo (no son
+  # fijos: cada ronda arranca en un ID distinto). Portable en bash 3.2
+  # (sin mapfile/readarray, que son bash 4+).
+  local ids=()
+  while IFS= read -r id_h; do
+    [ -n "$id_h" ] && ids+=("$id_h")
+  done < <(grep -oE '^ID: H[0-9]+$' "$state_file" | sed -E 's/^ID: //' | sort -u)
 
-  if [ "$cantidad" -eq 0 ]; then
-    err "No hay ninguna hipótesis — HIPOTESIS_1 tiene que estar completa."
+  if [ "${#ids[@]}" -eq 0 ]; then
+    err "No se encontró ningún registro de hipótesis (ID: H##) en el archivo."
     motivos=$((motivos + 1))
   fi
 
-  for i in 1 2 3 4 5; do
-    if [ -n "${hipotesis[$i]}" ] && ! tiene_formato_refutable "${hipotesis[$i]}"; then
-      err "HIPOTESIS_$i no sigue el formato refutable ('Si <X> es la causa, entonces <Y>...'): '${hipotesis[$i]}'"
-      motivos=$((motivos + 1))
+  for id_h in "${ids[@]}"; do
+    valor="$(campo_de_registro "$state_file" "$id_h" HIPOTESIS)"
+    if [ -n "$valor" ]; then
+      cantidad=$((cantidad + 1))
+      if ! tiene_formato_refutable "$valor"; then
+        err "HIPOTESIS de $id_h no sigue el formato refutable ('Si <X> es la causa, entonces <Y>...'): '$valor'"
+        motivos=$((motivos + 1))
+      fi
     fi
   done
 
