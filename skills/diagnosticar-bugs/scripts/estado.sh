@@ -36,6 +36,21 @@ set -euo pipefail
 #     fase lea, sin retipearlo a mano, un valor que ya grabó una fase
 #     anterior (ej. SINTOMA_USUARIO de Fase 0, o COMANDO ya acumulado de
 #     Fase 1).
+#   estado.sh proximo-id-hipotesis <id>
+#     Imprime el próximo ID de hipótesis libre (H01, H02, ...), buscando
+#     el más alto ya usado en DIAGNOSTICO.md (en cualquier ronda de la
+#     Fase "formular hipótesis" ya acumulada) y sumando uno. H01 si
+#     todavía no hay ninguno. Los IDs son globales a la investigación —
+#     nunca se reinician entre rondas, así una hipótesis nunca se
+#     confunde con otra de una ronda distinta.
+#   estado.sh acumular-hipotesis <id>
+#     Como "acumular", pero específico de fases/formular-hipotesis.md y
+#     con título fijo ("Fase: Formular hipótesis"). A diferencia de
+#     "acumular", si la sección YA existe (porque hubo una ronda
+#     anterior) no falla ni duplica: fusiona los registros de
+#     hipótesis nuevos dentro de esa misma sección y actualiza
+#     JUSTIFICACION_MENOS_DE_3 con el valor de esta ronda. Solo la
+#     primera ronda crea la sección; las siguientes la extienden.
 #
 # DIAGNOSTICOS_ROOT (default: ~/Documents/diagnostics) es la raíz de
 # todos los proyectos; se puede sobreescribir para tests o para aislar
@@ -52,6 +67,8 @@ Uso:
   $0 ruta-fase <id> <fase>
   $0 acumular <id> <fase> <titulo>
   $0 campo <id> <nombre-campo>
+  $0 proximo-id-hipotesis <id>
+  $0 acumular-hipotesis <id>
 EOF
 }
 
@@ -187,6 +204,68 @@ cmd_acumular() {
   echo "Acumulado: $titulo -> $global_file"
 }
 
+cmd_acumular_hipotesis() {
+  local id="$1" dir fase_file global_file titulo="Fase: Formular hipótesis"
+  dir="$(cmd_dir "$id")"
+  fase_file="$dir/fases/formular-hipotesis.md"
+  global_file="$dir/DIAGNOSTICO.md"
+
+  [ -f "$fase_file" ] || { echo "Error: no existe '$fase_file'. Completá la fase antes de acumularla." >&2; exit 1; }
+
+  if ! grep -qF "## $titulo" "$global_file"; then
+    # Primera ronda: no hay nada que fusionar todavía.
+    {
+      printf '\n## %s\n\n' "$titulo"
+      cat "$fase_file"
+      printf '\n'
+    } >> "$global_file"
+    echo "Acumulado (primera ronda): $titulo -> $global_file"
+    return
+  fi
+
+  # Ronda siguiente: la sección ya existe — en vez de acumular otra
+  # (duplicando comentarios y el resto de la plantilla), se fusionan
+  # solo los registros de hipótesis nuevos dentro de la sección ya
+  # existente, y se actualiza la justificación con la de esta ronda
+  # (si una ronda anterior necesitó justificar menos de 3 y esta no,
+  # ese texto anterior se pierde — es una limitación aceptada, no un
+  # bug: el caso es raro y lo que importa mecánicamente es la cantidad
+  # total, no el historial de cada justificación).
+  local registros justificacion linea_marcador
+  registros="$(awk '
+    /^ID: H[0-9]+$/ { print; getline; print; print "" }
+  ' "$fase_file")"
+
+  if [ -z "$registros" ]; then
+    echo "Error: '$fase_file' no tiene ningún registro de hipótesis (ID: H##) para fusionar." >&2
+    exit 1
+  fi
+
+  linea_marcador="$(grep -n '^## Justificación si hay menos de 3 hipótesis$' "$global_file" | head -1 | cut -d: -f1)"
+  if [ -z "$linea_marcador" ]; then
+    echo "Error: no se encontró '## Justificación si hay menos de 3 hipótesis' en la sección ya acumulada — no se puede fusionar." >&2
+    exit 1
+  fi
+
+  {
+    head -n "$((linea_marcador - 1))" "$global_file"
+    printf '%s\n\n' "$registros"
+    tail -n "+${linea_marcador}" "$global_file"
+  } > "$global_file.tmp"
+  mv "$global_file.tmp" "$global_file"
+
+  justificacion="$(grep -m1 -E '^JUSTIFICACION_MENOS_DE_3:' "$fase_file" | sed -E 's/^JUSTIFICACION_MENOS_DE_3:[[:space:]]*//')"
+  if [ -n "$justificacion" ]; then
+    awk -v valor="$justificacion" '
+      $0 ~ "^JUSTIFICACION_MENOS_DE_3:" { print "JUSTIFICACION_MENOS_DE_3: " valor; next }
+      { print }
+    ' "$global_file" > "$global_file.tmp"
+    mv "$global_file.tmp" "$global_file"
+  fi
+
+  echo "Fusionado (ronda nueva) dentro de la sección existente: $titulo -> $global_file"
+}
+
 cmd_campo() {
   local id="$1" nombre="$2" dir archivo
   dir="$(cmd_dir "$id")"
@@ -195,6 +274,23 @@ cmd_campo() {
   # aborte el script entero bajo 'set -e': acá no encontrarlo es un
   # resultado válido (cadena vacía), no un error.
   grep -m1 -E "^${nombre}:" "$archivo" | sed -E "s/^${nombre}:[[:space:]]*//" || true
+}
+
+cmd_proximo_id_hipotesis() {
+  local id="$1" dir archivo max siguiente
+  dir="$(cmd_dir "$id")"
+  archivo="$dir/DIAGNOSTICO.md"
+
+  # "|| true": sin ningún H## todavía es un resultado válido (arranca
+  # en H01), no un error bajo 'set -e'. Cada hipótesis es un registro
+  # "ID: H##" (ver fases/formular-hipotesis/TEMPLATE.md) — no un campo
+  # "H##: valor" suelto.
+  max="$(grep -oE '^ID: H[0-9]+$' "$archivo" 2>/dev/null | grep -oE '[0-9]+' | sort -n | tail -1)" || true
+  max="${max:-0}"
+  # "10#": fuerza base 10 — sin esto, un max con cero a la izquierda
+  # como "08" o "09" es un literal octal inválido en bash y explota.
+  siguiente=$((10#$max + 1))
+  printf 'H%02d\n' "$siguiente"
 }
 
 main() {
@@ -208,6 +304,8 @@ main() {
     ruta-fase) [ $# -eq 2 ] || { uso; exit 2; }; cmd_ruta_fase "$1" "$2" ;;
     acumular) [ $# -eq 3 ] || { uso; exit 2; }; cmd_acumular "$1" "$2" "$3" ;;
     campo) [ $# -eq 2 ] || { uso; exit 2; }; cmd_campo "$1" "$2" ;;
+    proximo-id-hipotesis) [ $# -eq 1 ] || { uso; exit 2; }; cmd_proximo_id_hipotesis "$1" ;;
+    acumular-hipotesis) [ $# -eq 1 ] || { uso; exit 2; }; cmd_acumular_hipotesis "$1" ;;
     *) uso; exit 2 ;;
   esac
 }

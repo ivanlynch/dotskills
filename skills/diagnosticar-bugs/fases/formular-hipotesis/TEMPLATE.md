@@ -26,31 +26,31 @@ SINTOMA_USUARIO:
 
 <!-- Generá 3 a 5 hipótesis ordenadas, la más probable primero.
 Generar una sola hace que te ancles en la primera idea plausible. Cada
-una tiene que poder refutarse — expresá la predicción con este
-formato exacto (el validador lo chequea, busca "si ... entonces"):
+una es un registro de dos campos, "ID:" e "HIPOTESIS:", separado del
+siguiente por una línea en blanco:
 
-  Si <X> es la causa, entonces <cambiar Y> hará desaparecer el bug /
-  <cambiar Z> lo empeorará.
+  ID: H01
+  HIPOTESIS: Si <X> es la causa, entonces <cambiar Y> hará desaparecer
+  el bug / <cambiar Z> lo empeorará.
 
-HIPOTESIS_4 y HIPOTESIS_5 son opcionales — dejalas vacías si solo
-tenés 3. Si el bug es tan acotado que genuinamente no hay 3 causas
-plausibles, completá menos y explicá por qué en
-JUSTIFICACION_MENOS_DE_3 en vez de inventar hipótesis débiles para
-completar el mínimo. -->
-
-HIPOTESIS_1:
-HIPOTESIS_2:
-HIPOTESIS_3:
-HIPOTESIS_4:
-HIPOTESIS_5:
+Los registros que aparecen abajo ya vienen con su "ID:" agregado por
+scripts/iniciar.sh, con IDs que nunca se repiten en toda la
+investigación — si esta es una segunda vuelta porque la Fase 4 agotó
+la ronda anterior, van a arrancar más arriba de H05 (ej. H06). No
+edites el "ID:" de ningún registro; completá solo su "HIPOTESIS:".
+Podés dejar sin completar los registros que no uses (el mínimo es 3,
+salvo que justifiques menos abajo). La predicción tiene que poder
+refutarse (el validador la chequea, busca "si ... entonces" en el
+texto). Si es una segunda vuelta, revisá primero
+fases/instrumentar.md (todavía sin acumular, si existe) para ver qué
+se descartó y por qué — no repitas esas hipótesis. -->
 
 ## Justificación si hay menos de 3 hipótesis
 
-<!-- Completala solo si generaste menos de 3 (alguna de las tres
-primeras quedó vacía): explicá con una frase concreta por qué el bug
-no da para más. Si generaste 3 o más, escribí "no aplica". No alcanza
-con una respuesta trivial si de verdad tenés menos de 3 — el validador
-rechaza justificaciones demasiado cortas. -->
+<!-- Completala solo si generaste menos de 3. Explicá con una frase
+concreta por qué el bug no da para más. Si generaste 3 o más, escribí
+"no aplica". No alcanza con una respuesta trivial si de verdad tenés
+menos de 3 — el validador rechaza justificaciones demasiado cortas. -->
 
 JUSTIFICACION_MENOS_DE_3:
 

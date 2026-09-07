@@ -8,9 +8,13 @@
 <skill-dir>/fases/formular-hipotesis/scripts/iniciar.sh <id>
 ```
 
-Copia la plantilla y completa `SINTOMA_USUARIO` automáticamente,
-usando el valor ya grabado en `DIAGNOSTICO.md`. No hace falta escribir
-ese valor a mano.
+Copia la plantilla, completa `SINTOMA_USUARIO` automáticamente (usando
+el valor ya grabado en `DIAGNOSTICO.md`), y agrega 5 campos de
+hipótesis en blanco con IDs nuevos que nunca se repiten en toda la
+investigación. Si esta es una vuelta posterior porque la Fase 4 agotó
+la ronda anterior sin confirmar ninguna, los IDs arrancan después del
+último usado (ej. `H06` en vez de `H01`) — no hace falta calcular nada
+a mano.
 
 ### 2. Completar la plantilla
 
@@ -49,5 +53,15 @@ y 2, acá no hace falta su confirmación explícita para acumular.
 ### 5. Acumular y cerrar la fase
 
 ```bash
-<skill-dir>/scripts/estado.sh acumular <id> formular-hipotesis "Fase: Formular hipótesis"
+<skill-dir>/scripts/estado.sh acumular-hipotesis <id>
 ```
+
+A diferencia de las demás fases, **esta fase sí puede cerrarse más de
+una vez** en la misma investigación (una tanda de hipótesis es un
+resultado válido en sí mismo, aunque después ninguna resulte ser la
+causa). Por eso no usa el `acumular` genérico: `acumular-hipotesis` es
+específico de esta fase — si es la primera vez, crea la sección
+`## Fase: Formular hipótesis`; si ya existe (porque hubo una vuelta
+anterior), **fusiona** los registros nuevos ahí adentro y actualiza
+`JUSTIFICACION_MENOS_DE_3`, en vez de crear una sección duplicada con
+todo el comentario de la plantilla repetido de nuevo.

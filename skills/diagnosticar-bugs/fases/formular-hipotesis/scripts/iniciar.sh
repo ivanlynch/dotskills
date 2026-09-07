@@ -1,9 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Arranca la fase "formular hipótesis": copia TEMPLATE.md al destino y
-# precarga SINTOMA_USUARIO extrayéndolo de DIAGNOSTICO.md — evita que
-# el agente lo retipee a mano.
+# Arranca (o inicia una ronda nueva de) la fase "formular hipótesis":
+# copia TEMPLATE.md al destino, precarga SINTOMA_USUARIO extrayéndolo
+# de DIAGNOSTICO.md, y agrega 5 registros de hipótesis en blanco
+# ("ID: H##" + "HIPOTESIS:") con IDs nuevos que nunca se repiten en
+# toda la investigación — arrancan después del ID más alto ya usado,
+# así una ronda nueva nunca pisa ni confunde hipótesis de una ronda
+# anterior.
 #
 # Uso: iniciar.sh <id>
 # Imprime la ruta del archivo ya inicializado.
@@ -26,7 +30,7 @@ escribir_campo() {
 }
 
 main() {
-  local id="${1:-}" destino sintoma
+  local id="${1:-}" destino sintoma proximo_id numero n bloque
   [ -n "$id" ] || { err "Uso: $0 <id>"; exit 2; }
 
   destino="$("$ESTADO_SH" ruta-fase "$id" formular-hipotesis)"
@@ -34,8 +38,29 @@ main() {
 
   sintoma="$("$ESTADO_SH" campo "$id" SINTOMA_USUARIO)"
   [ -n "$sintoma" ] || { err "Error: no se encontró SINTOMA_USUARIO en DIAGNOSTICO.md — ¿corriste la Fase 0?"; exit 1; }
-
   escribir_campo "$destino" "SINTOMA_USUARIO" "$sintoma"
+
+  proximo_id="$("$ESTADO_SH" proximo-id-hipotesis "$id")"
+  numero="${proximo_id#H}"
+  numero=$((10#$numero))
+
+  # Command substitution ya recorta los saltos de línea finales, así
+  # que el separador en blanco entre registros no deja un final sucio.
+  bloque="$(for n in 0 1 2 3 4; do printf 'ID: H%02d\nHIPOTESIS:\n\n' "$((numero + n))"; done)"
+
+  # Inserta los campos H## dentro de la sección "## Hipótesis" (antes
+  # de la sección "Justificación"), no al final del archivo — si no,
+  # quedarían después de "Condiciones de salida", donde nadie los
+  # espera encontrar. head/tail en vez de awk -v: el awk de macOS (no
+  # es gawk) no acepta bien un -v con saltos de línea adentro.
+  local linea_marcador
+  linea_marcador="$(grep -n '^## Justificación si hay menos de 3 hipótesis$' "$destino" | head -1 | cut -d: -f1)"
+  {
+    head -n "$((linea_marcador - 1))" "$destino"
+    printf '%s\n\n' "$bloque"
+    tail -n "+${linea_marcador}" "$destino"
+  } > "$destino.tmp"
+  mv "$destino.tmp" "$destino"
 
   echo "$destino"
 }

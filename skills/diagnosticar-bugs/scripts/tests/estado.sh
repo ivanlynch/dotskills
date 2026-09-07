@@ -72,6 +72,23 @@ if [ -n "$valor_inexistente" ]; then
 fi
 echo "PASS: campo devuelve vacío para un campo que no existe."
 
+# --- proximo-id-hipotesis: H01 cuando todavía no hay ninguno ---
+proximo=$(bash "$SCRIPT" proximo-id-hipotesis "$id")
+if [ "$proximo" != "H01" ]; then
+  echo "TEST FAIL: proximo-id-hipotesis sin hipótesis previas debería devolver 'H01', devolvió '$proximo'." >&2
+  exit 1
+fi
+echo "PASS: proximo-id-hipotesis devuelve 'H01' cuando no hay hipótesis previas."
+
+# --- proximo-id-hipotesis sigue después del más alto ya usado, con ceros a la izquierda (bug de octal) ---
+printf '\n## Fase: Formular hipótesis (H01-H05)\n\nID: H01\nHIPOTESIS: algo\n\nID: H02\nHIPOTESIS: algo\n\nID: H07\nHIPOTESIS: algo\n\nID: H09\nHIPOTESIS: algo\n' >> "$dir/DIAGNOSTICO.md"
+proximo=$(bash "$SCRIPT" proximo-id-hipotesis "$id")
+if [ "$proximo" != "H10" ]; then
+  echo "TEST FAIL: con H01,H02,H07,H09 ya usados, el próximo debería ser 'H10' (probando que '09' no se interprete como octal inválido), devolvió '$proximo'." >&2
+  exit 1
+fi
+echo "PASS: proximo-id-hipotesis sigue después del más alto usado, sin romperse con ceros a la izquierda."
+
 # --- init NO es idempotente: cada llamada arranca una investigación nueva ---
 echo "contenido previo" >> "$dir/DIAGNOSTICO.md"
 id2=$(bash "$SCRIPT" init "otro síntoma sin relación con el anterior")
@@ -182,6 +199,87 @@ if bash "$SCRIPT" acumular "$id" "construir-bucle" "Fase: Construir bucle" 2>/de
   exit 1
 fi
 echo "PASS: acumular la misma fase dos veces falla, no duplica."
+
+# --- acumular-hipotesis: primera ronda crea la sección ---
+REPO_H="$TMP_DIR/proyecto-hipotesis"
+mkdir -p "$REPO_H"
+git -C "$REPO_H" init -q
+git -C "$REPO_H" remote add origin "https://github.com/ivanlynch/proyecto-hipotesis.git"
+cd "$REPO_H"
+
+id_h=$(bash "$SCRIPT" init "bug de prueba para hipotesis")
+dir_h=$(bash "$SCRIPT" dir "$id_h")
+mkdir -p "$dir_h/fases"
+
+cat > "$dir_h/fases/formular-hipotesis.md" <<'EOF'
+ID: H01
+HIPOTESIS: Si A es la causa, entonces cambiar A arregla esto
+
+ID: H02
+HIPOTESIS: Si B es la causa, entonces cambiar B arregla esto
+
+## Justificación si hay menos de 3 hipótesis
+
+JUSTIFICACION_MENOS_DE_3: no aplica
+EOF
+bash "$SCRIPT" acumular-hipotesis "$id_h" >/dev/null
+
+if [ "$(grep -c '## Fase: Formular hipótesis' "$dir_h/DIAGNOSTICO.md")" -ne 1 ]; then
+  echo "TEST FAIL: acumular-hipotesis (primera ronda) debería crear exactamente 1 sección." >&2
+  exit 1
+fi
+if ! grep -q '^ID: H01$' "$dir_h/DIAGNOSTICO.md" || ! grep -q '^ID: H02$' "$dir_h/DIAGNOSTICO.md"; then
+  echo "TEST FAIL: la primera ronda debería incluir H01 y H02." >&2
+  exit 1
+fi
+echo "PASS: acumular-hipotesis crea la sección en la primera ronda."
+
+# --- acumular-hipotesis: segunda ronda fusiona en vez de duplicar ---
+cat > "$dir_h/fases/formular-hipotesis.md" <<'EOF'
+ID: H03
+HIPOTESIS: Si C es la causa, entonces cambiar C arregla esto
+
+## Justificación si hay menos de 3 hipótesis
+
+JUSTIFICACION_MENOS_DE_3: el bug solo tiene un punto de entrada posible en el codigo
+EOF
+bash "$SCRIPT" acumular-hipotesis "$id_h" >/dev/null
+
+if [ "$(grep -c '## Fase: Formular hipótesis' "$dir_h/DIAGNOSTICO.md")" -ne 1 ]; then
+  echo "TEST FAIL: acumular-hipotesis (segunda ronda) NO debería crear una segunda sección — tiene que fusionar en la existente." >&2
+  cat "$dir_h/DIAGNOSTICO.md" >&2
+  exit 1
+fi
+echo "PASS: una segunda ronda no duplica la sección — sigue habiendo una sola."
+
+if ! grep -q '^ID: H01$' "$dir_h/DIAGNOSTICO.md" || ! grep -q '^ID: H02$' "$dir_h/DIAGNOSTICO.md" || ! grep -q '^ID: H03$' "$dir_h/DIAGNOSTICO.md"; then
+  echo "TEST FAIL: la sección fusionada debería tener H01, H02 (de la ronda 1) y H03 (de la ronda 2)." >&2
+  cat "$dir_h/DIAGNOSTICO.md" >&2
+  exit 1
+fi
+echo "PASS: la sección fusionada conserva los registros de la ronda anterior y suma los nuevos."
+
+if [ "$(grep -c '^JUSTIFICACION_MENOS_DE_3:' "$dir_h/DIAGNOSTICO.md")" -ne 1 ]; then
+  echo "TEST FAIL: debería haber una sola línea JUSTIFICACION_MENOS_DE_3 (actualizada), no una por ronda." >&2
+  exit 1
+fi
+if ! grep -q "^JUSTIFICACION_MENOS_DE_3: el bug solo tiene un punto de entrada posible en el codigo\$" "$dir_h/DIAGNOSTICO.md"; then
+  echo "TEST FAIL: JUSTIFICACION_MENOS_DE_3 debería quedar actualizada con el valor de la ronda 2." >&2
+  cat "$dir_h/DIAGNOSTICO.md" >&2
+  exit 1
+fi
+echo "PASS: JUSTIFICACION_MENOS_DE_3 se actualiza con el valor de la ronda más reciente."
+
+# --- el orden de los registros se conserva (H01, H02 antes que H03) ---
+linea_h02=$(grep -n '^ID: H02$' "$dir_h/DIAGNOSTICO.md" | cut -d: -f1)
+linea_h03=$(grep -n '^ID: H03$' "$dir_h/DIAGNOSTICO.md" | cut -d: -f1)
+if [ "$linea_h03" -le "$linea_h02" ]; then
+  echo "TEST FAIL: H03 (ronda 2) debería aparecer después de H02 (ronda 1)." >&2
+  exit 1
+fi
+echo "PASS: los registros quedan en orden (ronda 1 antes que ronda 2)."
+
+cd "$REPO_A"
 
 # --- dos proyectos distintos tienen contadores independientes ---
 REPO_B="$TMP_DIR/proyecto-b"
