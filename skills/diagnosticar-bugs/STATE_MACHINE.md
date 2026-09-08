@@ -28,7 +28,7 @@ stateDiagram-v2
     Instrumentar --> FormularHipotesis: Se agotaron todas las hipótesis sin confirmar ninguna
     Instrumentar --> CorregirTestear: Una hipótesis queda confirmada, y ahí sí se acumula
 
-    CorregirTestear --> Limpiar: El arreglo queda aplicado y verificado (con test de regresión, o sin frontera documentada)
+    CorregirTestear --> Limpiar: La corrección queda aplicada y se acumula (con test de regresión, o con el hallazgo de que no había lugar para testear)
 
     Limpiar --> [*]: El checklist de cierre queda completo
 ```
@@ -42,7 +42,7 @@ stateDiagram-v2
 | 2 | Reproducir y minimizar | Fase 1 cerrada | `validar.sh` imprime `READY` **y** la capa semántica confirma que `COMANDO_MINIMIZADO` reproduce el síntoma exacto **y** se corrió `acumular` |
 | 3 | Formular hipótesis | Fase 2 cerrada, o Fase 4 agotó su ronda de hipótesis sin confirmar ninguna | `validar.sh` imprime `READY` (completitud y formato refutable) **y** se corrió `acumular-hipotesis` — mostrarle la lista al usuario es un checkpoint no bloqueante, no un gate. Puede cerrarse más de una vez por investigación (una por ronda); a partir de la segunda, `acumular-hipotesis` fusiona los registros nuevos en la misma sección de `DIAGNOSTICO.md` en vez de crear una sección aparte |
 | 4 | Instrumentar | Fase 3 cerrada | Una hipótesis queda `confirmada` **y** se corrió `acumular` — es la única condición de cierre real. Mientras tanto, el loop de probar y descartar hipótesis vive en el archivo de la fase sin acumularse (nada que cerrar todavía); si se agotan todas sin confirmar ninguna, vuelve a la Fase 3 en vez de cerrar |
-| 5 | Corregir y testear | Una hipótesis quedó confirmada | Arreglo aplicado y verificado: con test de regresión en una frontera correcta, o con la ausencia de esa frontera documentada como hallazgo |
+| 5 | Corregir y testear | Una hipótesis quedó confirmada | Corrección aplicada, `COMANDO` original de la Fase 1 en verde, **y** se corrió `acumular` — con test de regresión si había un lugar correcto para escribirlo, o con la ausencia de ese lugar documentada como hallazgo si no lo había |
 | 6 | Limpiar | Fase 5 cerrada | Checklist completo: reproducción original ya no ocurre, test de regresión (o su ausencia documentada), instrumentación `[DEBUG-...]` eliminada, prototipos descartables eliminados o movidos, hipótesis correcta en el commit/PR |
 
 ## Transiciones no lineales
@@ -70,10 +70,12 @@ stateDiagram-v2
   demás fases, no crea una sección nueva por ronda. El archivo de
   Instrumentar nunca se pierde entre rondas: cada vez que se retoma,
   suma los bloques de las hipótesis nuevas sin tocar los ya probados.
-- **Fase 5 tiene una rama sin salida distinta, pero converge igual.** Si
-  no existe una frontera correcta para el test de regresión, esa ausencia
-  se documenta como hallazgo — no bloquea el avance a Fase 6, que ya
-  contempla ese caso en su checklist.
+- **Fase 5 tiene una rama sin test, pero la corrección se aplica en
+  las dos.** Si no hay un lugar correcto para escribir el test de
+  regresión, esa ausencia se documenta como hallazgo (`HALLAZGO` en la
+  plantilla) — la corrección se aplica igual, solo que sin test.
+  Ninguna de las dos ramas se salta `acumular`; no bloquea el avance a
+  Fase 6, que ya contempla ese caso en su checklist.
 
 ## Regla general
 

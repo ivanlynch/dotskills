@@ -71,3 +71,31 @@ Todo issue se etiqueta con el nombre de la skill a la que corresponde
 (ej. `diagnosticar-bugs`). Si el label todavía no existe en el
 repositorio, crealo primero (`gh label create <nombre-skill>`) antes de
 abrir el issue.
+
+## Redacción de contenido de skills: criterios de revisión
+
+Al escribir o revisar `INSTRUCCIONES.md`, `TEMPLATE.md`, o cualquier
+otro contenido de una skill (incluidos ejemplos y fixtures de test que
+representan contenido real, no solo formato), chequeá:
+
+1. **Coherencia.** La información no se contradice entre archivos (ej.
+   `STATE_MACHINE.md` vs `INSTRUCCIONES.md` de una fase), y ninguna
+   rama de un flujo omite un paso que sí aparece en la otra rama.
+2. **Palabras simples.** Evitar jerga o calcos del inglés sin necesidad
+   (ej. "seam", "ejercitar") cuando la idea se puede describir en
+   lenguaje llano sin perder precisión.
+3. **Información concisa, pero no a costa de la claridad.** Conciso
+   significa sacar redundancia real — decir lo mismo dos veces, texto
+   que no aporta nada nuevo — no comprimir una oración hasta romper su
+   gramática o volverla difícil de leer. **No hay ningún motivo para
+   economizar caracteres**: un ejemplo o una hipótesis tiene que leerse
+   natural, no como una nota telegráfica.
+4. **Instrucciones lógicas.** El orden de los pasos no puede exigir
+   información que todavía no existe (ej. pedir datos de un usuario
+   logeado antes del paso de login), y ninguna rama de un flujo se
+   salta un paso necesario que la otra rama sí tiene.
+5. **Mecanizar lo que se pueda mecanizar.** Si un paso se puede resolver
+   con un script (grep, un validador, `estado.sh acumular`) en vez de
+   depender del criterio del agente en cada corrida, mecanizarlo —
+   mismo patrón que ya usan las fases de `diagnosticar-bugs` con
+   `iniciar.sh`/`validar.sh`.
