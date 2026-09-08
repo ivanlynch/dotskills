@@ -30,7 +30,7 @@ stateDiagram-v2
 
     CorregirTestear --> Limpiar: La corrección queda aplicada y se acumula (con test de regresión, o con el hallazgo de que no había lugar para testear)
 
-    Limpiar --> [*]: validar.sh da READY y se confirman los 2 ítems que no se pueden mecanizar
+    Limpiar --> [*]: validar.sh da READY, se confirman los 2 ítems que no se pueden mecanizar, y se genera REPORT.md
 ```
 
 ## Estados
@@ -43,7 +43,7 @@ stateDiagram-v2
 | 3 | Formular hipótesis | Fase 2 cerrada, o Fase 4 agotó su ronda de hipótesis sin confirmar ninguna | `validar.sh` imprime `READY` (completitud y formato refutable) **y** se corrió `acumular-hipotesis` — mostrarle la lista al usuario es un checkpoint no bloqueante, no un gate. Puede cerrarse más de una vez por investigación (una por ronda); a partir de la segunda, `acumular-hipotesis` fusiona los registros nuevos en la misma sección de `DIAGNOSTICO.md` en vez de crear una sección aparte |
 | 4 | Instrumentar | Fase 3 cerrada | Una hipótesis queda `confirmada` **y** se corrió `acumular` — es la única condición de cierre real. Mientras tanto, el loop de probar y descartar hipótesis vive en el archivo de la fase sin acumularse (nada que cerrar todavía); si se agotan todas sin confirmar ninguna, vuelve a la Fase 3 en vez de cerrar |
 | 5 | Corregir y testear | Una hipótesis quedó confirmada | Corrección aplicada, `COMANDO` original de la Fase 1 en verde, **y** se corrió `acumular` — con test de regresión si había un lugar correcto para escribirlo, o con la ausencia de ese lugar documentada como hallazgo si no lo había |
-| 6 | Limpiar | Fase 5 cerrada | `validar.sh` imprime `READY` (`COMANDO` original de la Fase 1 en verde, Fase 5 consistente, sin instrumentación `[DEBUG-...]`) **y** se confirmaron a mano los 2 ítems que no se pueden mecanizar: prototipos descartables eliminados o movidos, hipótesis correcta en el commit/PR |
+| 6 | Limpiar | Fase 5 cerrada | `validar.sh` imprime `READY` (`COMANDO` original de la Fase 1 en verde, Fase 5 consistente, sin instrumentación `[DEBUG-...]`), se confirmaron a mano los 2 ítems que no se pueden mecanizar (prototipos descartables eliminados o movidos, hipótesis correcta en el commit/PR), **y** `generar-reporte.sh` dejó `REPORT.md` con `## Análisis final` completo |
 
 ## Transiciones no lineales
 
@@ -79,7 +79,10 @@ stateDiagram-v2
 - **Fase 6 no acumula nada.** Es la fase terminal: `validar.sh` lee
   campos ya acumulados por las Fases 1 y 5 y verifica el estado del
   repo, pero no escribe ninguna sección `## Fase: Limpiar` en
-  `DIAGNOSTICO.md` — no hay una fase siguiente que necesite leerla.
+  `DIAGNOSTICO.md` — no hay una fase siguiente que necesite leerla. Su
+  único paso que sí escribe algo nuevo es `generar-reporte.sh`, y
+  escribe un archivo aparte (`REPORT.md`, ver ADR 0009), no una
+  sección de `DIAGNOSTICO.md`.
 
 ## Regla general
 
