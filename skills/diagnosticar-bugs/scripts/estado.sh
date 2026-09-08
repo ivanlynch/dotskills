@@ -51,6 +51,15 @@ set -euo pipefail
 #     hipótesis nuevos dentro de esa misma sección y actualiza
 #     JUSTIFICACION_MENOS_DE_3 con el valor de esta ronda. Solo la
 #     primera ronda crea la sección; las siguientes la extienden.
+#   estado.sh listar
+#     Imprime "<id>: <SINTOMA_USUARIO>", una línea por investigación
+#     abierta del proyecto actual (mismo criterio de identidad que el
+#     resto de los comandos: remoto git "origin" desde el directorio
+#     donde se invoca). No compara nada ni decide si hay duplicados
+#     (ver ADR 0005 y ADR 0007) — es solo lectura, para recuperar un
+#     <id> que se perdió de la conversación (corte de sesión, contexto
+#     comprimido). Silencioso (sin salida, exit 0) si todavía no hay
+#     ninguna investigación para este proyecto.
 #
 # DIAGNOSTICOS_ROOT (default: ~/Documents/diagnostics) es la raíz de
 # todos los proyectos; se puede sobreescribir para tests o para aislar
@@ -69,6 +78,7 @@ Uso:
   $0 campo <id> <nombre-campo>
   $0 proximo-id-hipotesis <id>
   $0 acumular-hipotesis <id>
+  $0 listar
 EOF
 }
 
@@ -293,6 +303,19 @@ cmd_proximo_id_hipotesis() {
   printf 'H%02d\n' "$siguiente"
 }
 
+cmd_listar() {
+  local proyecto_dir dir id sintoma
+  proyecto_dir="$(ruta_base)"
+  [ -d "$proyecto_dir" ] || return 0
+
+  for dir in "$proyecto_dir"/INV*/; do
+    [ -f "$dir/DIAGNOSTICO.md" ] || continue
+    id="$(basename "$dir")"
+    sintoma="$(grep -m1 -E '^SINTOMA_USUARIO:' "$dir/DIAGNOSTICO.md" | sed -E 's/^SINTOMA_USUARIO:[[:space:]]*//')"
+    printf '%s: %s\n' "$id" "$sintoma"
+  done
+}
+
 main() {
   local cmd="${1:-}"
   [ -n "$cmd" ] || { uso; exit 2; }
@@ -306,6 +329,7 @@ main() {
     campo) [ $# -eq 2 ] || { uso; exit 2; }; cmd_campo "$1" "$2" ;;
     proximo-id-hipotesis) [ $# -eq 1 ] || { uso; exit 2; }; cmd_proximo_id_hipotesis "$1" ;;
     acumular-hipotesis) [ $# -eq 1 ] || { uso; exit 2; }; cmd_acumular_hipotesis "$1" ;;
+    listar) [ $# -eq 0 ] || { uso; exit 2; }; cmd_listar ;;
     *) uso; exit 2 ;;
   esac
 }

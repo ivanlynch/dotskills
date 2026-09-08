@@ -5,7 +5,11 @@
 Aceptada. Supera ADR 0002. Parcialmente superada por ADR 0006: una vez
 sin detección de duplicados, Recepción se fusiona con Iniciar
 investigación — la decisión de fondo de este ADR (no detectar
-duplicados) sigue en pie.
+duplicados) sigue en pie. También parcialmente superada por ADR 0007:
+`estado.sh listar`, que este ADR eliminó junto con la detección de
+duplicados, vuelve — pero con un propósito distinto (recuperar un
+`<id>` perdido, no comparar síntomas). La decisión de fondo de este
+ADR (no detectar duplicados) tampoco cambia por eso.
 
 ## Contexto
 
