@@ -57,9 +57,11 @@ main() {
   case "$se_puede" in
     sí|si)
       [ -n "$test_regresion" ] || { err "SE_PUEDE_TESTEAR es 'sí' pero falta TEST_DE_REGRESION en la Fase 5."; motivos=$((motivos + 1)); }
+      [ -z "$hallazgo" ] || { err "SE_PUEDE_TESTEAR es 'sí' pero también hay un HALLAZGO completado — la Fase 5 tiene que llenar uno de los dos, no los dos."; motivos=$((motivos + 1)); }
       ;;
     no)
       [ -n "$hallazgo" ] || { err "SE_PUEDE_TESTEAR es 'no' pero falta HALLAZGO en la Fase 5."; motivos=$((motivos + 1)); }
+      [ -z "$test_regresion" ] || { err "SE_PUEDE_TESTEAR es 'no' pero también hay un TEST_DE_REGRESION completado — la Fase 5 tiene que llenar uno de los dos, no los dos."; motivos=$((motivos + 1)); }
       ;;
     *)
       err "No se encontró SE_PUEDE_TESTEAR en DIAGNOSTICO.md — ¿se acumuló la Fase 5?"

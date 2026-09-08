@@ -63,6 +63,22 @@ if bash "$SCRIPT" "$id" 2>/dev/null; then
 fi
 echo "PASS: falta HALLAZGO -> NOT_READY."
 
+# --- SE_PUEDE_TESTEAR: sí, pero también hay un HALLAZGO (no debería coexistir) ---
+id=$(nueva_investigacion "TIPO_BUCLE: automatico" "COMANDO: true" "SE_PUEDE_TESTEAR: sí" "TEST_DE_REGRESION: tests/checkout.test.js" "HALLAZGO: esto no debería estar")
+if bash "$SCRIPT" "$id" 2>/dev/null; then
+  echo "TEST FAIL: SE_PUEDE_TESTEAR sí con TEST_DE_REGRESION y HALLAZGO completados a la vez debería dar NOT_READY." >&2
+  exit 1
+fi
+echo "PASS: TEST_DE_REGRESION y HALLAZGO completados a la vez (SE_PUEDE_TESTEAR: sí) -> NOT_READY."
+
+# --- SE_PUEDE_TESTEAR: no, pero también hay un TEST_DE_REGRESION (no debería coexistir) ---
+id=$(nueva_investigacion "TIPO_BUCLE: automatico" "COMANDO: true" "SE_PUEDE_TESTEAR: no" "HALLAZGO: no habia caller aislable para un test" "TEST_DE_REGRESION: esto no debería estar")
+if bash "$SCRIPT" "$id" 2>/dev/null; then
+  echo "TEST FAIL: SE_PUEDE_TESTEAR no con HALLAZGO y TEST_DE_REGRESION completados a la vez debería dar NOT_READY." >&2
+  exit 1
+fi
+echo "PASS: TEST_DE_REGRESION y HALLAZGO completados a la vez (SE_PUEDE_TESTEAR: no) -> NOT_READY."
+
 # --- Fase 5 no acumulada: falta SE_PUEDE_TESTEAR entero ---
 id=$(nueva_investigacion "TIPO_BUCLE: automatico" "COMANDO: true")
 if bash "$SCRIPT" "$id" 2>/dev/null; then
@@ -91,7 +107,7 @@ if [ "$rc" -ne 0 ] || [ "$salida" != "READY" ]; then
 fi
 echo "PASS: COMANDO en verde + test de regresión documentado -> READY."
 
-# --- caso feliz: sin punto de entrada, con HALLAZGO ---
+# --- caso feliz: sin lugar para testear, con HALLAZGO ---
 id=$(nueva_investigacion "TIPO_BUCLE: automatico" "COMANDO: true" "SE_PUEDE_TESTEAR: no" "HALLAZGO: no habia caller aislable para un test")
 salida=$(bash "$SCRIPT" "$id" 2>/dev/null) && rc=0 || rc=$?
 if [ "$rc" -ne 0 ] || [ "$salida" != "READY" ]; then
