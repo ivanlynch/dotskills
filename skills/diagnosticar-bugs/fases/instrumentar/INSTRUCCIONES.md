@@ -10,19 +10,31 @@
 
 La primera vez crea el archivo y precarga `SINTOMA_USUARIO`. En
 cualquier corrida (primera o no), agrega un registro
-(`ID:`/`SONDEO:`/`RESULTADO:`/`VEREDICTO:`) por cada hipótesis de la
-Fase 3 que todavía no tenga uno acá, sin pisar los que ya existen —
-así una ronda nueva de hipótesis se suma sin perder el trabajo ya
-hecho.
+(`ID:`/`SONDEO:`/`RESULTADO:`/`EVIDENCIA:`/`VEREDICTO:`) por cada
+hipótesis de la Fase 3 que todavía no tenga uno acá, sin pisar los que
+ya existen — así una ronda nueva de hipótesis se suma sin perder el
+trabajo ya hecho.
 
 ### 2. Probar la hipótesis vigente
 
 La vigente es la de menor ID que todavía no tiene `VEREDICTO`
 puesto — no hay ningún campo que la señale, es el primer registro
 vacío que encontrás bajando por el archivo. Completá su
-`SONDEO`/`RESULTADO`/`VEREDICTO`, siguiendo los comentarios de la
-plantilla — ahí está la técnica de instrumentación y el criterio para
-elegir `confirmada` o `descartada`.
+`SONDEO`/`RESULTADO`, siguiendo los comentarios de la plantilla —
+ahí está la técnica de instrumentación.
+
+Antes de completar `VEREDICTO`, guardá la salida cruda del sondeo (el
+log, la transcripción del debugger, la captura del profiler — tal
+cual, no un resumen) en:
+
+```bash
+<skill-dir>/scripts/estado.sh ruta-evidencia <id> <ID_hipotesis>.txt
+```
+
+y completá `EVIDENCIA` con esa ruta. Recién con eso elegí `confirmada`
+o `descartada` para `VEREDICTO`, siguiendo el criterio de la
+plantilla — sin evidencia cruda guardada, el validador no deja avanzar
+(paso 3).
 
 ### 3. Correr el validador
 
@@ -40,9 +52,10 @@ por sí solo: el validador pasa directo a chequear la siguiente vigente
 
 - **`READY`** (exit 0) → una hipótesis quedó `confirmada`. Andá al paso 4.
 - **`NOT_READY`** (exit 1), con el motivo exacto por stderr:
-  - Si el motivo es que falta `SONDEO`/`RESULTADO`/`VEREDICTO` de una
-    hipótesis puntual: completá ese registro (paso 2) y volvé a correr
-    el validador.
+  - Si el motivo es que falta `SONDEO`/`RESULTADO`/`EVIDENCIA`/
+    `VEREDICTO` de una hipótesis puntual, o que `EVIDENCIA` apunta a un
+    archivo vacío o inexistente: completá ese registro (paso 2) y
+    volvé a correr el validador.
   - Si el motivo es que **todas las hipótesis conocidas ya tienen
     veredicto y ninguna es `confirmada`** (agotamiento): **no inventes
     sondeos sueltos sin fundamento**. Volvé a la Fase 3 para generar

@@ -60,6 +60,13 @@ set -euo pipefail
 #     <id> que se perdió de la conversación (corte de sesión, contexto
 #     comprimido). Silencioso (sin salida, exit 0) si todavía no hay
 #     ninguna investigación para este proyecto.
+#   estado.sh ruta-evidencia <id> <nombre-archivo>
+#     Imprime la ruta de evidencia/<nombre-archivo> dentro del
+#     diagnóstico, creando la carpeta evidencia/ si todavía no existe
+#     (bajo demanda, igual que fases/<fase>.md). Ahí se guarda la
+#     salida cruda de un sondeo (Fase 4) — log, transcripción de
+#     debugger, captura de profiler — tal cual, no un resumen. Ver
+#     ADR 0008.
 #
 # DIAGNOSTICOS_ROOT (default: ~/Documents/diagnostics) es la raíz de
 # todos los proyectos; se puede sobreescribir para tests o para aislar
@@ -79,6 +86,7 @@ Uso:
   $0 proximo-id-hipotesis <id>
   $0 acumular-hipotesis <id>
   $0 listar
+  $0 ruta-evidencia <id> <nombre-archivo>
 EOF
 }
 
@@ -303,6 +311,13 @@ cmd_proximo_id_hipotesis() {
   printf 'H%02d\n' "$siguiente"
 }
 
+cmd_ruta_evidencia() {
+  local id="$1" nombre_archivo="$2" dir
+  dir="$(cmd_dir "$id")"
+  mkdir -p "$dir/evidencia"
+  printf '%s/evidencia/%s\n' "$dir" "$nombre_archivo"
+}
+
 cmd_listar() {
   local proyecto_dir dir id sintoma
   proyecto_dir="$(ruta_base)"
@@ -330,6 +345,7 @@ main() {
     proximo-id-hipotesis) [ $# -eq 1 ] || { uso; exit 2; }; cmd_proximo_id_hipotesis "$1" ;;
     acumular-hipotesis) [ $# -eq 1 ] || { uso; exit 2; }; cmd_acumular_hipotesis "$1" ;;
     listar) [ $# -eq 0 ] || { uso; exit 2; }; cmd_listar ;;
+    ruta-evidencia) [ $# -eq 2 ] || { uso; exit 2; }; cmd_ruta_evidencia "$1" "$2" ;;
     *) uso; exit 2 ;;
   esac
 }
