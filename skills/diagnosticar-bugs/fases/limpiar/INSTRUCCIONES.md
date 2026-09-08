@@ -29,7 +29,25 @@ trabajo, confirmá vos mismo:
 - [ ] La hipótesis que resultó correcta está expresada en el mensaje
       del commit o PR, para que el próximo debugger aprenda de ella.
 
+### 3. Generar el reporte
+
+```bash
+<skill-dir>/scripts/generar-reporte.sh <id>
+```
+
+Arma `REPORT.md` (junto a `DIAGNOSTICO.md`, en la carpeta de la
+investigación) con el problema, el diagnóstico confirmado, la tabla de
+hipótesis evaluadas y la corrección aplicada — todo extraído de lo que
+ya acumulaste en fases anteriores, sin retipear nada.
+
+Completá vos la sección `## Análisis final` que el script deja en
+blanco: un resumen de 3 a 5 líneas de qué pasó, por qué, y qué se
+aprendió. Esa síntesis no se puede extraer mecánicamente de los campos
+ya escritos — es la única parte de `REPORT.md` que te corresponde
+redactar.
+
 ## Criterio de cierre
 
-Terminaste cuando el validador dio `READY` **y** confirmaste los dos
-ítems manuales de arriba.
+Terminaste cuando el validador dio `READY`, confirmaste los dos ítems
+manuales de arriba, y `REPORT.md` quedó generado con `## Análisis
+final` completo.
