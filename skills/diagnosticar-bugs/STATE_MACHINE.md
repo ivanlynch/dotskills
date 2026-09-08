@@ -30,7 +30,7 @@ stateDiagram-v2
 
     CorregirTestear --> Limpiar: La corrección queda aplicada y se acumula (con test de regresión, o con el hallazgo de que no había lugar para testear)
 
-    Limpiar --> [*]: El checklist de cierre queda completo
+    Limpiar --> [*]: validar.sh da READY y se confirman los 2 ítems que no se pueden mecanizar
 ```
 
 ## Estados
@@ -43,7 +43,7 @@ stateDiagram-v2
 | 3 | Formular hipótesis | Fase 2 cerrada, o Fase 4 agotó su ronda de hipótesis sin confirmar ninguna | `validar.sh` imprime `READY` (completitud y formato refutable) **y** se corrió `acumular-hipotesis` — mostrarle la lista al usuario es un checkpoint no bloqueante, no un gate. Puede cerrarse más de una vez por investigación (una por ronda); a partir de la segunda, `acumular-hipotesis` fusiona los registros nuevos en la misma sección de `DIAGNOSTICO.md` en vez de crear una sección aparte |
 | 4 | Instrumentar | Fase 3 cerrada | Una hipótesis queda `confirmada` **y** se corrió `acumular` — es la única condición de cierre real. Mientras tanto, el loop de probar y descartar hipótesis vive en el archivo de la fase sin acumularse (nada que cerrar todavía); si se agotan todas sin confirmar ninguna, vuelve a la Fase 3 en vez de cerrar |
 | 5 | Corregir y testear | Una hipótesis quedó confirmada | Corrección aplicada, `COMANDO` original de la Fase 1 en verde, **y** se corrió `acumular` — con test de regresión si había un lugar correcto para escribirlo, o con la ausencia de ese lugar documentada como hallazgo si no lo había |
-| 6 | Limpiar | Fase 5 cerrada | Checklist completo: reproducción original ya no ocurre, test de regresión (o su ausencia documentada), instrumentación `[DEBUG-...]` eliminada, prototipos descartables eliminados o movidos, hipótesis correcta en el commit/PR |
+| 6 | Limpiar | Fase 5 cerrada | `validar.sh` imprime `READY` (`COMANDO` original de la Fase 1 en verde, Fase 5 consistente, sin instrumentación `[DEBUG-...]`) **y** se confirmaron a mano los 2 ítems que no se pueden mecanizar: prototipos descartables eliminados o movidos, hipótesis correcta en el commit/PR |
 
 ## Transiciones no lineales
 
@@ -76,6 +76,10 @@ stateDiagram-v2
   plantilla) — la corrección se aplica igual, solo que sin test.
   Ninguna de las dos ramas se salta `acumular`; no bloquea el avance a
   Fase 6, que ya contempla ese caso en su checklist.
+- **Fase 6 no acumula nada.** Es la fase terminal: `validar.sh` lee
+  campos ya acumulados por las Fases 1 y 5 y verifica el estado del
+  repo, pero no escribe ninguna sección `## Fase: Limpiar` en
+  `DIAGNOSTICO.md` — no hay una fase siguiente que necesite leerla.
 
 ## Regla general
 
