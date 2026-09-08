@@ -16,13 +16,13 @@ scripts/iniciar.sh no lo pisa: cada vez que lo corrés agrega los
 registros de las hipótesis nuevas que todavía no tengan uno, sin tocar
 los que ya existen.
 
-Cada hipótesis es un registro de 4 campos ("ID:", "SONDEO:",
-"RESULTADO:", "VEREDICTO:"), separado del siguiente por una línea en
-blanco — no campos sueltos con el ID pegado al nombre (nada de
-"SONDEO_H06:"). Como "SONDEO:"/"RESULTADO:"/"VEREDICTO:" se repiten
-una vez por registro, scripts/validar.sh no los busca en todo el
-archivo: primero encuentra el registro por su "ID:" y recién ahí busca
-el campo, dentro de ese bloque.
+Cada hipótesis es un registro de 5 campos ("ID:", "SONDEO:",
+"RESULTADO:", "EVIDENCIA:", "VEREDICTO:"), separado del siguiente por
+una línea en blanco — no campos sueltos con el ID pegado al nombre
+(nada de "SONDEO_H06:"). Como "SONDEO:"/"RESULTADO:"/"EVIDENCIA:"/
+"VEREDICTO:" se repiten una vez por registro, scripts/validar.sh no
+los busca en todo el archivo: primero encuentra el registro por su
+"ID:" y recién ahí busca el campo, dentro de ese bloque.
 
 -->
 
@@ -59,7 +59,17 @@ ser incorrectos. Medí primero (tiempo cronometrado, performance.now(),
 un profiler, o el plan de una consulta), y después hacé bisección.
 Medí antes de corregir.
 
-RESULTADO: qué observaste al correrlo.
+RESULTADO: qué observaste al correrlo, en tus propias palabras.
+
+EVIDENCIA: ruta al archivo con la salida cruda que respalda RESULTADO
+— el log, la transcripción del debugger o la captura del profiler tal
+cual, no un resumen ni una paráfrasis. Generá la ruta con:
+
+  <skill-dir>/scripts/estado.sh ruta-evidencia <id> <ID_hipotesis>.txt
+
+y pegá esa salida real en el archivo antes de completar este campo.
+Sin esto, VEREDICTO queda sin poder verificarse — ver
+INSTRUCCIONES.md.
 
 VEREDICTO: "confirmada" si el resultado coincide con la predicción de
 esa hipótesis, "descartada" si no. -->

@@ -52,12 +52,13 @@ for n in H01 H02 H03; do
     exit 1
   fi
 done
-if [ "$(grep -c '^SONDEO:$' "$destino")" -ne 3 ] || [ "$(grep -c '^RESULTADO:$' "$destino")" -ne 3 ] || [ "$(grep -c '^VEREDICTO:$' "$destino")" -ne 3 ]; then
-  echo "TEST FAIL: debería haber exactamente 3 campos SONDEO/RESULTADO/VEREDICTO vacíos (uno por hipótesis real)." >&2
+if [ "$(grep -c '^SONDEO:$' "$destino")" -ne 3 ] || [ "$(grep -c '^RESULTADO:$' "$destino")" -ne 3 ] \
+  || [ "$(grep -c '^EVIDENCIA:$' "$destino")" -ne 3 ] || [ "$(grep -c '^VEREDICTO:$' "$destino")" -ne 3 ]; then
+  echo "TEST FAIL: debería haber exactamente 3 campos SONDEO/RESULTADO/EVIDENCIA/VEREDICTO vacíos (uno por hipótesis real)." >&2
   cat "$destino" >&2
   exit 1
 fi
-echo "PASS: se agrega un registro (ID/SONDEO/RESULTADO/VEREDICTO) por cada hipótesis real."
+echo "PASS: se agrega un registro (ID/SONDEO/RESULTADO/EVIDENCIA/VEREDICTO) por cada hipótesis real."
 
 if grep -qE "^ID: H0[45]\$" "$destino"; then
   echo "TEST FAIL: H04 y H05 quedaron en blanco en la Fase 3 (no son hipótesis) — no deberían generar registro." >&2

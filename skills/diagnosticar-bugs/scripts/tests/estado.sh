@@ -380,4 +380,29 @@ if printf '%s\n' "$salida_listar" | grep -q "otro proyecto"; then
 fi
 echo "PASS: 'listar' no mezcla investigaciones de otro proyecto."
 
+# --- ruta-evidencia: crea evidencia/ bajo demanda e imprime la ruta ---
+REPO_E="$TMP_DIR/proyecto-evidencia"
+mkdir -p "$REPO_E"
+git -C "$REPO_E" init -q
+git -C "$REPO_E" remote add origin "https://github.com/ivanlynch/proyecto-evidencia.git"
+cd "$REPO_E"
+
+id_e=$(bash "$SCRIPT" init "bug de prueba para evidencia")
+dir_e=$(bash "$SCRIPT" dir "$id_e")
+if [ -d "$dir_e/evidencia" ]; then
+  echo "TEST FAIL: 'evidencia/' no debería existir todavía, antes de pedir una ruta." >&2
+  exit 1
+fi
+
+ruta_ev=$(bash "$SCRIPT" ruta-evidencia "$id_e" "H01.txt")
+if [ "$ruta_ev" != "$dir_e/evidencia/H01.txt" ]; then
+  echo "TEST FAIL: 'ruta-evidencia' debería devolver '$dir_e/evidencia/H01.txt', devolvió '$ruta_ev'." >&2
+  exit 1
+fi
+if [ ! -d "$dir_e/evidencia" ]; then
+  echo "TEST FAIL: 'ruta-evidencia' debería crear la carpeta 'evidencia/' bajo demanda." >&2
+  exit 1
+fi
+echo "PASS: 'ruta-evidencia' crea 'evidencia/' bajo demanda e imprime la ruta del archivo."
+
 echo "Todos los tests de estado.sh pasaron."

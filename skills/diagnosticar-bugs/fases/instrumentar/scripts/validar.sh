@@ -5,7 +5,12 @@ set -uo pipefail
 # de menor ID que todavía no tiene VEREDICTO ("confirmada" o
 # "descartada"). No hace falta ningún campo aparte que la señale: este
 # script la calcula solo, mirando qué registros ("ID:"/"SONDEO:"/
-# "RESULTADO:"/"VEREDICTO:") ya existen en el archivo.
+# "RESULTADO:"/"EVIDENCIA:"/"VEREDICTO:") ya existen en el archivo.
+#
+# EVIDENCIA tiene que apuntar a un archivo real y no vacío (la salida
+# cruda del sondeo, ver ADR 0008) — sin eso, VEREDICTO no puede
+# marcarse: no alcanza con describir el resultado, tiene que haber
+# algo verificable detrás.
 #
 # No valida que toda la fase haya terminado — Instrumentar es un loop,
 # puede pasar por acá una vez por cada hipótesis. Es INSTRUCCIONES.md
@@ -33,7 +38,8 @@ campo() {
 
 # Extrae "<campo>: valor" de DENTRO del registro delimitado por
 # "ID: <id_h>" — no del archivo entero. Necesario porque "SONDEO:",
-# "RESULTADO:" y "VEREDICTO:" se repiten una vez por registro.
+# "RESULTADO:", "EVIDENCIA:" y "VEREDICTO:" se repiten una vez por
+# registro.
 campo_de_registro() {
   local archivo="$1" id_h="$2" nombre="$3"
   awk -v id="ID: $id_h" -v campo="^${nombre}:" '
@@ -55,7 +61,7 @@ main() {
   [ -n "$state_file" ] || { err "Uso: $0 <ruta a fases/instrumentar.md>"; echo "NOT_READY"; exit 1; }
   [ -f "$state_file" ] || { err "No existe: $state_file"; echo "NOT_READY"; exit 1; }
 
-  local motivos=0 sintoma id_h veredicto sondeo resultado actual=""
+  local motivos=0 sintoma id_h veredicto sondeo resultado evidencia actual=""
 
   sintoma="$(campo "$state_file" SINTOMA_USUARIO)"
   [ -n "$sintoma" ] || { err "Falta SINTOMA_USUARIO."; motivos=$((motivos + 1)); }
@@ -76,27 +82,46 @@ main() {
   # La vigente: la de menor ID sin veredicto todavía. De paso, si
   # alguna ya está "confirmada", lo recordamos: cambia qué significa
   # que no quede ninguna vigente (éxito, no agotamiento).
-  local hay_confirmada=0
+  local hay_confirmada=0 id_confirmada=""
   for id_h in "${ids[@]}"; do
     veredicto="$(campo_de_registro "$state_file" "$id_h" VEREDICTO)"
     case "$veredicto" in
-      confirmada) hay_confirmada=1 ;;
+      confirmada) hay_confirmada=1; id_confirmada="$id_h" ;;
       descartada) ;;
       *) [ -z "$actual" ] && actual="$id_h" ;;
     esac
   done
 
   if [ "$hay_confirmada" -eq 1 ]; then
-    : # Éxito: ya hay una hipótesis confirmada. No importa si quedan
-      # otras sin tocar (iniciar.sh les crea el registro a todas de
-      # entrada) — encontrada la causa, no hay nada más que validar.
+    # Éxito: ya hay una hipótesis confirmada. No importa si quedan
+    # otras sin tocar (iniciar.sh les crea el registro a todas de
+    # entrada) — no hay nada más que validar, salvo que ESTA sí tenga
+    # la evidencia que respalda el veredicto (no alcanza con que el
+    # campo VEREDICTO diga "confirmada": tiene que haber un archivo
+    # real detrás, ver ADR 0008).
+    evidencia="$(campo_de_registro "$state_file" "$id_confirmada" EVIDENCIA)"
+    if [ -z "$evidencia" ]; then
+      err "El registro $id_confirmada está 'confirmada' pero le falta EVIDENCIA."
+      motivos=$((motivos + 1))
+    elif [ ! -s "$evidencia" ]; then
+      err "El registro $id_confirmada está 'confirmada' pero su EVIDENCIA ('$evidencia') no existe o está vacía."
+      motivos=$((motivos + 1))
+    fi
   elif [ -n "$actual" ]; then
     sondeo="$(campo_de_registro "$state_file" "$actual" SONDEO)"
     resultado="$(campo_de_registro "$state_file" "$actual" RESULTADO)"
+    evidencia="$(campo_de_registro "$state_file" "$actual" EVIDENCIA)"
     veredicto="$(campo_de_registro "$state_file" "$actual" VEREDICTO)"
 
     [ -n "$sondeo" ] || { err "Falta SONDEO del registro $actual."; motivos=$((motivos + 1)); }
     [ -n "$resultado" ] || { err "Falta RESULTADO del registro $actual."; motivos=$((motivos + 1)); }
+    if [ -z "$evidencia" ]; then
+      err "Falta EVIDENCIA del registro $actual — generá la ruta con 'estado.sh ruta-evidencia' y pegá ahí la salida cruda del sondeo."
+      motivos=$((motivos + 1))
+    elif [ ! -s "$evidencia" ]; then
+      err "EVIDENCIA del registro $actual apunta a '$evidencia', que no existe o está vacío — VEREDICTO no puede marcarse sin la salida cruda que lo respalda."
+      motivos=$((motivos + 1))
+    fi
     case "$veredicto" in
       confirmada|descartada) ;;
       "") err "Falta VEREDICTO del registro $actual."; motivos=$((motivos + 1)) ;;

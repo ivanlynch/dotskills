@@ -4,8 +4,8 @@ set -euo pipefail
 # Arranca (o continúa) la fase "instrumentar". Si el archivo de la
 # fase todavía no existe, lo crea desde TEMPLATE.md y precarga
 # SINTOMA_USUARIO. En cualquier caso (nuevo o ya existente), agrega un
-# registro ("ID:"/"SONDEO:"/"RESULTADO:"/"VEREDICTO:") por cada
-# hipótesis que exista en DIAGNOSTICO.md y todavía no tenga uno acá —
+# registro ("ID:"/"SONDEO:"/"RESULTADO:"/"EVIDENCIA:"/"VEREDICTO:") por
+# cada hipótesis que exista en DIAGNOSTICO.md y todavía no tenga uno acá —
 # nunca pisa los registros que ya están, así que una ronda nueva de
 # hipótesis de la Fase 3 se suma sin perder el trabajo ya hecho sobre
 # las anteriores.
@@ -84,7 +84,7 @@ main() {
   local bloque linea_marcador
   for id_h in "${ids[@]}"; do
     if ! grep -q "^ID: ${id_h}\$" "$destino"; then
-      bloque="$(printf 'ID: %s\nSONDEO:\nRESULTADO:\nVEREDICTO:\n' "$id_h")"
+      bloque="$(printf 'ID: %s\nSONDEO:\nRESULTADO:\nEVIDENCIA:\nVEREDICTO:\n' "$id_h")"
       # Inserta antes de "## Condiciones de salida", no al final del
       # archivo — si no, un registro nuevo (de una ronda de hipótesis
       # posterior) quedaría después del checklist de cierre, donde
