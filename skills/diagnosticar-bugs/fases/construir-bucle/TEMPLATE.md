@@ -36,8 +36,8 @@ pruebes todos en orden. Ante dos opciones igual de viables, preferí
 la que aparece primero en esta lista (van de más simple/barata a más
 compleja):
 
-1. test_fallido: test fallido en cualquier frontera que alcance el
-   bug (unitario, integración o e2e).
+1. test_fallido: test fallido en cualquier nivel que llegue a
+   ejecutar el código del bug (unitario, integración o e2e).
 2. curl_http: script curl / HTTP contra un servidor de desarrollo en
    ejecución.
 3. cli_fixture: invocación de CLI con una entrada fixture, comparando

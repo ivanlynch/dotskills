@@ -1,15 +1,61 @@
 # Fase 5: corregir y agregar el test de regresión
 
-Escribí el test de regresión **antes del arreglo**, pero solo si existe una **frontera correcta** para hacerlo.
+Antes de tocar código, releé la hipótesis **confirmada** de la Fase 4
+(el registro con `VEREDICTO: confirmada` en `DIAGNOSTICO.md`, con su
+`SONDEO` y `RESULTADO`) — la corrección tiene que atacar esa causa
+puntual, no una intuición nueva.
 
-Una frontera correcta es aquella donde el test ejercita el **patrón real del bug** tal como ocurre en el punto de llamada. Si la única frontera disponible es demasiado superficial —un test de un único caller cuando el bug necesita varios callers, o un test unitario que no puede reproducir la cadena que lo disparó—, el test da una falsa sensación de seguridad.
+Copiá la plantilla de esta fase:
 
-**Si no existe una frontera correcta, ese hecho es el hallazgo.** Documentalo. La arquitectura del código impide fijar el bug. Señalalo para la siguiente fase.
+```bash
+cp <skill-dir>/fases/corregir-testear/TEMPLATE.md \
+   "$(<skill-dir>/scripts/estado.sh ruta-fase <id> corregir-testear)"
+```
 
-Si existe una frontera correcta:
+## ¿Se puede testear en el lugar correcto?
 
-1. Convertí la reproducción minimizada en un test fallido en esa frontera.
+Escribí el test de regresión antes de la corrección, pero solo si podés
+escribirlo en el lugar del código donde reproduce el **patrón real
+del bug** tal como ocurre en producción — no en un lugar más
+superficial que dé falsa sensación de seguridad. Por ejemplo: un test
+de un único caller cuando el bug necesita varios callers, o un test
+unitario que no puede reproducir la cadena de llamadas que lo
+disparó.
+
+**Si no lo hay:** completá `SE_PUEDE_TESTEAR: no` y `HALLAZGO` en la
+plantilla — lo que falta es la forma de *testear* el patrón real del
+bug, no de corregirlo. Igual vas a aplicar la corrección, solo que sin
+test de regresión. Andá directo a "Aplicar y verificar".
+
+**Si lo hay:** completá `SE_PUEDE_TESTEAR: sí` y `TEST_DE_REGRESION`
+con su ubicación, y escribilo **antes de la corrección**:
+
+1. Convertí la reproducción minimizada (`COMANDO_MINIMIZADO` de la
+   Fase 2) en un test fallido ahí.
 2. Observá cómo falla.
-3. Aplicá el arreglo.
-4. Observá cómo pasa.
-5. Volvé a ejecutar el bucle de feedback de la Fase 1 contra el escenario original, sin minimizar.
+
+## Aplicar y verificar
+
+3. Aplicá la corrección — la que ataca la causa confirmada, no un
+   parche alrededor del síntoma.
+4. Si escribiste un test de regresión: observá cómo pasa. Si no pasa
+   al primer intento, no sigas — ajustá la corrección y repetí este
+   paso.
+5. Volvé a ejecutar el `COMANDO` original de la Fase 1 (sin
+   minimizar) contra el escenario completo. Si sigue en rojo, la
+   corrección no alcanza — volvé al paso 3.
+6. Completá `CORRECCION` en la plantilla con un resumen de qué cambió
+   y por qué ataca la causa confirmada.
+
+## Acumular y cerrar la fase
+
+```bash
+<skill-dir>/scripts/estado.sh acumular <id> corregir-testear "Fase: Corregir y testear"
+```
+
+## Criterio de cierre
+
+Terminaste cuando la corrección está aplicada, el `COMANDO` original
+de la Fase 1 da verde, y se corrió `acumular` — con test de regresión
+si había un lugar correcto para escribirlo, o con `HALLAZGO`
+documentado si no lo había.
