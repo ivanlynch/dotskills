@@ -4,11 +4,13 @@
 
 ### 1. Copiar la plantilla
 
-Ejecuta el siguiente comando para copiar la plantilla:
+Ejecutá el siguiente comando para copiar la plantilla — no pisa el
+archivo si ya existe (por ejemplo, si estás retomando esta fase
+después de un corte de sesión con progreso ya escrito):
 
 ```bash
-cp <skill-dir>/fases/construir-bucle/TEMPLATE.md \
-   "$(<skill-dir>/scripts/estado.sh ruta-fase <id> construir-bucle)"
+destino="$(<skill-dir>/scripts/estado.sh ruta-fase <id> construir-bucle)"
+[ -f "$destino" ] || cp <skill-dir>/fases/construir-bucle/TEMPLATE.md "$destino"
 ```
 
 ### 2. Completar la plantilla

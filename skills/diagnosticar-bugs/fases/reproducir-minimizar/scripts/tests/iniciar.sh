@@ -59,6 +59,20 @@ else
   exit 1
 fi
 
+# --- resumir sin acumular: no pisa el progreso ya escrito ---
+sed -i -E 's/^RECORTES:$/RECORTES: saqué los campos opcionales del payload/' "$destino"
+destino_resumido=$(bash "$SCRIPT" "$id")
+if [ "$destino_resumido" != "$destino" ]; then
+  echo "TEST FAIL: al resumir sin haber acumulado, iniciar.sh debería devolver la misma ruta." >&2
+  exit 1
+fi
+if ! grep -q "^RECORTES: saqué los campos opcionales del payload$" "$destino_resumido"; then
+  echo "TEST FAIL: iniciar.sh pisó RECORTES ya escrito en una fase todavía sin acumular." >&2
+  cat "$destino_resumido" >&2
+  exit 1
+fi
+echo "PASS: resumir la fase sin haber acumulado no pisa el progreso ya escrito."
+
 # --- un valor con '/' y '&' no rompe la sustitución (motivo de usar awk, no sed) ---
 comando_con_caracteres_especiales='curl -sf "localhost:3000/checkout?a=1&b=2"'
 printf 'SINTOMA_USUARIO: otro sintoma\nMETODO: curl_http\nCOMANDO: %s\nTIPO_BUCLE: automatico\nAJUSTES: ninguno\n' "$comando_con_caracteres_especiales" > "$dir/fases/construir-bucle-2.md"

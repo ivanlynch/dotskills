@@ -9,8 +9,16 @@ set -euo pipefail
 # así una ronda nueva nunca pisa ni confunde hipótesis de una ronda
 # anterior.
 #
+# Si el destino ya existe, refrescarlo (pisarlo) es seguro únicamente
+# cuando su contenido ya se acumuló a DIAGNOSTICO.md — significa que es
+# el archivo de una ronda ya cerrada, y esta llamada arranca una ronda
+# nueva. Si su contenido todavía NO se acumuló, es una ronda en curso
+# (por ejemplo, se retoma después de un corte de sesión) y no se toca,
+# para no perder hipótesis ya redactadas. El chequeo: si el ID más bajo
+# del archivo ya aparece en DIAGNOSTICO.md, la ronda ya se acumuló.
+#
 # Uso: iniciar.sh <id>
-# Imprime la ruta del archivo ya inicializado.
+# Imprime la ruta del archivo (nuevo, refrescado, o ya existente sin tocar).
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 FASE_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
@@ -30,10 +38,22 @@ escribir_campo() {
 }
 
 main() {
-  local id="${1:-}" destino sintoma proximo_id numero n bloque
+  local id="${1:-}" destino diagnostico sintoma proximo_id numero n bloque
   [ -n "$id" ] || { err "Uso: $0 <id>"; exit 2; }
 
   destino="$("$ESTADO_SH" ruta-fase "$id" formular-hipotesis)"
+  diagnostico="$("$ESTADO_SH" dir "$id")/DIAGNOSTICO.md"
+
+  if [ -f "$destino" ]; then
+    local primer_id_local
+    primer_id_local="$(grep -m1 -oE '^ID: H[0-9]+$' "$destino" | sed -E 's/^ID: //')"
+    if [ -n "$primer_id_local" ] && ! grep -q "^ID: ${primer_id_local}\$" "$diagnostico" 2>/dev/null; then
+      # La ronda de este archivo todavía no se acumuló — no la pisamos.
+      echo "$destino"
+      exit 0
+    fi
+  fi
+
   cp "$FASE_DIR/TEMPLATE.md" "$destino"
 
   sintoma="$("$ESTADO_SH" campo "$id" SINTOMA_USUARIO)"

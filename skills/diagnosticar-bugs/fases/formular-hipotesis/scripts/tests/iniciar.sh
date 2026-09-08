@@ -55,6 +55,22 @@ if grep -q "^ID: H06$" "$destino"; then
 fi
 echo "PASS: la primera ronda no genera de más."
 
+# --- resumir sin acumular: no pisa una HIPOTESIS ya redactada ---
+# awk en vez de sed: "0,/regex/" (reemplazar solo la primera
+# ocurrencia) es una extensión de GNU sed que el sed de macOS no trae.
+awk '!hecho && /^HIPOTESIS:$/ { print "HIPOTESIS: Si el timeout es la causa, entonces subirlo arregla esto"; hecho=1; next } { print }' "$destino" > "$destino.tmp" && mv "$destino.tmp" "$destino"
+destino_resumido=$(bash "$SCRIPT" "$id")
+if [ "$destino_resumido" != "$destino" ]; then
+  echo "TEST FAIL: al resumir sin haber acumulado, iniciar.sh debería devolver la misma ruta." >&2
+  exit 1
+fi
+if ! grep -q "^HIPOTESIS: Si el timeout es la causa, entonces subirlo arregla esto$" "$destino_resumido"; then
+  echo "TEST FAIL: iniciar.sh pisó una HIPOTESIS ya redactada en una ronda todavía sin acumular." >&2
+  cat "$destino_resumido" >&2
+  exit 1
+fi
+echo "PASS: resumir la fase sin haber acumulado no pisa hipótesis ya redactadas."
+
 # --- segunda ronda: arranca en H06, no repite H01-H05 ---
 printf '\n## Fase: Formular hipótesis (H01-H05)\n\nID: H01\nHIPOTESIS: algo\n\nID: H02\nHIPOTESIS: algo\n\nID: H03\nHIPOTESIS: algo\n\nID: H04\nHIPOTESIS:\n\nID: H05\nHIPOTESIS:\n' >> "$(bash "$ESTADO_SH" dir "$id")/DIAGNOSTICO.md"
 
