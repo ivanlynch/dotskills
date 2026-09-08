@@ -5,11 +5,13 @@ Antes de tocar código, releé la hipótesis **confirmada** de la Fase 4
 `SONDEO` y `RESULTADO`) — la corrección tiene que atacar esa causa
 puntual, no una intuición nueva.
 
-Copiá la plantilla de esta fase:
+Copiá la plantilla de esta fase — no pisa el archivo si ya existe (por
+ejemplo, si estás retomando esta fase después de un corte de sesión
+con progreso ya escrito):
 
 ```bash
-cp <skill-dir>/fases/corregir-testear/TEMPLATE.md \
-   "$(<skill-dir>/scripts/estado.sh ruta-fase <id> corregir-testear)"
+destino="$(<skill-dir>/scripts/estado.sh ruta-fase <id> corregir-testear)"
+[ -f "$destino" ] || cp <skill-dir>/fases/corregir-testear/TEMPLATE.md "$destino"
 ```
 
 ## ¿Se puede testear en el lugar correcto?

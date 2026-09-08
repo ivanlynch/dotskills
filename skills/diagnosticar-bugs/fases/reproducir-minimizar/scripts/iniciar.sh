@@ -6,8 +6,16 @@ set -euo pipefail
 # de DIAGNOSTICO.md (ya los grabaron Fase 0 y Fase 1) — evita que el
 # agente los retipee a mano, con el riesgo de copiarlos mal.
 #
+# Si el destino ya existe Y ya tiene SINTOMA_USUARIO precargado, no lo
+# toca — evita pisar el recorte y las notas ya escritas si se retoma la
+# fase después de un corte de sesión, antes de haber llegado a
+# acumularla. Si existe pero SINTOMA_USUARIO todavía está vacío, es la
+# plantilla en blanco que dejó una corrida anterior que falló antes de
+# completar el precargado (por ejemplo, sin COMANDO todavía acumulado
+# en ese momento) — en ese caso sí se reintenta.
+#
 # Uso: iniciar.sh <id>
-# Imprime la ruta del archivo ya inicializado.
+# Imprime la ruta del archivo (nuevo, reintentado, o ya existente sin tocar).
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 FASE_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
@@ -32,6 +40,12 @@ main() {
   [ -n "$id" ] || { err "Uso: $0 <id>"; exit 2; }
 
   destino="$("$ESTADO_SH" ruta-fase "$id" reproducir-minimizar)"
+
+  if [ -f "$destino" ] && grep -qE '^SINTOMA_USUARIO:[[:space:]]*\S' "$destino"; then
+    echo "$destino"
+    return 0
+  fi
+
   cp "$FASE_DIR/TEMPLATE.md" "$destino"
 
   sintoma="$("$ESTADO_SH" campo "$id" SINTOMA_USUARIO)"
