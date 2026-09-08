@@ -335,4 +335,49 @@ if ! grep -q "^SINTOMA_USUARIO: primera línea segunda línea$" "$dir_f/DIAGNOST
 fi
 echo "PASS: un síntoma con saltos de línea se colapsa a una sola línea (formato CAMPO: valor)."
 
+# --- listar: sin investigaciones todavía -> silencioso, exit 0 ---
+REPO_L="$TMP_DIR/proyecto-listar"
+mkdir -p "$REPO_L"
+git -C "$REPO_L" init -q
+git -C "$REPO_L" remote add origin "https://github.com/ivanlynch/proyecto-listar.git"
+cd "$REPO_L"
+
+salida_listar=$(bash "$SCRIPT" listar) && rc=0 || rc=$?
+if [ "$rc" -ne 0 ] || [ -n "$salida_listar" ]; then
+  echo "TEST FAIL: 'listar' sin investigaciones debería salir en silencio con exit 0. rc=$rc salida='$salida_listar'" >&2
+  exit 1
+fi
+echo "PASS: 'listar' sin investigaciones todavía -> sin salida, exit 0."
+
+# --- listar: devuelve "<id>: <sintoma>", una línea por investigación ---
+id_l1=$(bash "$SCRIPT" init "el checkout devuelve 500 al pagar")
+id_l2=$(bash "$SCRIPT" init "el export tarda 40 segundos")
+
+salida_listar=$(bash "$SCRIPT" listar)
+esperado=$(printf '%s: el checkout devuelve 500 al pagar\n%s: el export tarda 40 segundos' "$id_l1" "$id_l2")
+if [ "$salida_listar" != "$esperado" ]; then
+  echo "TEST FAIL: 'listar' debería imprimir una línea '<id>: <sintoma>' por investigación, en orden." >&2
+  echo "Esperado:" >&2; echo "$esperado" >&2
+  echo "Obtenido:" >&2; echo "$salida_listar" >&2
+  exit 1
+fi
+echo "PASS: 'listar' imprime '<id>: <sintoma>' para cada investigación del proyecto actual, en orden."
+
+# --- listar: no mezcla investigaciones de otro proyecto ---
+REPO_L2="$TMP_DIR/proyecto-listar-2"
+mkdir -p "$REPO_L2"
+git -C "$REPO_L2" init -q
+git -C "$REPO_L2" remote add origin "https://github.com/ivanlynch/proyecto-listar-2.git"
+cd "$REPO_L2"
+bash "$SCRIPT" init "un bug completamente distinto, de otro proyecto" >/dev/null
+
+cd "$REPO_L"
+salida_listar=$(bash "$SCRIPT" listar)
+if printf '%s\n' "$salida_listar" | grep -q "otro proyecto"; then
+  echo "TEST FAIL: 'listar' mezcló una investigación de otro proyecto." >&2
+  echo "$salida_listar" >&2
+  exit 1
+fi
+echo "PASS: 'listar' no mezcla investigaciones de otro proyecto."
+
 echo "Todos los tests de estado.sh pasaron."

@@ -15,3 +15,13 @@ el bug:
 ## Criterio de cierre
 
 El comando devolvió un `<id>` (ej. `INV007`).
+
+## Si ya tenías una investigación en curso
+
+`estado.sh init` siempre crea una investigación nueva — no verifica si
+ya había una abierta para este mismo bug (ver ADR 0005). Si perdiste
+de la conversación el `<id>` de una investigación que ya habías
+empezado (corte de sesión, contexto comprimido), no la reinicies:
+corré `<skill-dir>/scripts/estado.sh listar` para ver las
+investigaciones abiertas de este proyecto y retomar la que corresponda
+en la fase donde haya quedado.
