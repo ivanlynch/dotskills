@@ -5,8 +5,8 @@ Cursor.
 
 `dotskills` reúne las instrucciones, comandos y scripts auxiliares que uso para
 analizar tickets, planificar implementaciones, documentar proyectos y preparar
-pull requests. El repositorio es público y el instalador los registra de forma
-global mediante enlaces simbólicos.
+pull requests. El repositorio es público y el instalador registra las skills
+globalmente como copias para Codex/Cursor y enlaces simbólicos para Claude Code.
 
 ## Instalación rápida
 
@@ -28,16 +28,17 @@ sh -c "$(curl -fsSL https://raw.githubusercontent.com/ivanlynch/dotskills/main/i
 El instalador:
 
 - clona o actualiza el repositorio en `~/.local/share/dotskills`;
-- crea enlaces simbólicos en las carpetas globales de cada herramienta;
+- copia las skills a `~/.agents/skills/` para Codex y Cursor, y crea enlaces
+  simbólicos en `~/.claude/skills/` para Claude Code;
 - no sobrescribe archivos o directorios existentes;
 - permite volver a ejecutar la instalación para actualizar los workflows.
 
 ## Dónde se instalan
 
 Cada skill vive una sola vez en este repositorio, bajo `skills/<nombre>/`
-(formato abierto [Agent Skills](https://agentskills.io)). El instalador no
-copia ese contenido: lo symlinkea a las rutas que cada herramienta lee de
-forma nativa.
+(formato abierto [Agent Skills](https://agentskills.io)). El instalador copia
+las skills a `~/.agents/skills/` para Codex y Cursor, y las symlinkea a
+`~/.claude/skills/` para Claude Code.
 
 | Herramienta | Invocación | Destino global |
 | --- | --- | --- |
@@ -45,9 +46,8 @@ forma nativa.
 | Claude Code | `/cocinar` | `~/.claude/skills/` |
 | Cursor | `/cocinar` | `~/.agents/skills/` |
 
-Codex y Cursor comparten `~/.agents/skills/` (ambos lo leen nativamente), así
-que un solo enlace por skill alcanza para las dos. Claude Code solo lee
-`~/.claude/skills/`.
+Codex y Cursor comparten `~/.agents/skills/`, así que una sola copia por skill
+alcanza para las dos. Claude Code lee `~/.claude/skills/`.
 
 ## Uso
 
@@ -67,8 +67,8 @@ Para actualizar la instalación, vuelve a ejecutar el comando correspondiente.
 El instalador hará `git pull --ff-only` sobre la copia almacenada en
 `~/.local/share/dotskills` y refrescará los enlaces.
 
-Para eliminar los enlaces creados por `dotskills`, ejecuta el desinstalador
-desde la copia local:
+Para eliminar las copias y los enlaces creados por `dotskills`, ejecuta el
+desinstalador desde la copia local:
 
 ```bash
 sh ~/.local/share/dotskills/uninstall.sh all
@@ -82,8 +82,9 @@ sh ~/.local/share/dotskills/uninstall.sh claude
 sh ~/.local/share/dotskills/uninstall.sh cursor
 ```
 
-El desinstalador solo elimina enlaces simbólicos; no elimina archivos existentes
-que no hayan sido creados por el instalador.
+El desinstalador solo elimina copias marcadas por `dotskills` y enlaces que
+apuntan a skills del repositorio. Conserva destinos existentes ajenos. Las
+copias locales editadas también se eliminan al desinstalar.
 
 ## Workflows incluidos
 
@@ -149,7 +150,7 @@ conectores de Jira, Atlassian o GitHub.
 dotskills/
 ├── skills/               # Cada skill vive una sola vez: <nombre>/SKILL.md
 │   └── <nombre>/         # + scripts/, references/, assets/, recursos propios
-│                         # symlinkeado a ~/.claude/skills/ y ~/.agents/skills/
+│                         # copiado a ~/.agents/skills/ y symlinkeado a ~/.claude/skills/
 ├── install.sh            # Instalador global
 └── uninstall.sh          # Desinstalador de enlaces
 ```
@@ -161,9 +162,9 @@ de skill vecino, nunca copiando el script. Cuando una skill solo tiene sentido
 como parte del flujo de otra (por ejemplo, el análisis de alcance y la
 ejecución tarea por tarea de `cocinar`), su contenido vive directamente en
 `references/` y `scripts/` de la skill dueña en vez de existir como skill
-separada — así queda claro que no es invocable por su cuenta. `install.sh` no
-copia contenido en ningún punto: solo crea symlinks desde `skills/<nombre>/`
-hacia las carpetas globales de cada herramienta.
+separada — así queda claro que no es invocable por su cuenta. `install.sh`
+copia las skills de `skills/<nombre>/` a `~/.agents/skills/` y mantiene los
+symlinks de `~/.claude/skills/`.
 
 ## Desarrollo
 
@@ -198,8 +199,8 @@ archivo o directorio que ocupa el destino y vuelve a ejecutar el instalador.
 
 ### Cursor o Codex no muestran un skill
 
-Reinicia la herramienta y revisa `~/.agents/skills/`. Comprobá que el skill
-exista ahí como enlace simbólico hacia `~/.local/share/dotskills/skills/<nombre>/`.
+Reinicia la herramienta y revisa `~/.agents/skills/`. Comprobá que la skill
+exista ahí como carpeta real con `SKILL.md`.
 
 ### Claude Code no muestra una skill
 

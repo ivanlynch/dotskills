@@ -72,7 +72,7 @@ Solo creá los que el skill realmente necesite:
 
 ### 8. Crear el directorio del skill
 
-Escribí el resultado directamente bajo `skills/<name>/` en este repositorio (nunca en `core/`, `claude/`, `codex/` ni `cursor/` — esas carpetas ya no existen; `skills/` es la única fuente y `install.sh` la symlinkea a `~/.claude/skills/` y `~/.agents/skills/` sin copiar nada). No modifiques `install.sh` ni `uninstall.sh`: ya recorren todo lo que exista bajo `skills/*` de forma genérica.
+Escribí el resultado directamente bajo `skills/<name>/` en este repositorio (nunca en `core/`, `claude/`, `codex/` ni `cursor/` — esas carpetas ya no existen; `skills/` es la única fuente y `install.sh` copia a `~/.agents/skills/` y symlinkea a `~/.claude/skills/`). No modifiques `install.sh` ni `uninstall.sh`: ya recorren todo lo que exista bajo `skills/*` de forma genérica.
 
 ### 9. Validar antes de terminar
 

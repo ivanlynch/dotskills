@@ -30,7 +30,7 @@ if [ ! -d "$script_dir/skills" ]; then
   exec sh "$CACHE_DIR/install.sh" "$REQUESTED"
 fi
 
-link_file() {
+link_skill() {
   source_path=$1
   target_path=$2
   mkdir -p "$(dirname "$target_path")"
@@ -44,28 +44,89 @@ link_file() {
   echo "Instalado: $target_path"
 }
 
-install_shared_skills() {
+is_dotskills_link() {
+  link_path=$(readlink "$1")
+  [ "$(basename "$link_path")" = "$2" ] \
+    && [ "$(basename "$(dirname "$link_path")")" = skills ] \
+    && [ "$(basename "$(dirname "$(dirname "$link_path")")")" = dotskills ]
+}
+
+copy_skill() {
+  source_path=$1
+  target_path=$2
+  target_root=$(dirname "$target_path")
+  marker="$target_path/.dotskills-managed-copy"
+  mkdir -p "$target_root"
+
+  if [ -L "$target_path" ]; then
+    if ! is_dotskills_link "$target_path" "$(basename "$source_path")"; then
+      echo "No se reemplaza un enlace ajeno: $target_path" >&2
+      exit 1
+    fi
+    stage_path=$(mktemp -d "$target_root/.dotskills-copy.XXXXXX")
+    if ! cp -R "$source_path/." "$stage_path/" || ! : > "$stage_path/.dotskills-managed-copy"; then
+      rm -rf "$stage_path"
+      exit 1
+    fi
+    rm "$target_path"
+    if ! mv "$stage_path" "$target_path"; then
+      ln -s "$source_path" "$target_path"
+      rm -rf "$stage_path"
+      exit 1
+    fi
+  elif [ -e "$target_path" ]; then
+    if [ ! -d "$target_path" ] || [ ! -f "$marker" ]; then
+      echo "No se sobrescribe el destino existente: $target_path" >&2
+      echo "Haz una copia de seguridad y vuelve a ejecutar el instalador." >&2
+      exit 1
+    fi
+    # shortcut: archivos eliminados de skills/ permanecen en las copias; agregar limpieza por manifiesto si aparecen residuos.
+    cp -R "$source_path/." "$target_path/"
+  else
+    stage_path=$(mktemp -d "$target_root/.dotskills-copy.XXXXXX")
+    if ! cp -R "$source_path/." "$stage_path/" || ! : > "$stage_path/.dotskills-managed-copy"; then
+      rm -rf "$stage_path"
+      exit 1
+    fi
+    if ! mv "$stage_path" "$target_path"; then
+      rm -rf "$stage_path"
+      exit 1
+    fi
+  fi
+
+  echo "Instalado: $target_path"
+}
+
+install_agent_skills() {
   target_root=$1
   for skill in "$script_dir"/skills/*; do
     [ -d "$skill" ] || continue
-    link_file "$skill" "$target_root/$(basename "$skill")"
+    copy_skill "$skill" "$target_root/$(basename "$skill")"
+  done
+}
+
+install_claude_skills() {
+  target_root=$1
+  for skill in "$script_dir"/skills/*; do
+    [ -d "$skill" ] || continue
+    link_skill "$skill" "$target_root/$(basename "$skill")"
   done
 }
 
 install_codex() {
-  install_shared_skills "$HOME/.agents/skills"
+  install_agent_skills "$HOME/.agents/skills"
 }
 
 install_claude() {
-  install_shared_skills "$HOME/.claude/skills"
+  install_claude_skills "$HOME/.claude/skills"
 }
 
 install_cursor() {
-  install_shared_skills "$HOME/.agents/skills"
+  install_agent_skills "$HOME/.agents/skills"
 }
 
 case "$REQUESTED" in
-  all) install_codex; install_claude; install_cursor ;;
+  all) install_codex; install_claude ;;
   codex) install_codex ;;
   claude) install_claude ;;
   cursor) install_cursor ;;
