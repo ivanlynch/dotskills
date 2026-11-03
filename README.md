@@ -92,10 +92,10 @@ que no hayan sido creados por el instalador.
 | Workflow | Propósito |
 | --- | --- |
 | `crear-ticket` | Produce un ticket de Jira claro y accionable. |
-| `crear-jira-issue` | Crea una tarea independiente o una subtarea bajo un ticket de Jira, después de una entrevista y confirmación. |
+| `crear-jira-issue` | Crea una tarea independiente sin asignar Sprint o una subtarea que hereda el Sprint del ticket padre, después de una entrevista y confirmación. |
 | `consultar-ticket` | Consulta el título y la descripción de un ticket de Jira. |
 | `crear-feature-flag` | Genera una propuesta de feature flag de Split.io a partir de un ticket Jira. |
-| `cocinar` | Carga un ticket de Jira y entrega a `/sdd` reglas para dividir el plan en unidades lógicas de hasta 300 líneas y crear subtareas bajo ese ticket. |
+| `cocinar` | Carga un ticket y pide a `/sdd` dividir el plan en unidades lógicas, con un objetivo orientativo de hasta 300 líneas modificadas en el diff por tarea y un límite duro de 500, y crear las subtareas bajo ese ticket. |
 | `crear-pr` | Prepara una pull request a partir de cambios implementados. |
 
 ### Documentación (Diátaxis)
@@ -126,9 +126,13 @@ Los archivos se pueden instalar sin configurar servicios externos, pero algunos
 workflows esperan capacidades adicionales:
 
 - `cocinar` espera los workflows `consultar-ticket`, `consultar-subtareas` y
-  `crear-jira-issue`, acceso a Jira y la skill `/sdd`; el traspaso pide apuntar a
-  tareas de hasta 300 líneas sin cambiar el límite duro de 500 de `/sdd`, y
-  crear las subtareas del plan aprobado antes de ejecutarlo;
+  `crear-jira-issue`, acceso a Jira y la skill `/sdd`; el traspaso pide dividir
+  por unidades lógicas, apuntar a hasta 300 líneas agregadas y borradas en el
+  diff por tarea (incluidas pruebas, sin lockfiles ni archivos generados), y
+  justificar las excepciones mientras se mantiene el límite duro de 500 líneas
+  de `/sdd`. Las subtareas nuevas se crean bajo el ticket original después de
+  aprobar el plan y antes de ejecutarlo, con confirmación explícita para cada
+  creación;
 - `crear-feature-flag` usa `consultar-ticket` para obtener el contexto Jira
   antes de generar la propuesta de Split.io;
 - `documentar` organiza el trabajo internamente en sub-skills privadas
