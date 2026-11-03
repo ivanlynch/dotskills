@@ -13,10 +13,9 @@ Este skill combina el flujo de `/crear-ticket` con la creación efectiva del iss
 - Parent predeterminado para una tarea independiente: `DTCZE-12424` (Epic de DTC Zé Courier - BAU).
 - Tipo predeterminado para una tarea independiente: `Technical Task` (`id: 11737`).
 - Board de referencia: `https://ab-inbev.atlassian.net/jira/software/c/projects/DTCZE/boards/54142/backlog`.
-- Sprint fijo de creación: `Backlog Priorizado` (`customfield_10007`, sprint ID `114686`, board `54142`).
 - Team Name fijo de creación: `ZE_Last_Mile` (`customfield_13230`, opción ID `61436`).
 
-No usar el board para crear el ticket. En el modo independiente, la API REST crea el proyecto, tipo, parent y Team Name; después de crearlo, la API Agile lo agrega al sprint.
+No usar el board para crear el ticket. En el modo independiente, la API REST crea el proyecto, tipo, parent y Team Name; el campo Sprint queda vacío.
 
 ### Modo de subtarea
 
@@ -37,9 +36,9 @@ subtarea bajo el ticket Jira recibido, no bajo el parent predeterminado:
 - La descripción y el título salen de la tarea aprobada del plan, sin inventar
   criterios ni convertir una tarea vertical en una descripción genérica.
 
-La creación independiente conserva su parent, tipo, Team Name y sprint
-predeterminados. No depender de valores predeterminados o automatizaciones de
-Jira para esos campos.
+La creación independiente conserva su parent, tipo y Team Name
+predeterminados. No asignar un Sprint ni depender de valores predeterminados o
+automatizaciones de Jira para esos campos.
 
 ## Flujo de entrevista
 
@@ -160,7 +159,7 @@ Reglas de redacción para esta estructura:
      --subtask-issue-type-id "$SUBTASK_ISSUE_TYPE_ID"
    ```
 
-3. Sin `--parent-key`, el script crea un `Technical Task` con parent `DTCZE-12424`, `Team Name = ZE_Last_Mile` y lo asocia al sprint `Backlog Priorizado` en una segunda llamada a la API Agile.
+3. Sin `--parent-key`, el script crea un `Technical Task` con parent `DTCZE-12424` y `Team Name = ZE_Last_Mile`. No asigna un Sprint.
 4. Con `--parent-key`, el script consulta el ticket padre y los tipos de tarea disponibles. Crea una subtarea con el proyecto y el parent detectados; copia el `Team Name` del parent si existe y hereda su Sprint.
 5. No reintentar automáticamente una creación fallida: una repetición podría duplicar el ticket. La consulta que informa varios tipos ocurre antes de crear; después de elegir uno, volver a confirmar el resumen y ejecutar el script una sola vez con el ID elegido. Si la respuesta a la creación es ambigua, consultar Jira antes de volver a crear.
 6. Informar el JSON devuelto por el script y el enlace al ticket creado.

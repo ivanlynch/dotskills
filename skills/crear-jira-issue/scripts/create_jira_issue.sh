@@ -15,8 +15,6 @@ PROJECT_KEY="DTCZE"
 ISSUE_TYPE="Technical Task"
 ISSUE_TYPE_ID="11737"
 PARENT_KEY="DTCZE-12424"
-SPRINT_FIELD="customfield_10007"
-SPRINT_ID="114686"
 TEAM_FIELD="customfield_13230"
 TEAM_OPTION_ID="61436"
 PARENT_TEAM_OPTION_ID=""
@@ -25,7 +23,7 @@ err() { echo "$*" >&2; }
 fail() { local code="$1"; shift; err "$*"; exit "$code"; }
 
 cleanup() {
-  rm -f "${payload_file:-}" "${response_file:-}" "${sprint_response_file:-}" \
+  rm -f "${payload_file:-}" "${response_file:-}" \
     "${parent_response_file:-}" "${metadata_response_file:-}" "${output_file:-}"
 }
 
@@ -138,7 +136,6 @@ main() {
   local base_url="${JIRA_BASE_URL%/}" http_code
   payload_file="$(mktemp)"
   response_file="$(mktemp)"
-  sprint_response_file="$(mktemp)"
   parent_response_file="$(mktemp)"
   metadata_response_file="$(mktemp)"
   output_file="$(mktemp)"
@@ -269,24 +266,6 @@ main() {
     jq --arg url "$base_url/browse/$issue_key" '. + {url:$url}' "$output_file"
     return 0
   fi
-
-  local sprint_http_code
-  if ! sprint_http_code="$(curl --silent --show-error --location \
-    --output "$sprint_response_file" --write-out '%{http_code}' \
-    --user "$JIRA_EMAIL:$JIRA_API_TOKEN" \
-    --header 'Accept: application/json' \
-    --header 'Content-Type: application/json' \
-    --header 'User-Agent: codex-jira-skill' \
-    --data-binary "$(jq -nc --arg issue_key "$issue_key" '{issues:[$issue_key]}')" \
-    --request POST "$base_url/rest/agile/1.0/sprint/$SPRINT_ID/issue" 2>/dev/null)"; then
-    fail "$REQUEST_FAILED" "Issue $issue_key fue creado, pero no se pudo asociar al sprint $SPRINT_ID"
-  fi
-
-  case "$sprint_http_code" in
-    200|201|204) ;;
-    401|403) fail "$AUTH_REQUIRED" "Issue $issue_key fue creado, pero Jira rechazó la asociación al sprint ($sprint_http_code)" ;;
-    *) fail "$REQUEST_FAILED" "Issue $issue_key fue creado, pero Jira respondió HTTP $sprint_http_code al asociar el sprint" ;;
-  esac
 
   jq --arg url "$base_url/browse/$issue_key" '. + {url:$url}' "$output_file"
 }

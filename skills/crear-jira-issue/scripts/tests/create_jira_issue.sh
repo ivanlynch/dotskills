@@ -38,9 +38,7 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 printf '%s %s\n' "$method" "$url" >> "$CURL_TRACE"
-if [[ "$url" == *"/rest/agile/1.0/sprint/114686/issue" ]]; then
-  printf '%s' '{}' > "$output"; printf '204'
-elif [[ "$method" == GET && "$url" == *"/rest/api/3/issue/${TEST_PARENT_KEY:-DTCZE-14437}?fields=project,issuetype,customfield_13230" ]]; then
+if [[ "$method" == GET && "$url" == *"/rest/api/3/issue/${TEST_PARENT_KEY:-DTCZE-14437}?fields=project,issuetype,customfield_13230" ]]; then
   parent_project="${PARENT_PROJECT:-DTCZE}"
   is_subtask="${PARENT_IS_SUBTASK:-false}"
   if [[ "$parent_project" == DTCZE ]]; then
@@ -79,10 +77,11 @@ jq -e '
   .fields.description.content[1].content[1].marks[0].type == "strong" and
   (.fields.description.content[2].content | length == 2) and
   .fields.customfield_13230 == {id:"61436"} and
+  .fields.customfield_10007 == null and
   .fields.issuetype == {id:"11737"} and
   .fields.parent == {key:"DTCZE-12424"}
 ' "$tmp_dir/default-payload.json" >/dev/null
-grep -q 'POST https://jira.example/rest/agile/1.0/sprint/114686/issue' "$tmp_dir/default-trace.txt"
+! grep -q '/rest/agile/1.0/sprint/' "$tmp_dir/default-trace.txt"
 
 result="$(PATH="$tmp_dir:$PATH" PAYLOAD_CAPTURE="$tmp_dir/subtask-payload.json" CURL_TRACE="$tmp_dir/subtask-trace.txt" JIRA_BASE_URL=https://jira.example JIRA_EMAIL=user@example JIRA_API_TOKEN=secret bash "$SCRIPT" --title-file "$tmp_dir/title.txt" --description-file "$tmp_dir/description.md" --parent-key DTCZE-14437)"
 printf '%s' "$result" | jq -e '.issue_key == "DTCZE-14436" and .parent == "DTCZE-14437" and .project == "DTCZE" and .issue_type == "Technical Sub-task" and .url == "https://jira.example/browse/DTCZE-14436"' >/dev/null
